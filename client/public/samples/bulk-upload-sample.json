@@ -1,0 +1,64 @@
+{
+  "_readme": [
+    "Bulk upload file for ONE language. Admin -> Bulk upload -> choose this file -> check the preview -> Import.",
+    "language.slug: same slug as an existing language = add questions to it (only the fields you write are changed).",
+    "language.isActive false = hidden from visitors until you activate it in Admin -> Languages.",
+    "topics: names in display order. question.topic: a topic name or slug from this list.",
+    "type: qa or mcq. difficulty: easy, medium or hard. isFree true = guests see it (free MCQs = sample quiz).",
+    "MCQ: exactly 4 different options + correctAnswer (the option text) or correctOption (0-3). answer = explanation.",
+    "Same question text again = that question is updated, not duplicated. Nothing is ever deleted.",
+    "Keys starting with _ are ignored."
+  ],
+  "language": {
+    "name": "JavaScript",
+    "slug": "javascript",
+    "icon": "javascript",
+    "description": "The language of the web browser, also used on servers with Node.js. Covers basics, functions, async code and the DOM.",
+    "isActive": false,
+    "topics": ["Basics", "Functions & Scope", "Async & Promises"]
+  },
+  "questions": [
+    {
+      "type": "qa",
+      "topic": "Basics",
+      "difficulty": "easy",
+      "isFree": true,
+      "question": "What is the difference between let, const and var?",
+      "answer": "var is function-scoped and can be re-declared. let and const are block-scoped. const cannot be re-assigned, but an object or array stored in a const can still be changed.",
+      "codeSnippet": "const list = [1, 2];\nlist.push(3); // allowed\n// list = []; // TypeError",
+      "tags": ["variables", "scope"]
+    },
+    {
+      "type": "qa",
+      "topic": "Functions & Scope",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is a closure?",
+      "answer": "A closure is a function that remembers the variables of the place where it was created, even after that outer function has finished running.",
+      "codeSnippet": "function counter() {\n  let count = 0;\n  return () => ++count;\n}\nconst next = counter();\nnext(); // 1\nnext(); // 2",
+      "tags": ["closures", "functions"]
+    },
+    {
+      "type": "mcq",
+      "topic": "Basics",
+      "difficulty": "easy",
+      "isFree": true,
+      "question": "What does typeof null return?",
+      "options": ["\"null\"", "\"object\"", "\"undefined\"", "\"number\""],
+      "correctAnswer": "\"object\"",
+      "answer": "typeof null is \"object\". This is an old bug in JavaScript that was kept so existing websites do not break.",
+      "tags": ["types"]
+    },
+    {
+      "type": "mcq",
+      "topic": "Async & Promises",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "In what order is this logged: console.log(1); setTimeout(() => console.log(2)); Promise.resolve().then(() => console.log(3)); console.log(4);",
+      "options": ["1 2 3 4", "1 4 2 3", "1 4 3 2", "1 3 4 2"],
+      "correctOption": 2,
+      "answer": "Normal code runs first (1, 4). Then promise callbacks (microtasks) run (3), and only after that timers (macrotasks) run (2).",
+      "tags": ["event-loop", "promises"]
+    }
+  ]
+}

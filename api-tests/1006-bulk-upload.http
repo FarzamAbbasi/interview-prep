@@ -1,0 +1,94 @@
+### IPP-1006 Bulk upload (one file = language + topics + questions)
+### Put ADMIN_PASSWORD from server/.env while testing, then put CHANGE_ME back.
+### Requests 2-5 are dry runs (nothing saved). Request 6 really saves a test language "Upload Test"
+### (inactive, hidden from visitors). Delete it afterwards: Admin -> Questions (delete its 2 questions),
+### then Admin -> Languages -> Upload Test -> Delete.
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = raeeschechi302@gmail.com
+@adminPassword = CHANGE_ME
+@adminToken = {{adminLogin.response.body.data.token}}
+
+
+### 1. Admin login -> expect 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Dry run, new language -> expect languages.added 1, questions.added 2, skipped 3
+###    items: row 3 "correctAnswer ... is not one of the 4 options", row 4 topic "dom" not a topic,
+###    row 5 "appears twice in the file". languageItems[0].topicsNew = ["Basics", "Async & Promises"]
+POST {{baseUrl}}/admin/backup/import?dryRun=true
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "language": {
+    "name": "Upload Test",
+    "isActive": false,
+    "topics": ["Basics", "Async & Promises"]
+  },
+  "questions": [
+    { "type": "qa", "topic": "Basics", "question": "Upload test: what is hoisting?", "answer": "Declarations move to the top." },
+    { "type": "mcq", "topic": "async-promises", "question": "Upload test: which returns a Promise?", "answer": "fetch() returns a Promise.",
+      "options": ["fetch()", "alert()", "parseInt()", "Math.max()"], "correctAnswer": "fetch()" },
+    { "type": "mcq", "topic": "Basics", "question": "Upload test: wrong answer text", "answer": "x",
+      "options": ["a", "b", "c", "d"], "correctAnswer": "z" },
+    { "type": "qa", "topic": "DOM", "question": "Upload test: unknown topic", "answer": "x" },
+    { "type": "qa", "topic": "Basics", "question": "Upload test: what is hoisting?", "answer": "duplicate" }
+  ]
+}
+
+
+### 3. Dry run, add to PHP with only its slug -> expect languages.updated 1, questions.added 1.
+###    PHP's name, logo and description stay as they are (only fields in the file change).
+POST {{baseUrl}}/admin/backup/import?dryRun=true
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "language": { "slug": "php" },
+  "questions": [
+    { "type": "qa", "topic": "oop", "question": "Upload test: what is an abstract class?", "answer": "A class that cannot be created directly." }
+  ]
+}
+
+
+### 4. Name already used by another slug -> expect languageItems[0].status "error",
+###    reason 'the name "PHP" is already used by the language with slug "php"'
+POST {{baseUrl}}/admin/backup/import?dryRun=true
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "language": { "name": "PHP", "slug": "php-8" }, "questions": [] }
+
+
+### 5. Not an upload or backup file -> expect 400
+POST {{baseUrl}}/admin/backup/import?dryRun=true
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "hello": "world" }
+
+
+### 6. Real import (saves!) -> expect 200 "Import done: 2 questions added, 0 updated, 0 skipped"
+###    Send it twice: the second time -> 0 added, 2 updated (no duplicates)
+POST {{baseUrl}}/admin/backup/import
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "language": { "name": "Upload Test", "isActive": false, "topics": ["Basics", "Async & Promises"] },
+  "questions": [
+    { "type": "qa", "topic": "Basics", "question": "Upload test: what is hoisting?", "answer": "Declarations move to the top." },
+    { "type": "mcq", "topic": "async-promises", "question": "Upload test: which returns a Promise?", "answer": "fetch() returns a Promise.",
+      "options": ["fetch()", "alert()", "parseInt()", "Math.max()"], "correctAnswer": "fetch()" }
+  ]
+}
+
+
+### 7. Sample file is served by the website -> expect 200 JSON (run `npm run dev` in /client)
+GET http://localhost:5173/samples/bulk-upload-sample.json

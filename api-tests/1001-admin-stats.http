@@ -1,0 +1,36 @@
+### IPP-1001 Admin stats API test
+### Put ADMIN_PASSWORD from server/.env while testing, then put CHANGE_ME back
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = raeeschechi302@gmail.com
+@adminPassword = dingdongdingdonghilalkidingdongbubble
+@userEmail = arsalmustafa62+ipp2@gmail.com
+@userPassword = secret456
+@adminToken = {{adminLogin.response.body.data.token}}
+@userToken = {{userLogin.response.body.data.token}}
+
+
+### 1. Admin login -> expect 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Stats -> expect 200 with users / languages / questions (40: 20 Q&A, 20 MCQs) / quizzes / recentUsers
+GET {{baseUrl}}/admin/stats
+Authorization: Bearer {{adminToken}}
+
+
+### 3. Normal user login -> expect 200
+# @name userLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{userEmail}}", "password": "{{userPassword}}" }
+
+
+### 4. Stats as a normal user -> expect 403 "Admin access only"
+GET {{baseUrl}}/admin/stats
+Authorization: Bearer {{userToken}}

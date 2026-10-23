@@ -1,0 +1,130 @@
+### IPP-501 Quiz engine API tests
+### How to use: run `npm run dev` in /server, then click "Send Request" above each request, top to bottom.
+
+@baseUrl = http://localhost:5000/api
+
+### Put real passwords only while testing, then put CHANGE_ME back
+@adminEmail = raeeschechi302@gmail.com
+@adminPassword = Change_me
+@userEmail = arsalmustafa62+ipp2@gmail.com
+@userPassword = secret456
+
+### Picked up automatically
+@userToken = {{userLogin.response.body.data.token}}
+@adminToken = {{adminLogin.response.body.data.token}}
+@sampleId = {{sampleQuiz.response.body.data.attemptId}}
+@fullId = {{fullQuiz.response.body.data.attemptId}}
+@q1 = {{fullQuiz.response.body.data.questions[0]._id}}
+@q2 = {{fullQuiz.response.body.data.questions[1]._id}}
+@q3 = {{fullQuiz.response.body.data.questions[2]._id}}
+@s1 = {{sampleQuiz.response.body.data.questions[0]._id}}
+
+
+### 1. Start WITHOUT login -> expect 401 "Please log in to continue"
+POST {{baseUrl}}/quiz/start
+Content-Type: application/json
+
+{ "language": "php" }
+
+
+### ---- Unpaid user: sample quiz ----
+
+### 2. Login as unpaid user -> expect 200
+# @name userLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{userEmail}}", "password": "{{userPassword}}" }
+
+
+### 3. Start -> expect 201 "Sample quiz started", "isSample": true, 5 questions, "timeLimit": 150
+###    Check: questions have options but NO "correctOption" and NO "answer"
+# @name sampleQuiz
+POST {{baseUrl}}/quiz/start
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "language": "php", "difficulty": "hard" }
+
+
+### 4. Submit one answer (option 0) -> expect 200 "Quiz submitted", score 0 or 1 out of 5,
+###    "review" shows correctOption + explanation for all 5
+POST {{baseUrl}}/quiz/{{sampleId}}/submit
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "answers": [
+    { "question": "{{s1}}", "selectedOption": 0 }
+  ]
+}
+
+
+### 5. Submit the same quiz again -> expect 409 "This quiz was already submitted"
+POST {{baseUrl}}/quiz/{{sampleId}}/submit
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "answers": [] }
+
+
+### ---- Paid (admin has full access): full quiz ----
+
+### 6. Admin login -> expect 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 7. Start a full quiz -> expect 201 "Quiz started", "isSample": false, 6 questions, "timeLimit": 180
+# @name fullQuiz
+POST {{baseUrl}}/quiz/start
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "language": "php", "difficulty": "mixed" }
+
+
+### 8. Only easy questions -> expect 6 questions, all "difficulty": "easy"
+POST {{baseUrl}}/quiz/start
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "language": "php", "difficulty": "easy" }
+
+
+### 9. Bad option -> expect 400 "selectedOption must be 0 to 3 or null"
+POST {{baseUrl}}/quiz/{{fullId}}/submit
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "answers": [ { "question": "{{q1}}", "selectedOption": 7 } ] }
+
+
+### 10. The unpaid user tries to submit the admin's quiz -> expect 404 "Quiz not found"
+POST {{baseUrl}}/quiz/{{fullId}}/submit
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "answers": [] }
+
+
+### 11. Submit 3 answers (others count as skipped) -> expect 200, "total": 6, review for all 6,
+###     "timeTaken" in seconds. Change the options to test right/wrong answers.
+POST {{baseUrl}}/quiz/{{fullId}}/submit
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "answers": [
+    { "question": "{{q1}}", "selectedOption": 0 },
+    { "question": "{{q2}}", "selectedOption": 1 },
+    { "question": "{{q3}}", "selectedOption": null }
+  ]
+}
+
+
+### 12. Timer test: run request 7 again, WAIT more than 3 minutes 15 seconds, then send request 11
+###     -> expect 200 "Time was up, so no answers were counted", score 0, "timedOut": true

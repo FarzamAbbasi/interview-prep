@@ -1,0 +1,53 @@
+### IPP-1004 Admin users API tests
+### Put ADMIN_PASSWORD from server/.env while testing, then put CHANGE_ME back
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = raeeschechi302@gmail.com
+@adminPassword = change_me
+@adminToken = {{adminLogin.response.body.data.token}}
+@userId = {{search.response.body.data.users[0]._id}}
+
+
+### 1. Admin login -> expect 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. All users (newest first, 20 per page) -> each has quizCount and lastQuizAt
+GET {{baseUrl}}/admin/users
+Authorization: Bearer {{adminToken}}
+
+
+### 3. Search -> expect the +ipp2 test user (its id is used below)
+# @name search
+GET {{baseUrl}}/admin/users?search=ipp2
+Authorization: Bearer {{adminToken}}
+
+
+### 4. Filters -> paid | free | blocked | unverified | admin
+GET {{baseUrl}}/admin/users?filter=unverified
+Authorization: Bearer {{adminToken}}
+
+
+### 5. Bad filter -> expect 400
+GET {{baseUrl}}/admin/users?filter=vip
+Authorization: Bearer {{adminToken}}
+
+
+### 6. Block -> expect 200 "... is blocked"  (the user now gets 403 when logging in)
+PUT {{baseUrl}}/admin/users/{{userId}}/block
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "isBlocked": true }
+
+
+### 7. Unblock -> expect 200 "... is unblocked"
+PUT {{baseUrl}}/admin/users/{{userId}}/block
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "isBlocked": false }

@@ -1,0 +1,41 @@
+### IPP-1005 Backup export / import tests
+### Put ADMIN_PASSWORD from server/.env while testing, then put CHANGE_ME back
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = raeeschechi302@gmail.com
+@adminPassword = CHANGE_ME
+@adminToken = {{adminLogin.response.body.data.token}}
+
+
+### 1. Admin login -> expect 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Export -> expect 200, data.backup with languages (topics) and questions
+GET {{baseUrl}}/admin/backup/export
+Authorization: Bearer {{adminToken}}
+
+
+### 3. Dry run (nothing is saved) -> expect 1 to add, 1 skipped with "MCQ must have exactly 4 options"
+POST {{baseUrl}}/admin/backup/import?dryRun=true
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "questions": [
+    { "language": "php", "type": "qa", "topic": "oop", "question": "TEST (IPP-1005): what is a constructor?", "answer": "A method that runs when an object is created." },
+    { "language": "php", "type": "mcq", "topic": "oop", "question": "TEST bad mcq", "answer": "x", "options": ["a", "b"], "correctOption": 0 }
+  ]
+}
+
+
+### 4. Not a backup -> expect 400 "This does not look like a backup file..."
+POST {{baseUrl}}/admin/backup/import?dryRun=true
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "hello": "world" }

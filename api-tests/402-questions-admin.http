@@ -1,0 +1,180 @@
+### IPP-402 Questions management API (admin) tests
+### How to use: run `npm run dev` in /server, then click "Send Request" above each request, top to bottom.
+
+@baseUrl = http://localhost:5000/api
+
+### Admin login: put ADMIN_PASSWORD from server/.env here. Put it back to CHANGE_ME after testing.
+@adminEmail = raeeschechi302@gmail.com
+@adminPassword = CHANGE_ME
+
+### PHP language id (from 401 tests)
+@phpId = 6ad894999dcf1f882fd249b2
+
+### Picked up automatically from the requests below
+@adminToken = {{adminLogin.response.body.data.token}}
+@qaId = {{newQa.response.body.data.question._id}}
+@mcqId = {{newMcq.response.body.data.question._id}}
+
+
+### 1. Admin login -> expect 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+
+### 2. Add WITHOUT login -> expect 401 "Please log in to continue"
+POST {{baseUrl}}/admin/questions
+Content-Type: application/json
+
+{}
+
+
+### 3. Add with empty body -> expect 400 with a list of errors
+POST {{baseUrl}}/admin/questions
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{}
+
+
+### 4. Add a Q&A -> expect 201 "Question added", tags saved in small letters
+# @name newQa
+POST {{baseUrl}}/admin/questions
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "language": "{{phpId}}",
+  "type": "qa",
+  "question": "TEST (IPP-402): What does the null coalescing operator ?? do in PHP?",
+  "answer": "It returns the left value if it exists and is not null, otherwise the right value.",
+  "difficulty": "easy",
+  "tags": ["Operators", "PHP7"],
+  "codeSnippet": "$name = $_GET['name'] ?? 'Guest';"
+}
+
+
+### 5. MCQ with only 3 options -> expect 400 "MCQ must have exactly 4 options, none empty"
+POST {{baseUrl}}/admin/questions
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "language": "{{phpId}}",
+  "type": "mcq",
+  "question": "TEST: Which one is a PHP superglobal?",
+  "answer": "$_GET holds query string values.",
+  "options": ["$_GET", "$GET", "_GET"],
+  "correctOption": 0
+}
+
+
+### 6. MCQ with the same option twice -> expect 400 "MCQ options must all be different"
+POST {{baseUrl}}/admin/questions
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "language": "{{phpId}}",
+  "type": "mcq",
+  "question": "TEST: Which one is a PHP superglobal?",
+  "answer": "$_GET holds query string values.",
+  "options": ["$_GET", "$_get", "_GET", "GET$"],
+  "correctOption": 0
+}
+
+
+### 7. MCQ without a correct option -> expect 400 "Choose the correct option (0 to 3)"
+POST {{baseUrl}}/admin/questions
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "language": "{{phpId}}",
+  "type": "mcq",
+  "question": "TEST: Which one is a PHP superglobal?",
+  "answer": "$_GET holds query string values.",
+  "options": ["$_GET", "$GET", "_GET", "GET$"]
+}
+
+
+### 8. Add a correct MCQ -> expect 201 "Question added"
+# @name newMcq
+POST {{baseUrl}}/admin/questions
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "language": "{{phpId}}",
+  "type": "mcq",
+  "question": "TEST (IPP-402): Which one is a PHP superglobal?",
+  "answer": "$_GET holds the values from the URL query string.",
+  "options": ["$_GET", "$GET", "_GET", "GET$"],
+  "correctOption": 0,
+  "difficulty": "easy"
+}
+
+
+### 9. Get the MCQ with full details -> expect 200, language shows name + slug
+GET {{baseUrl}}/admin/questions/{{mcqId}}
+Authorization: Bearer {{adminToken}}
+
+
+### 10. Mark the Q&A as free -> expect 200, isFree true
+PUT {{baseUrl}}/admin/questions/{{qaId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "isFree": true
+}
+
+
+### 11. Try to change the type -> expect 400 "Question type cannot be changed..."
+PUT {{baseUrl}}/admin/questions/{{qaId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "type": "mcq"
+}
+
+
+### 12. Edit the MCQ: new correct option + deactivate -> expect 200, correctOption 2, isActive false
+PUT {{baseUrl}}/admin/questions/{{mcqId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "correctOption": 2,
+  "isActive": false
+}
+
+
+### 13. Public languages list -> PHP still shows qaCount 21 (the test Q&A), mcqCount 20 (test MCQ is inactive)
+GET {{baseUrl}}/languages/php
+
+
+### 14. Delete the test Q&A -> expect 200 "Question deleted"
+DELETE {{baseUrl}}/admin/questions/{{qaId}}
+Authorization: Bearer {{adminToken}}
+
+
+### 15. Delete the test MCQ -> expect 200 (no quiz has used it yet)
+###     After IPP-501, an MCQ that appeared in a quiz gives 409 "...Deactivate it instead"
+DELETE {{baseUrl}}/admin/questions/{{mcqId}}
+Authorization: Bearer {{adminToken}}
+
+
+### 16. Get the deleted MCQ -> expect 404 "Question not found"
+GET {{baseUrl}}/admin/questions/{{mcqId}}
+Authorization: Bearer {{adminToken}}
+
+
+### 17. PHP counts are back to 20 / 20 / 5
+GET {{baseUrl}}/languages/php

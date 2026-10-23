@@ -1,0 +1,116 @@
+### IPP-303 registration + email verification tests
+### How to use: run `npm run dev` in /server, then click "Send Request" above each request, top to bottom.
+### Use an email inbox you can open (e.g. your Gmail with +test: yourname+ipp1@gmail.com).
+
+@baseUrl = http://localhost:5000/api
+@email = arsalmustafa62+ipp2@gmail.com
+
+### Step 3 needs the token from the email link:
+### the link looks like http://localhost:5173/verify-email/<64 characters>
+### copy those 64 characters and paste after "@verifyToken = ".
+### (The same link is also printed in the server terminal as "[dev] Verify link ...")
+@verifyToken = a96ab5a5fb5dcd6f14ce1e9a65440562623912f48954a2720250c31a9a06f5a4
+
+
+### 1. Register with bad data -> expect 400 with a list of errors
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "",
+  "email": "abc",
+  "password": "1"
+}
+
+
+### 2. Register -> expect 201 "Account created. Please check your email..."
+###    data.user.isVerified = false, and NO password / token in the response.
+###    Check your inbox (and spam) for the "Verify your email" email.
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "{{email}}",
+  "password": "secret123"
+}
+
+
+### 3. Verify with the token from the email -> expect 200 "Email verified. You can now log in"
+GET {{baseUrl}}/auth/verify-email/{{verifyToken}}
+
+
+### 4. Same link again -> expect 400 "This verification link is invalid or has expired..."
+###    (each link works only once)
+GET {{baseUrl}}/auth/verify-email/{{verifyToken}}
+
+
+### 5. Broken link -> expect 400 "Invalid verification link"
+GET {{baseUrl}}/auth/verify-email/abc123
+
+
+### 6. Register the same (now verified) email again -> expect 409 "This email is already registered. Please log in"
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "{{email}}",
+  "password": "secret123"
+}
+
+
+### 7. Resend for a verified email -> expect 200 with the general message (no email is sent)
+POST {{baseUrl}}/auth/resend-verification
+Content-Type: application/json
+
+{
+  "email": "{{email}}"
+}
+
+
+### 8. Resend for an email that is not registered -> expect the SAME 200 message
+###    (so nobody can find out which emails are registered)
+POST {{baseUrl}}/auth/resend-verification
+Content-Type: application/json
+
+{
+  "email": "nobody-here@example.com"
+}
+
+
+### ---- Resend flow with a second, unverified account ----
+
+### 9. Register a second email -> expect 201 (an email is sent)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Second User",
+  "email": "arsalmustafa62+ipp3@gmail.com",
+  "password": "secret123"
+}
+
+
+### 10. Resend straight away -> expect 429 "Please wait a minute before asking for another email"
+POST {{baseUrl}}/auth/resend-verification
+Content-Type: application/json
+
+{
+  "email": "arsalmustafa62+ipp3@gmail.com"
+}
+
+
+### 11. Wait 1 minute, send again -> expect 200 and a NEW email.
+###     The link in the first email for this account now gives 400 (only the newest link works).
+POST {{baseUrl}}/auth/resend-verification
+Content-Type: application/json
+
+{
+  "email": "arsalmustafa62+ipp3@gmail.com"
+}
+
+
+### NOTE: register / resend allow 10 emails per hour per IP. If you get 429
+### "Too many emails requested", restart `npm run dev` (the counter resets).
+### Clean up test users afterwards in Atlas (Browse Collections -> users), or keep them for IPP-304.

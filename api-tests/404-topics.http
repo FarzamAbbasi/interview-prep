@@ -1,0 +1,148 @@
+### IPP-404 Topics tests
+### BEFORE testing, in the server folder run:
+###   npm run backup     (safety copy)
+###   npm run seed       (adds the 5 PHP topics and sets the topic of all 40 questions; ids stay the same)
+### Then `npm run dev` and send the requests below, top to bottom.
+
+@baseUrl = http://localhost:5000/api
+
+### Put real passwords only while testing, then put CHANGE_ME back
+@adminEmail = raeeschechi302@gmail.com
+@adminPassword = dingdongdingdonghilalkidingdongbubble
+@userEmail = arsalmustafa62+ipp2@gmail.com
+@userPassword = secret456
+
+@phpId = 6ad894999dcf1f882fd249b2
+@adminToken = {{adminLogin.response.body.data.token}}
+@userToken = {{userLogin.response.body.data.token}}
+@testQ = {{newQ.response.body.data.question._id}}
+
+
+### 1. PHP with topics -> expect "topics": 5 items with qaCount / mcqCount:
+###    basics-syntax 4/6, operators-types 3/5, oop 5/3, web-security 5/3, modern-php-tooling 3/3
+GET {{baseUrl}}/languages/php
+
+
+### 2. Public Q&A of one topic -> expect total 5, every question "topic": "oop"
+GET {{baseUrl}}/questions?language=php&topic=oop
+
+
+### 3. Tags inside a topic (for the filter)
+GET {{baseUrl}}/questions/tags?language=php&topic=web-security
+
+
+### 4. Admin login -> expect 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 5. Add a question WITHOUT topic -> expect 400 "Choose a topic"
+POST {{baseUrl}}/admin/questions
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "language": "{{phpId}}", "type": "qa", "question": "TEST (IPP-404) topic question", "answer": "Test answer" }
+
+
+### 6. Wrong topic -> expect 400 "This topic does not belong to the chosen language"
+POST {{baseUrl}}/admin/questions
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "language": "{{phpId}}", "type": "qa", "topic": "cooking", "question": "TEST (IPP-404) topic question", "answer": "Test answer" }
+
+
+### 7. Correct topic -> expect 201 "Question added", "topic": "oop"
+# @name newQ
+POST {{baseUrl}}/admin/questions
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "language": "{{phpId}}", "type": "qa", "topic": "oop", "question": "TEST (IPP-404) topic question", "answer": "Test answer" }
+
+
+### 8. Delete the test question -> expect 200
+DELETE {{baseUrl}}/admin/questions/{{testQ}}
+Authorization: Bearer {{adminToken}}
+
+
+### 9. Try to remove the "oop" topic (it has questions) -> expect 409 "Topic "oop" has 8 questions..."
+PUT {{baseUrl}}/languages/{{phpId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "topics": [
+    { "name": "Basics & Syntax", "slug": "basics-syntax" },
+    { "name": "Operators & Types", "slug": "operators-types" },
+    { "name": "Web & Security", "slug": "web-security" },
+    { "name": "Modern PHP & Tooling", "slug": "modern-php-tooling" }
+  ]
+}
+
+
+### 10. Rename a topic (same slug = questions stay) -> expect 200, "OOP" now "Object-Oriented PHP"
+PUT {{baseUrl}}/languages/{{phpId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "topics": [
+    { "name": "Basics & Syntax", "slug": "basics-syntax" },
+    { "name": "Operators & Types", "slug": "operators-types" },
+    { "name": "Object-Oriented PHP", "slug": "oop" },
+    { "name": "Web & Security", "slug": "web-security" },
+    { "name": "Modern PHP & Tooling", "slug": "modern-php-tooling" }
+  ]
+}
+
+
+### 11. Put the name back to "OOP" -> expect 200
+PUT {{baseUrl}}/languages/{{phpId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "topics": [
+    { "name": "Basics & Syntax", "slug": "basics-syntax" },
+    { "name": "Operators & Types", "slug": "operators-types" },
+    { "name": "OOP", "slug": "oop" },
+    { "name": "Web & Security", "slug": "web-security" },
+    { "name": "Modern PHP & Tooling", "slug": "modern-php-tooling" }
+  ]
+}
+
+
+### 12. Topic quiz (admin = full access) -> expect 201, 3 questions (OOP has 3 MCQs), "timeLimit": 90
+POST {{baseUrl}}/quiz/start
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "language": "php", "topic": "oop" }
+
+
+### 13. Unknown topic -> expect 400 "Topic not found"
+POST {{baseUrl}}/quiz/start
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "language": "php", "topic": "cooking" }
+
+
+### 14. Unpaid user login -> expect 200
+# @name userLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{userEmail}}", "password": "{{userPassword}}" }
+
+
+### 15. Unpaid user with a topic -> topic is ignored: sample quiz, 5 questions, "topic": null
+POST {{baseUrl}}/quiz/start
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "language": "php", "topic": "oop" }

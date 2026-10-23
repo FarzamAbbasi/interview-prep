@@ -1,0 +1,93 @@
+### IPP-304 login + session tests
+### How to use: run `npm run dev` in /server, then click "Send Request" above each request, top to bottom.
+### Uses the accounts from 303 tests:
+###   ipp1 = registered AND verified,  ipp3 = registered but NOT verified (both with password secret123)
+
+@baseUrl = http://localhost:5000/api
+@verifiedEmail = arsalmustafa62+ipp2@gmail.com
+@unverifiedEmail = arsalmustafa62+ipp3@gmail.com
+
+### The token from request 6 is picked up automatically (no copy-paste needed).
+### Run request 6 before 8.
+@token = {{login.response.body.data.token}}
+
+
+### 1. Login with empty body -> expect 400 "Please enter a valid email"
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{}
+
+
+### 2. Wrong password -> expect 401 "Invalid email or password"
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{verifiedEmail}}",
+  "password": "wrongpass"
+}
+
+
+### 3. Email that is not registered -> expect the SAME 401 "Invalid email or password"
+###    (so nobody can find out which emails are registered)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "nobody-here@example.com",
+  "password": "secret123"
+}
+
+
+### 4. Not verified account, correct password -> expect 403 "Please verify your email..."
+###    and "code": "EMAIL_NOT_VERIFIED" (the frontend will show a "Resend" button for this)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{unverifiedEmail}}",
+  "password": "secret123"
+}
+
+
+### 5. Not verified account, WRONG password -> expect 401 (not 403)
+###    Account status is only shown to someone who knows the password.
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{unverifiedEmail}}",
+  "password": "wrongpass"
+}
+
+
+### 6. Correct login -> expect 200 "Logged in successfully"
+###    data.token = long string, data.user has NO password
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{verifiedEmail}}",
+  "password": "secret123"
+}
+
+
+### 7. /me WITHOUT token -> expect 401 "Please log in to continue"
+GET {{baseUrl}}/auth/me
+
+
+### 8. /me WITH token (from request 6) -> expect 200 with data.user (your name, email, isVerified: true)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+
+### 9. /me with a broken token -> expect 401 "Invalid login session. Please log in again"
+GET {{baseUrl}}/auth/me
+Authorization: Bearer abc.def.ghi
+
+
+### OPTIONAL: blocked user -> expect 403 "Your account has been blocked..." with "code": "ACCOUNT_BLOCKED"
+### In Atlas (Browse Collections -> users), set isBlocked: true on the ipp1 user, send request 6 again,
+### then set isBlocked back to false.

@@ -1,0 +1,110 @@
+### IPP-403 Question browsing API tests
+### How to use: run `npm run dev` in /server, then click "Send Request" above each request, top to bottom.
+
+@baseUrl = http://localhost:5000/api
+
+### Login details (put real passwords here only while testing, then put CHANGE_ME back)
+@adminEmail = raeeschechi302@gmail.com
+@adminPassword = change_me
+### Any normal (unpaid) verified user
+@userEmail = arsalmustafa62+ipp2@gmail.com
+@userPassword =  secret456
+
+@adminToken = {{adminLogin.response.body.data.token}}
+@userToken = {{userLogin.response.body.data.token}}
+
+
+### ---- Guest (no login) ----
+
+### 1. PHP questions page 1 -> expect 200, 10 questions, total 20, totalPages 2
+###    The 5 free ones come first WITH answers; the other 5 have "isLocked": true and no answer
+GET {{baseUrl}}/questions?language=php
+
+
+### 2. Page 2 -> expect 10 questions, all "isLocked": true
+GET {{baseUrl}}/questions?language=php&page=2
+
+
+### 3. Filter by difficulty -> expect only "difficulty": "hard"
+GET {{baseUrl}}/questions?language=php&difficulty=hard
+
+
+### 4. Search -> expect the "Abstract class vs interface" question (MCQs never appear here)
+GET {{baseUrl}}/questions?language=php&search=class
+
+
+### 5. Tags for the filter dropdown -> expect a list of tags A-Z
+GET {{baseUrl}}/questions/tags?language=php
+
+
+### 6. Filter by tag (pick any tag from request 5)
+GET {{baseUrl}}/questions?language=php&tag=oop
+
+
+### 7. Unknown language -> expect 404 "Language not found"
+GET {{baseUrl}}/questions?language=cobol
+
+
+### 8. Bad limit -> expect 400 "limit must be 1 to 50"
+GET {{baseUrl}}/questions?limit=500
+
+
+### 9. One locked question -> copy any locked "_id" from request 2 in place of QUESTION_ID
+###    expect 200 with "isLocked": true and no answer
+GET {{baseUrl}}/questions/6ad895509dcf1f882fd24a20
+
+
+### ---- Unpaid user ----
+
+### 10. Login as a normal user -> expect 200
+# @name userLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{userEmail}}",
+  "password": "{{userPassword}}"
+}
+
+
+### 11. All PHP questions -> still 15 locked (unpaid), "hasFullAccess": false
+GET {{baseUrl}}/questions?language=php&limit=20
+Authorization: Bearer {{userToken}}
+
+
+### ---- Admin (has full access) ----
+
+### 12. Admin login -> expect 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+
+### 13. All PHP questions -> 0 locked, every question has an answer, "hasFullAccess": true
+GET {{baseUrl}}/questions?language=php&limit=20
+Authorization: Bearer {{adminToken}}
+
+
+### 14. Admin table list (IPP-1003): everything incl. MCQs -> expect total 40
+GET {{baseUrl}}/admin/questions?language=php&limit=50
+Authorization: Bearer {{adminToken}}
+
+
+### 15. Admin filter: only MCQs -> expect total 20, with options and correctOption
+GET {{baseUrl}}/admin/questions?type=mcq
+Authorization: Bearer {{adminToken}}
+
+
+### 16. Admin filter: free Q&A -> expect total 5
+GET {{baseUrl}}/admin/questions?type=qa&isFree=true
+Authorization: Bearer {{adminToken}}
+
+
+### 17. Admin list as a normal user -> expect 403 "Admin access only"
+GET {{baseUrl}}/admin/questions
+Authorization: Bearer {{userToken}}

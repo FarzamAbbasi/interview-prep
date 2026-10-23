@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Brand colors: use as bg-brand-600, text-brand-700, etc.
+   Change these values to re-color the whole site. */
+@theme {
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}

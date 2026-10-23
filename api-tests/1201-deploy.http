@@ -1,0 +1,76 @@
+### IPP-1201 live deploy checks (Render API + Vercel website)
+### How to use: put your real addresses below, then "Send Request" top to bottom.
+### The first request can take up to ~1 minute (free Render server waking up).
+
+@api = https://YOUR-RENDER-APP.onrender.com/api
+@site = https://YOUR-VERCEL-APP.vercel.app
+@testEmail = arsalmustafa62+ipp-live1@gmail.com
+
+
+### 1. Health -> expect 200 { success: true, message: "API is running", data: { ip } }
+###    "ip" must be YOUR internet IP (check whatismyip.com). If it is another IP, set TRUST_PROXY=2 on Render.
+GET {{api}}/health
+
+
+### 2. CORS from the website -> expect 200 and header  Access-Control-Allow-Origin: {{site}}
+GET {{api}}/languages
+Origin: {{site}}
+
+
+### 3. CORS from another site -> expect NO Access-Control-Allow-Origin header (browser would block it)
+GET {{api}}/languages
+Origin: https://evil.example.com
+
+
+### 4. Dev test routes are off in production -> expect 404
+GET {{api}}/dev/protected
+
+
+### 5. Not logged in -> expect 401
+GET {{api}}/auth/me
+
+
+### 6. Register -> expect 201 with data.emailSent = true, then an email from Brevo (check Spam too).
+###    emailSent false = Brevo problem: Render -> Logs shows the reason ("[email] ...").
+###    The link in the email must start with {{site}}/verify-email/...  Click it -> "Email verified".
+POST {{api}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Live Test",
+  "email": "{{testEmail}}",
+  "password": "secret456"
+}
+
+
+### 7. Login after verifying -> expect 200 with a token
+# @name liveLogin
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{testEmail}}",
+  "password": "secret456"
+}
+
+
+### 8. Who am I -> expect 200, data.user.role "user", isPaid false
+GET {{api}}/auth/me
+Authorization: Bearer {{liveLogin.response.body.data.token}}
+
+
+### 9. Forgot password -> expect 200 + a reset email whose link starts with {{site}}/reset-password/...
+POST {{api}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "{{testEmail}}"
+}
+
+
+### 10. Website page refresh works (SPA rewrite) -> expect 200 HTML, not Vercel 404
+GET {{site}}/languages
+
+
+### 11. Unknown page -> expect 200 HTML (React shows the "Page not found" screen)
+GET {{site}}/some/unknown/page

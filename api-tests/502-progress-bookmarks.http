@@ -1,0 +1,119 @@
+### IPP-502 Quiz history, result detail, bookmarks and paid access tests
+### How to use: run `npm run dev` in /server, then click "Send Request" above each request, top to bottom.
+### Run 501-quiz.http first so there are some submitted quizzes.
+
+@baseUrl = http://localhost:5000/api
+
+### Put real passwords only while testing, then put CHANGE_ME back
+@adminEmail = raeeschechi302@gmail.com
+@adminPassword = dingdongdingdonghilalkidingdongbubble
+@userEmail = arsalmustafa62+ipp2@gmail.com
+@userPassword = secret456
+
+### Picked up automatically
+@userToken = {{userLogin.response.body.data.token}}
+@userId = {{userLogin.response.body.data.user._id}}
+@adminToken = {{adminLogin.response.body.data.token}}
+@attemptId = {{history.response.body.data.attempts[0]._id}}
+@paidQuestion = {{phpList.response.body.data.questions[5]._id}}
+@freeQuestion = {{phpList.response.body.data.questions[0]._id}}
+
+
+### 1. Login as the normal user -> expect 200
+# @name userLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{userEmail}}", "password": "{{userPassword}}" }
+
+
+### 2. Quiz history -> expect 200: "stats" (totalAttempts, questionsAnswered, averagePercentage, byLanguage)
+###    and "attempts" newest first, each with score, total, percentage, language
+# @name history
+GET {{baseUrl}}/quiz/history
+Authorization: Bearer {{userToken}}
+
+
+### 3. Full result of the latest quiz -> expect 200 with "review": correct option + explanation per question
+GET {{baseUrl}}/quiz/{{attemptId}}
+Authorization: Bearer {{userToken}}
+
+
+### 4. PHP questions (to get question ids for the bookmark tests)
+# @name phpList
+GET {{baseUrl}}/questions?language=php
+Authorization: Bearer {{userToken}}
+
+
+### 5. Bookmark as UNPAID user -> expect 403 "This feature needs full access..."
+POST {{baseUrl}}/bookmarks/{{paidQuestion}}
+Authorization: Bearer {{userToken}}
+
+
+### ---- Admin turns on paid access ----
+
+### 6. Admin login -> expect 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 7. Paid access ON for the user -> expect 200 "Full access turned on for ...", isPaid true, paidAt set
+PUT {{baseUrl}}/admin/users/{{userId}}/access
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "isPaid": true }
+
+
+### 8. Normal user tries the admin route -> expect 403 "Admin access only"
+PUT {{baseUrl}}/admin/users/{{userId}}/access
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "isPaid": true }
+
+
+### ---- Now the user is paid ----
+
+### 9. Bookmark a question -> expect 200 "Saved to bookmarks", "bookmarked": true
+POST {{baseUrl}}/bookmarks/{{paidQuestion}}
+Authorization: Bearer {{userToken}}
+
+
+### 10. Bookmark another one -> expect "bookmarked": true
+POST {{baseUrl}}/bookmarks/{{freeQuestion}}
+Authorization: Bearer {{userToken}}
+
+
+### 11. Bookmarks list -> expect total 2, newest first, full answers
+GET {{baseUrl}}/bookmarks
+Authorization: Bearer {{userToken}}
+
+
+### 12. PHP list again -> answers unlocked now, and the 2 saved questions show "isBookmarked": true
+GET {{baseUrl}}/questions?language=php
+Authorization: Bearer {{userToken}}
+
+
+### 13. Same bookmark again = remove -> expect 200 "Removed from bookmarks", "bookmarked": false
+POST {{baseUrl}}/bookmarks/{{paidQuestion}}
+Authorization: Bearer {{userToken}}
+
+
+### 14. Paid user starts a quiz -> expect "isSample": false and 6 questions
+POST {{baseUrl}}/quiz/start
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "language": "php" }
+
+
+### 15. Paid access OFF again (so other tests still work as "unpaid") -> expect 200, isPaid false
+PUT {{baseUrl}}/admin/users/{{userId}}/access
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "isPaid": false }

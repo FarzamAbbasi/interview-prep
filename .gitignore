@@ -1,0 +1,16 @@
+# Dependencies and builds
+node_modules/
+dist/
+
+# Secrets and local settings (see server/.env.example and client/.env.example)
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log

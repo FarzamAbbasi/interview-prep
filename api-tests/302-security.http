@@ -1,0 +1,52 @@
+### IPP-302 security tests
+### How to use: click "Send Request" above any request. The response opens on the right.
+### First run `npm run dev:token` in a terminal and paste the token below (after "@token = ").
+
+@baseUrl = http://localhost:5000/api
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhZDg5NTUwYWIxNzQ3ZDllYTliNjA4YyIsImlhdCI6MTc5MjU4NjMyOCwiZXhwIjoxNzkzMTkxMTI4fQ.MwN4ynyTNfQixldDreYsClGKGl2fM6SnkC_Vozo9F4M
+
+
+### 0. Health check -> expect 200 "API is running"
+GET {{baseUrl}}/health
+
+
+### 1. Protected route WITHOUT token -> expect 401 "Please log in to continue"
+GET {{baseUrl}}/dev/protected
+
+
+### 2. Protected route WITH token -> expect 200 "You are logged in"
+GET {{baseUrl}}/dev/protected
+Authorization: Bearer {{token}}
+
+
+### 3. Admin route with admin token -> expect 200 "Welcome, admin"
+GET {{baseUrl}}/dev/admin
+Authorization: Bearer {{token}}
+
+
+### 4. Validation with bad data -> expect 400 with a list of errors
+POST {{baseUrl}}/dev/validate
+Content-Type: application/json
+
+{
+  "email": "abc",
+  "password": "1"
+}
+
+
+### 5. Validation with good data -> expect 200 "Validation passed"
+POST {{baseUrl}}/dev/validate
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "secret123"
+}
+
+
+### 6. Unknown route -> expect 404 "Route not found"
+GET {{baseUrl}}/kuchbhi
+
+
+### 7. Rate limit: click "Send Request" here 11 times -> the 11th gives 429 "Too many attempts"
+POST {{baseUrl}}/dev/limited

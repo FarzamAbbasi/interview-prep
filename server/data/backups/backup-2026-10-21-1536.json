@@ -1,0 +1,714 @@
+{
+  "exportedAt": "2026-10-21T10:36:27.860Z",
+  "languages": [
+    {
+      "name": "PHP",
+      "slug": "php",
+      "icon": "php",
+      "description": "Server-side scripting language behind WordPress, Laravel and a large share of the web. Covers basics, OOP, security and modern PHP 8 features.",
+      "isActive": true
+    }
+  ],
+  "questions": [
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "Which keyword adds a trait to a class?",
+      "answer": "Inside the class body, write use TraitName; to add the trait's methods. extends is for classes, implements is for interfaces.",
+      "codeSnippet": "",
+      "difficulty": "easy",
+      "tags": [
+        "oop",
+        "traits"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "include",
+        "extends",
+        "implements",
+        "use"
+      ],
+      "correctOption": 3
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "Which function returns the length of a string?",
+      "answer": "strlen() returns the number of bytes in a string. count() is for arrays.",
+      "codeSnippet": "",
+      "difficulty": "easy",
+      "tags": [
+        "strings",
+        "functions"
+      ],
+      "isFree": true,
+      "isActive": true,
+      "options": [
+        "count()",
+        "strlen()",
+        "length()",
+        "size()"
+      ],
+      "correctOption": 1
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "What does this code output?",
+      "answer": "The null coalescing operator ?? returns the right side when the left side is null or not set.",
+      "codeSnippet": "$x = null;\necho $x ?? \"default\";",
+      "difficulty": "easy",
+      "tags": [
+        "operators"
+      ],
+      "isFree": true,
+      "isActive": true,
+      "options": [
+        "null",
+        "Nothing (empty)",
+        "default",
+        "Warning"
+      ],
+      "correctOption": 2
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "Which superglobal holds form data sent with the POST method?",
+      "answer": "$_POST contains data sent in the request body with method=\"post\". $_FORM and $_DATA do not exist.",
+      "codeSnippet": "",
+      "difficulty": "easy",
+      "tags": [
+        "forms",
+        "superglobals"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "$_GET",
+        "$_POST",
+        "$_FORM",
+        "$_DATA"
+      ],
+      "correctOption": 1
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "What does echo 10 <=> 5; output?",
+      "answer": "The spaceship operator <=> returns 1 when the left side is greater, 0 when equal and -1 when smaller. It is handy in usort().",
+      "codeSnippet": "echo 10 <=> 5;",
+      "difficulty": "medium",
+      "tags": [
+        "operators"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "-1",
+        "0",
+        "1",
+        "true"
+      ],
+      "correctOption": 2
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "Which of these is NOT a valid variable name?",
+      "answer": "Variable names must start with a letter or underscore after the $ sign, never a digit. $name and $Name are both valid (and different, because names are case-sensitive).",
+      "codeSnippet": "",
+      "difficulty": "easy",
+      "tags": [
+        "basics",
+        "variables"
+      ],
+      "isFree": true,
+      "isActive": true,
+      "options": [
+        "$name",
+        "$_name",
+        "$1name",
+        "$Name"
+      ],
+      "correctOption": 2
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "What does this match expression output?",
+      "answer": "3 matches the second arm (3, 4), so 'mid' is returned. match uses strict comparison and needs no break.",
+      "codeSnippet": "echo match(3) {\n    1, 2 => 'low',\n    3, 4 => 'mid',\n    default => 'high',\n};",
+      "difficulty": "medium",
+      "tags": [
+        "php8",
+        "control flow"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "low",
+        "mid",
+        "high",
+        "UnhandledMatchError"
+      ],
+      "correctOption": 1
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "Which function should you use to hash user passwords?",
+      "answer": "password_hash() uses a slow, salted algorithm (bcrypt/Argon2). md5 and sha1 are too fast, and base64 is encoding, not hashing at all.",
+      "codeSnippet": "",
+      "difficulty": "easy",
+      "tags": [
+        "security",
+        "passwords"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "md5()",
+        "sha1()",
+        "password_hash()",
+        "base64_encode()"
+      ],
+      "correctOption": 2
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "What does count([1, [2, 3], 4]) return?",
+      "answer": "count() counts top-level elements only; the inner array [2, 3] counts as one element. count($arr, COUNT_RECURSIVE) would return 5.",
+      "codeSnippet": "echo count([1, [2, 3], 4]);",
+      "difficulty": "medium",
+      "tags": [
+        "arrays",
+        "functions"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "3",
+        "4",
+        "2",
+        "Error"
+      ],
+      "correctOption": 0
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "With strict types enabled, what happens when this code runs?",
+      "answer": "declare(strict_types=1) stops PHP from converting the string \"5\" to int, so passing a string to an int parameter throws a TypeError.",
+      "codeSnippet": "declare(strict_types=1);\n\nfunction add(int $a) { return $a; }\necho add(\"5\");",
+      "difficulty": "hard",
+      "tags": [
+        "types",
+        "strict types"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "Prints 5",
+        "Prints \"5\"",
+        "TypeError",
+        "Prints 0"
+      ],
+      "correctOption": 2
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "What does var_dump(\"10\" == \"1e1\"); output?",
+      "answer": "Both are numeric strings (\"1e1\" means 1 x 10^1 = 10), so PHP compares them as numbers: 10 == 10 is true.",
+      "codeSnippet": "var_dump(\"10\" == \"1e1\");",
+      "difficulty": "medium",
+      "tags": [
+        "operators",
+        "type juggling"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "bool(true)",
+        "bool(false)",
+        "Error",
+        "NULL"
+      ],
+      "correctOption": 0
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "How many elements remain after this array_filter call?",
+      "answer": "Without a callback, array_filter removes falsy values: 0, '' and null. Only 1, 2 and 3 remain (keys are preserved).",
+      "codeSnippet": "$result = array_filter([0, 1, 2, '', null, 3]);\necho count($result);",
+      "difficulty": "medium",
+      "tags": [
+        "arrays",
+        "functions"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "6",
+        "4",
+        "3",
+        "2"
+      ],
+      "correctOption": 2
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "Which is the nullsafe operator added in PHP 8?",
+      "answer": "?-> stops the chain and returns null if the object on its left is null, instead of throwing an error. Example: $user?->getAddress()?->city.",
+      "codeSnippet": "",
+      "difficulty": "easy",
+      "tags": [
+        "php8",
+        "operators"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "??",
+        "?->",
+        "?:",
+        "->?"
+      ],
+      "correctOption": 1
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "What does echo \"5\" + \"5\"; output?",
+      "answer": "The + operator is always arithmetic in PHP, so numeric strings are converted to numbers: 5 + 5 = 10.",
+      "codeSnippet": "echo \"5\" + \"5\";",
+      "difficulty": "easy",
+      "tags": [
+        "operators",
+        "type juggling"
+      ],
+      "isFree": true,
+      "isActive": true,
+      "options": [
+        "55",
+        "10",
+        "Error",
+        "\"5\"\"5\""
+      ],
+      "correctOption": 1
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "What does echo '5' . '5'; output?",
+      "answer": "The dot (.) is the string concatenation operator in PHP, so the two strings are joined: '55'.",
+      "codeSnippet": "echo '5' . '5';",
+      "difficulty": "easy",
+      "tags": [
+        "operators",
+        "strings"
+      ],
+      "isFree": true,
+      "isActive": true,
+      "options": [
+        "10",
+        "55",
+        "5.5",
+        "Error"
+      ],
+      "correctOption": 1
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "Which function prevents XSS when printing user input in HTML?",
+      "answer": "htmlspecialchars() converts <, >, &, \" and ' into HTML entities, so injected scripts are shown as text instead of running.",
+      "codeSnippet": "",
+      "difficulty": "medium",
+      "tags": [
+        "security",
+        "xss"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "stripslashes()",
+        "htmlspecialchars()",
+        "trim()",
+        "addslashes()"
+      ],
+      "correctOption": 1
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "Which visibility allows access inside the class and its child classes only?",
+      "answer": "protected members are accessible in the class and its subclasses. private is only the same class; public is everywhere. static is not a visibility.",
+      "codeSnippet": "",
+      "difficulty": "easy",
+      "tags": [
+        "oop",
+        "visibility"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "public",
+        "private",
+        "protected",
+        "static"
+      ],
+      "correctOption": 2
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "What does explode(\",\", \"a,b,c\") return?",
+      "answer": "explode() splits a string by a separator and returns an array. implode() does the opposite.",
+      "codeSnippet": "print_r(explode(\",\", \"a,b,c\"));",
+      "difficulty": "easy",
+      "tags": [
+        "strings",
+        "arrays"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "\"abc\"",
+        "[\"a\", \"b\", \"c\"]",
+        "[\"a,b,c\"]",
+        "3"
+      ],
+      "correctOption": 1
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "Which magic method runs when an object is used as a string?",
+      "answer": "__toString() is called by echo, string concatenation and similar string contexts. It must return a string.",
+      "codeSnippet": "",
+      "difficulty": "medium",
+      "tags": [
+        "oop",
+        "magic methods"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "__get()",
+        "__call()",
+        "__toString()",
+        "__invoke()"
+      ],
+      "correctOption": 2
+    },
+    {
+      "language": "php",
+      "type": "mcq",
+      "question": "Which PHP 8.1 feature defines a fixed set of named values?",
+      "answer": "Enums (PHP 8.1) define a type with a fixed set of cases, e.g. enum Status { case Active; case Blocked; }. They are type-safe, unlike plain constants.",
+      "codeSnippet": "enum Status: string {\n    case Active = 'active';\n    case Blocked = 'blocked';\n}",
+      "difficulty": "hard",
+      "tags": [
+        "php8",
+        "enums"
+      ],
+      "isFree": false,
+      "isActive": true,
+      "options": [
+        "const array",
+        "enum",
+        "define()",
+        "static class"
+      ],
+      "correctOption": 1
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "How is match different from switch?",
+      "answer": "match uses strict comparison (===), returns a value, has no fall-through (no break needed) and throws UnhandledMatchError if no arm matches. switch uses loose comparison (==), does not return a value and falls through to the next case if you forget break.",
+      "codeSnippet": "$label = match($status) {\n    1, 2 => 'Pending',\n    3    => 'Done',\n    default => 'Unknown',\n};",
+      "difficulty": "medium",
+      "tags": [
+        "php8",
+        "control flow"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "What is the difference between echo and print?",
+      "answer": "Both output text. echo can take multiple comma-separated arguments and returns nothing. print takes only one argument and always returns 1, so it can be used inside expressions. echo is marginally faster and more common.",
+      "codeSnippet": "echo \"Hello\", \" World\";   // works\n$r = print \"Hello\";         // $r is 1",
+      "difficulty": "easy",
+      "tags": [
+        "basics",
+        "output"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "include vs require: what happens if the file is missing?",
+      "answer": "include shows a warning and the script keeps running. require throws a fatal error and stops the script. Use require for files the app cannot work without (config, database). include_once and require_once skip the file if it was already loaded, which prevents 'cannot redeclare function' errors.",
+      "codeSnippet": "",
+      "difficulty": "easy",
+      "tags": [
+        "files",
+        "basics"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "When should you use GET and when POST?",
+      "answer": "GET sends data in the URL: it is visible, bookmarkable, cached and size-limited, so use it for reading data such as search and filters. POST sends data in the request body: use it for creating or changing data, login forms, passwords and file uploads.",
+      "codeSnippet": "",
+      "difficulty": "easy",
+      "tags": [
+        "forms",
+        "http"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "Sessions vs cookies: where is the data stored?",
+      "answer": "Cookies are stored in the user's browser and sent with every request, so users can read or edit them. Session data stays on the server; the browser only keeps a session ID cookie (PHPSESSID). Store sensitive data such as user ID or role in sessions, never in plain cookies.",
+      "codeSnippet": "session_start();\n$_SESSION['user_id'] = 42;          // stored on server\nsetcookie('theme', 'dark', time() + 3600); // stored in browser",
+      "difficulty": "easy",
+      "tags": [
+        "sessions",
+        "cookies",
+        "state"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "Why does empty(\"0\") return true?",
+      "answer": "empty() returns true for every 'falsy' value: \"\", \"0\", 0, 0.0, null, false and []. isset() only checks that a variable exists and is not null. is_null() checks strictly for null. This is a common bug: using empty() on a form field rejects a valid input of \"0\".",
+      "codeSnippet": "var_dump(empty(\"0\"));  // bool(true)\nvar_dump(isset($x));     // bool(false) if $x not defined\n$age = \"0\";\nif (empty($age)) { echo \"Age required\"; } // bug!",
+      "difficulty": "medium",
+      "tags": [
+        "functions",
+        "gotchas"
+      ],
+      "isFree": true,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "What is the difference between single quotes and double quotes in PHP strings?",
+      "answer": "Double quotes parse variables and escape sequences such as \\n and \\t. Single quotes print the text exactly as written (only \\' and \\\\ are escaped). Use single quotes when no variable is needed; it is clearer and slightly faster.",
+      "codeSnippet": "$name = \"Ali\";\necho \"Hello $name\\n\";  // Hello Ali + new line\necho 'Hello $name\\n';  // Hello $name\\n",
+      "difficulty": "easy",
+      "tags": [
+        "strings",
+        "basics"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "What is SQL injection and how do you prevent it in PHP?",
+      "answer": "SQL injection happens when user input is joined into a SQL query and changes its meaning, for example entering ' OR 1=1 -- to log in without a password. Prevent it with prepared statements (PDO or MySQLi) that send the query and the data separately. Never concatenate user input into SQL.",
+      "codeSnippet": "// Unsafe\n$sql = \"SELECT * FROM users WHERE email = '$email'\";\n\n// Safe (PDO)\n$stmt = $pdo->prepare(\"SELECT * FROM users WHERE email = ?\");\n$stmt->execute([$email]);",
+      "difficulty": "medium",
+      "tags": [
+        "security",
+        "database",
+        "pdo"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "Why should you never store passwords with md5()?",
+      "answer": "MD5 is very fast and has no built-in salt, so attackers crack it in seconds using lookup (rainbow) tables and GPUs. Use password_hash(), which uses bcrypt or Argon2 with an automatic random salt, and check passwords with password_verify().",
+      "codeSnippet": "$hash = password_hash($password, PASSWORD_DEFAULT);\n\nif (password_verify($input, $hash)) {\n    echo \"Login OK\";\n}",
+      "difficulty": "medium",
+      "tags": [
+        "security",
+        "passwords"
+      ],
+      "isFree": true,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "Name five important features added in PHP 8.",
+      "answer": "1) Named arguments, 2) match expression, 3) nullsafe operator ?->, 4) union types (int|string), 5) constructor property promotion. Also attributes and the JIT compiler. PHP 8.1 added enums, readonly properties and fibers.",
+      "codeSnippet": "// Constructor property promotion\nclass User {\n    public function __construct(public string $name, private int $age) {}\n}\n\n// Named arguments\nstr_pad(string: 'Hi', length: 6, pad_string: '*');",
+      "difficulty": "medium",
+      "tags": [
+        "php8",
+        "modern php"
+      ],
+      "isFree": true,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "Why does \"1\" == \"01\" return true, but \"1\" === \"01\" return false?",
+      "answer": "== compares values after type juggling. Both are numeric strings, so PHP compares them as numbers (1 == 1) and returns true. === checks value AND type without any conversion; the two strings are different, so it returns false. Note: in PHP 8, 0 == \"abc\" is false (it was true in PHP 7). Prefer === unless you really want conversion.",
+      "codeSnippet": "var_dump(\"1\" == \"01\");   // bool(true)\nvar_dump(\"1\" === \"01\");  // bool(false)\nvar_dump(0 == \"abc\");    // bool(false) in PHP 8",
+      "difficulty": "easy",
+      "tags": [
+        "operators",
+        "type juggling"
+      ],
+      "isFree": true,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "Abstract class vs interface: when should you use which?",
+      "answer": "An abstract class can have properties and fully written methods, and a class can extend only one. An interface only declares public methods (a contract) and a class can implement many. Use an interface to say what a class CAN DO (e.g. Payable); use an abstract class to share common base code between related classes.",
+      "codeSnippet": "interface Payable { public function pay(float $amount): bool; }\n\nabstract class Employee {\n    public function __construct(protected string $name) {}\n    abstract public function salary(): float;\n}",
+      "difficulty": "medium",
+      "tags": [
+        "oop",
+        "interfaces"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "What are traits and why does PHP need them?",
+      "answer": "PHP supports only single inheritance. Traits let you reuse a group of methods in many unrelated classes with the use keyword. If two traits have a method with the same name, resolve it with insteadof and as.",
+      "codeSnippet": "trait Loggable {\n    public function log(string $msg) { echo $msg; }\n}\n\nclass Order { use Loggable; }\nclass Invoice { use Loggable; }",
+      "difficulty": "medium",
+      "tags": [
+        "oop",
+        "traits"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "What is the difference between self:: and static::?",
+      "answer": "self:: always refers to the class where the method is written. static:: refers to the class that was actually called at runtime (late static binding). It matters when a child class overrides a static method or property.",
+      "codeSnippet": "class A {\n    public static function create() { return new static(); }\n    public static function createSelf() { return new self(); }\n}\nclass B extends A {}\n\nget_class(B::create());     // B\nget_class(B::createSelf()); // A",
+      "difficulty": "hard",
+      "tags": [
+        "oop",
+        "static"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "What are magic methods? Give examples.",
+      "answer": "Methods starting with __ that PHP calls automatically: __construct (object created), __destruct (object destroyed), __get / __set (reading or writing inaccessible properties), __call (calling undefined methods), __toString (object used as a string), __invoke (object called like a function).",
+      "codeSnippet": "class Money {\n    public function __construct(private int $amount) {}\n    public function __toString(): string { return \"Rs. {$this->amount}\"; }\n}\necho new Money(500); // Rs. 500",
+      "difficulty": "medium",
+      "tags": [
+        "oop",
+        "magic methods"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "Are objects passed by reference in PHP?",
+      "answer": "Not exactly. Objects are passed by an object handle: changing a property inside a function changes the original object, but assigning a completely new object to the parameter does not affect the caller. Arrays and scalars are passed by value (a copy) unless you use & in the parameter.",
+      "codeSnippet": "function changeName($user) { $user->name = 'Sara'; }\nfunction replaceUser($user) { $user = new User('Zain'); }\n\n$u = new User('Ali');\nchangeName($u);  // $u->name is now 'Sara'\nreplaceUser($u); // $u->name is still 'Sara'",
+      "difficulty": "medium",
+      "tags": [
+        "functions",
+        "oop",
+        "gotchas"
+      ],
+      "isFree": true,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "What do ?? and ??= do?",
+      "answer": "$a ?? $b returns $a if it exists and is not null, otherwise $b, without an 'undefined variable' warning. $a ??= $b assigns $b to $a only when $a is null or not set.",
+      "codeSnippet": "$page = $_GET['page'] ?? 1;\n\n$config['theme'] ??= 'light';",
+      "difficulty": "easy",
+      "tags": [
+        "operators"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "What is XSS and how do you prevent it in PHP?",
+      "answer": "Cross-site scripting (XSS) happens when user input containing JavaScript is printed on a page and runs in other users' browsers, for example stealing their session. Escape all output with htmlspecialchars($value, ENT_QUOTES, 'UTF-8') and validate input.",
+      "codeSnippet": "// Unsafe\necho $_GET['name'];\n\n// Safe\necho htmlspecialchars($_GET['name'], ENT_QUOTES, 'UTF-8');",
+      "difficulty": "medium",
+      "tags": [
+        "security",
+        "xss"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "What are Composer and PSR-4 autoloading?",
+      "answer": "Composer is PHP's dependency manager: packages are listed in composer.json and installed into vendor/. PSR-4 is a standard that maps namespaces to folders, so after including vendor/autoload.php, classes load automatically without writing require for each file.",
+      "codeSnippet": "// composer.json\n\"autoload\": {\n    \"psr-4\": { \"App\\\\\": \"src/\" }\n}\n\n// App\\Models\\User  ->  src/Models/User.php",
+      "difficulty": "medium",
+      "tags": [
+        "tooling",
+        "composer"
+      ],
+      "isFree": false,
+      "isActive": true
+    },
+    {
+      "language": "php",
+      "type": "qa",
+      "question": "What is the difference between Exception and Error, and what does finally do?",
+      "answer": "Both implement the Throwable interface. Exception is for recoverable problems that your code throws. Error is for engine-level problems such as TypeError or calling an undefined function. catch (Throwable $e) catches both. The finally block always runs, whether an exception happened or not, so it is used for cleanup like closing connections.",
+      "codeSnippet": "try {\n    $result = intdiv(10, 0);\n} catch (DivisionByZeroError $e) {\n    echo $e->getMessage();\n} finally {\n    echo \"Done\";\n}",
+      "difficulty": "hard",
+      "tags": [
+        "errors",
+        "exceptions"
+      ],
+      "isFree": false,
+      "isActive": true
+    }
+  ]
+}

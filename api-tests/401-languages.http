@@ -1,0 +1,114 @@
+### IPP-401 Languages API tests
+### How to use: run `npm run dev` in /server, then click "Send Request" above each request, top to bottom.
+
+@baseUrl = http://localhost:5000/api
+
+### Admin login: put the ADMIN_EMAIL / ADMIN_PASSWORD from server/.env here.
+### Do NOT commit this file with the real password (put it back to CHANGE_ME after testing).
+@adminEmail = raeeschechi302@gmail.com
+@adminPassword = CHANGE_ME
+
+### Tokens are picked up automatically from the login requests below
+@adminToken = {{adminLogin.response.body.data.token}}
+@langId = {{newLang.response.body.data.language._id}}
+
+
+### 1. Public list (no login) -> expect 200, PHP with qaCount 20, mcqCount 20, freeQaCount 5
+GET {{baseUrl}}/languages
+
+
+### 2. One language by slug -> expect 200 with PHP details and counts
+GET {{baseUrl}}/languages/php
+
+
+### 3. Unknown slug -> expect 404 "Language not found"
+GET {{baseUrl}}/languages/cobol
+
+
+### 4. Add a language WITHOUT login -> expect 401 "Please log in to continue"
+POST {{baseUrl}}/languages
+Content-Type: application/json
+
+{
+  "name": "Test Language"
+}
+
+
+### 5. Admin login -> expect 200 (the token is saved for the requests below)
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+
+### 6. Add with bad data -> expect 400 "Name is required"
+POST {{baseUrl}}/languages
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "",
+  "slug": "Bad Slug!"
+}
+
+
+### 7. Add a language -> expect 201 "Language added", slug "c-plus-plus" made from the name
+# @name newLang
+POST {{baseUrl}}/languages
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "C++",
+  "icon": "cplusplus",
+  "description": "Test language for IPP-401"
+}
+
+
+### 8. Add the same name again -> expect 409 "... already exists"
+POST {{baseUrl}}/languages
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "C++"
+}
+
+
+### 9. Deactivate it -> expect 200 "Language updated", isActive false
+PUT {{baseUrl}}/languages/{{langId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+
+### 10. Public list -> expect only PHP (C++ is hidden because it is inactive)
+GET {{baseUrl}}/languages
+
+
+### 11. Admin list with ?all=true -> expect C++ AND PHP
+GET {{baseUrl}}/languages?all=true
+Authorization: Bearer {{adminToken}}
+
+
+### 12. Try to delete PHP (it has 40 questions) -> expect 409 "PHP has 40 questions. Deactivate it instead..."
+###     First copy PHP's "_id" from request 1 and paste it below in place of PHP_ID_HERE.
+DELETE {{baseUrl}}/languages/6ad894999dcf1f882fd249b2
+Authorization: Bearer {{adminToken}}
+
+
+### 13. Delete the test language (no questions) -> expect 200 "Language deleted"
+DELETE {{baseUrl}}/languages/{{langId}}
+Authorization: Bearer {{adminToken}}
+
+
+### 14. Bad id -> expect 400 "Invalid language id"
+DELETE {{baseUrl}}/languages/abc
+Authorization: Bearer {{adminToken}}

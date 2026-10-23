@@ -1,0 +1,16 @@
+[
+  {
+    "name": "PHP",
+    "slug": "php",
+    "icon": "php",
+    "description": "Server-side scripting language behind WordPress, Laravel and a large share of the web. Covers basics, OOP, security and modern PHP 8 features.",
+    "isActive": true,
+    "topics": [
+      { "name": "Basics & Syntax" },
+      { "name": "Operators & Types" },
+      { "name": "OOP" },
+      { "name": "Web & Security" },
+      { "name": "Modern PHP & Tooling" }
+    ]
+  }
+]
