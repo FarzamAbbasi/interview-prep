@@ -5,7 +5,7 @@
 
 ### Admin login: put the ADMIN_EMAIL / ADMIN_PASSWORD from server/.env here.
 ### Do NOT commit this file with the real password (put it back to CHANGE_ME after testing).
-@adminEmail = raeeschechi302@gmail.com
+@adminEmail = askedin143@gmail.com
 @adminPassword = CHANGE_ME
 
 ### Tokens are picked up automatically from the login requests below

@@ -1,0 +1,2463 @@
+{
+  "_readme": [
+    "React content for Admin -> Bulk upload (IPP-1006). 10 topics x (10 Q&A + 6 MCQs).",
+    "isActive false: check the questions in Admin, then activate React in Admin -> Languages.",
+    "Free: 5 Q&A (guests) and 5 MCQs (sample quiz)."
+  ],
+  "language": {
+    "name": "React",
+    "slug": "react",
+    "icon": "react",
+    "description": "The most popular JavaScript library for building user interfaces. Covers components, state, hooks, rendering, performance, routing and React 19 features.",
+    "isActive": false,
+    "topics": [
+      "JSX & Components",
+      "Props & State",
+      "Events & Forms",
+      "useEffect & Side Effects",
+      "Hooks Deep Dive",
+      "Context & State Management",
+      "Rendering & Reconciliation",
+      "Performance Optimization",
+      "Routing, Data Fetching & Errors",
+      "React 19 & Modern React"
+    ]
+  },
+  "questions": [
+    {
+      "type": "qa",
+      "topic": "JSX & Components",
+      "difficulty": "easy",
+      "isFree": true,
+      "question": "What is JSX and how does the browser understand it?",
+      "answer": "JSX is a syntax extension that lets you write HTML-like markup inside JavaScript. Browsers cannot run it directly: a build tool (Vite with Babel or SWC) compiles each tag into a function call such as jsx('h1', { children: 'Hi' }), which returns a plain object describing the UI.",
+      "codeSnippet": "const el = <h1 className=\"title\">Hi</h1>;\n// compiles to roughly:\n// jsx('h1', { className: 'title', children: 'Hi' })",
+      "tags": [
+        "jsx",
+        "basics"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "JSX & Components",
+      "difficulty": "easy",
+      "isFree": true,
+      "question": "What is a React component?",
+      "answer": "A component is a JavaScript function that returns JSX (what should appear on the screen). Its name must start with a capital letter so React knows it is a component and not an HTML tag. Components can be reused and nested like building blocks.",
+      "codeSnippet": "function Welcome({ name }) {\n  return <p>Hello, {name}</p>;\n}\n\n<Welcome name=\"Ali\" />",
+      "tags": [
+        "components"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "JSX & Components",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Why must a component return a single root element, and what is a Fragment?",
+      "answer": "A component returns one value, and JSX tags turn into one object each, so several sibling tags must be wrapped. A Fragment (<>...</> or <Fragment>) groups children without adding an extra div to the DOM. Use <Fragment key={...}> when you need a key, for example inside a list.",
+      "codeSnippet": "function Row() {\n  return (\n    <>\n      <td>Name</td>\n      <td>Age</td>\n    </>\n  );\n}",
+      "tags": [
+        "jsx",
+        "fragment"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "JSX & Components",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Why do we write className and htmlFor in JSX instead of class and for?",
+      "answer": "JSX is JavaScript, and class and for are reserved words in JavaScript. JSX attributes follow the DOM property names, so it uses className and htmlFor. Other attributes are camelCase too, like onClick, tabIndex and style={{ backgroundColor: 'red' }}.",
+      "codeSnippet": "",
+      "tags": [
+        "jsx",
+        "attributes"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "JSX & Components",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What does it mean that a React component should be pure?",
+      "answer": "A pure component returns the same JSX for the same props, state and context, and does not change anything outside itself while rendering (no API calls, no changing global variables or the DOM). Side effects belong in event handlers or effects. Purity lets React render in any order, pause or repeat renders safely; StrictMode renders twice in development to catch impure code.",
+      "codeSnippet": "",
+      "tags": [
+        "purity",
+        "components"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "JSX & Components",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is the children prop and why is composition preferred over inheritance in React?",
+      "answer": "children holds whatever you put between a component's opening and closing tags. With it you build general wrappers (Card, Modal, Layout) and fill them with any content. React recommends composition (passing components and JSX as props) instead of class inheritance, because it is simpler and more flexible.",
+      "codeSnippet": "function Card({ title, children }) {\n  return (\n    <div className=\"card\">\n      <h2>{title}</h2>\n      {children}\n    </div>\n  );\n}\n\n<Card title=\"Profile\"><Avatar /></Card>",
+      "tags": [
+        "children",
+        "composition"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "JSX & Components",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What are the common ways to render something conditionally in JSX?",
+      "answer": "Use an if statement before the return (early return), the ternary operator cond ? <A /> : <B /> inside JSX, or cond && <A /> to show something or nothing. Returning null renders nothing. Be careful with &&: if the left side is the number 0, React renders 0 on the screen.",
+      "codeSnippet": "{items.length > 0 && <List items={items} />}   // safe\n{items.length && <List items={items} />}       // shows 0 when empty",
+      "tags": [
+        "conditional-rendering"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "JSX & Components",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Why is it a bug to define a component inside another component?",
+      "answer": "Each render of the parent creates a new function, so React sees a different component type every time. It unmounts the old one and mounts a new one, which loses all its state and DOM (an input loses focus and its text) and is slower. Define components at the top level and pass data through props.",
+      "codeSnippet": "function Parent() {\n  // BAD: new type on every render, state of Child is reset\n  function Child() { const [v, setV] = useState(''); return <input value={v} onChange={e => setV(e.target.value)} />; }\n  return <Child />;\n}",
+      "tags": [
+        "components",
+        "pitfalls"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "JSX & Components",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is dangerouslySetInnerHTML and why is it dangerous?",
+      "answer": "It sets raw HTML inside an element: <div dangerouslySetInnerHTML={{ __html: html }} />. React normally escapes all text, which prevents XSS (cross-site scripting). With this prop React inserts the string as HTML, so if it contains user input an attacker can run scripts. Only use it with trusted HTML or sanitize it first (for example with DOMPurify).",
+      "codeSnippet": "",
+      "tags": [
+        "security",
+        "xss"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "JSX & Components",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What are Higher-Order Components and render props, and what replaced them?",
+      "answer": "A Higher-Order Component is a function that takes a component and returns a new component with extra behaviour (e.g. withAuth(Page)). A render prop is a prop that is a function returning JSX, so the parent decides what to render with shared data. Both were used to share logic; today custom hooks do the same job more simply, without extra wrapper components.",
+      "codeSnippet": "",
+      "tags": [
+        "hoc",
+        "render-props",
+        "patterns"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "JSX & Components",
+      "difficulty": "easy",
+      "isFree": true,
+      "question": "Which name will React treat as a custom component?",
+      "options": [
+        "userCard",
+        "usercard",
+        "user-card",
+        "UserCard"
+      ],
+      "correctAnswer": "UserCard",
+      "answer": "Lowercase tags are treated as HTML elements. A component name must start with a capital letter.",
+      "codeSnippet": "",
+      "tags": [
+        "components"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "JSX & Components",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What does this component show when count is 0?",
+      "options": [
+        "Nothing",
+        "false",
+        "An error",
+        "0"
+      ],
+      "correctAnswer": "0",
+      "answer": "0 && <p/> evaluates to 0, and React renders numbers. Use count > 0 && ... or a ternary.",
+      "codeSnippet": "function Badge({ count }) {\n  return <div>{count && <p>{count} new</p>}</div>;\n}",
+      "tags": [
+        "conditional-rendering"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "JSX & Components",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Which statement about JSX is correct?",
+      "options": [
+        "Browsers can run JSX without any build step",
+        "JSX expressions compile to JavaScript function calls that return objects",
+        "JSX attributes must be written in lowercase",
+        "JSX can only be used inside class components"
+      ],
+      "correctAnswer": "JSX expressions compile to JavaScript function calls that return objects",
+      "answer": "A compiler turns JSX into jsx()/createElement calls that return plain objects (React elements).",
+      "codeSnippet": "",
+      "tags": [
+        "jsx"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "JSX & Components",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "How do you add an inline style with a red background in JSX?",
+      "options": [
+        "css={{ background: red }}",
+        "style=\"background-color: red\"",
+        "style={{ backgroundColor: 'red' }}",
+        "style={backgroundColor: 'red'}"
+      ],
+      "correctAnswer": "style={{ backgroundColor: 'red' }}",
+      "answer": "style takes an object with camelCase property names; the outer braces switch to JavaScript, the inner ones create the object.",
+      "codeSnippet": "",
+      "tags": [
+        "jsx",
+        "styling"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "JSX & Components",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Why does the input lose focus after every key press here?",
+      "options": [
+        "Field is a new component type on every render of Form, so it is remounted",
+        "useState cannot hold strings",
+        "value and onChange cannot be used together",
+        "Inputs always lose focus in React"
+      ],
+      "correctAnswer": "Field is a new component type on every render of Form, so it is remounted",
+      "answer": "Defining Field inside Form creates a new function each render. React sees a different type, unmounts the old input and mounts a new one.",
+      "codeSnippet": "function Form() {\n  const [text, setText] = useState('');\n  function Field() {\n    return <input value={text} onChange={e => setText(e.target.value)} />;\n  }\n  return <Field />;\n}",
+      "tags": [
+        "pitfalls"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "JSX & Components",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "In React 19, how should you give a function component a default value for a prop?",
+      "options": [
+        "Default values for props are not possible",
+        "Use Button.propTypes with a default",
+        "Set Button.defaultProps = { size: 'md' }",
+        "Use a default parameter in destructuring, e.g. function Button({ size = 'md' })"
+      ],
+      "correctAnswer": "Use a default parameter in destructuring, e.g. function Button({ size = 'md' })",
+      "answer": "React 19 removed defaultProps for function components; JavaScript default parameters are the way.",
+      "codeSnippet": "",
+      "tags": [
+        "props",
+        "react-19"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Props & State",
+      "difficulty": "easy",
+      "isFree": true,
+      "question": "What is the difference between props and state?",
+      "answer": "Props are inputs passed from a parent; the component must not change them. State is data a component owns and changes over time with its setter (useState), and changing it re-renders the component. If a value comes from the parent it is a prop; if the component changes it itself, it is state.",
+      "codeSnippet": "",
+      "tags": [
+        "props",
+        "state"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Props & State",
+      "difficulty": "easy",
+      "isFree": false,
+      "question": "Why should you not change state directly, like state.count = 5?",
+      "answer": "React only knows something changed when you call the setter. Changing the value directly does not trigger a re-render, and React compares old and new values by reference, so a mutated object looks unchanged. Always create a new value: setCount(5), setUser({ ...user, name }) or setItems([...items, item]).",
+      "codeSnippet": "// wrong\nuser.name = 'Sara';\n// right\nsetUser({ ...user, name: 'Sara' });",
+      "tags": [
+        "state",
+        "immutability"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Props & State",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Why does the state value not change right after calling setState?",
+      "answer": "The setter does not change the variable in the current render. It asks React to render again, and the new value appears in the next render. Inside the same event handler the variable still holds the old value (it is a snapshot). Use the new value you computed, or an effect if you need to react to the change.",
+      "codeSnippet": "function handleClick() {\n  setCount(count + 1);\n  console.log(count); // still the old value\n}",
+      "tags": [
+        "state",
+        "snapshot"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Props & State",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "When do you need the updater function form setCount(c => c + 1)?",
+      "answer": "When the new state depends on the previous state, especially when you update it several times in a row or from async code. React queues the updater functions and runs them in order, each one getting the latest value. setCount(count + 1) three times only adds 1, because all three read the same snapshot.",
+      "codeSnippet": "setCount(c => c + 1);\nsetCount(c => c + 1);\nsetCount(c => c + 1); // +3",
+      "tags": [
+        "state",
+        "updater"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Props & State",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What does lifting state up mean?",
+      "answer": "When two sibling components need the same data, you move the state to their closest common parent and pass the value and a change function down as props. Now there is one source of truth and both children stay in sync.",
+      "codeSnippet": "",
+      "tags": [
+        "state",
+        "lifting-state"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Props & State",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is prop drilling and how can you avoid it?",
+      "answer": "Prop drilling is passing a prop through many components that do not use it, only to reach a deep child. It makes code hard to change. Fixes: pass JSX as children (composition) so middle components do not need the data, use Context for app-wide values like the logged-in user or theme, or a state library for complex shared state.",
+      "codeSnippet": "",
+      "tags": [
+        "props",
+        "context"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Props & State",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "How do you update an object or an array in state correctly?",
+      "answer": "Create a copy with the change instead of mutating. Objects: spread and override ({ ...obj, key: value }), including nested objects you change. Arrays: add with [...arr, item], remove with filter, change one item with map, and copy before sort or reverse ([...arr].sort()).",
+      "codeSnippet": "setTodos(todos.map(t => t.id === id ? { ...t, done: !t.done } : t));\nsetTodos(todos.filter(t => t.id !== id));",
+      "tags": [
+        "state",
+        "immutability"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Props & State",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is derived state and why should you avoid storing it in useState?",
+      "answer": "Derived state is a value you can calculate from existing props or state, like a filtered list or a full name. Storing it in its own state means keeping two copies in sync, usually with an effect, which causes extra renders and bugs when you forget to update it. Calculate it during render instead (and use useMemo only if the calculation is slow).",
+      "codeSnippet": "// avoid\nconst [fullName, setFullName] = useState('');\nuseEffect(() => setFullName(first + ' ' + last), [first, last]);\n// better\nconst fullName = first + ' ' + last;",
+      "tags": [
+        "state",
+        "derived-state"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Props & State",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "How can you reset a component's state when a prop changes?",
+      "answer": "Give the component a key that changes with that prop, e.g. <Profile key={userId} userId={userId} />. When the key changes React treats it as a new component: it unmounts the old one and mounts a fresh one with initial state. This is cleaner than an effect that resets each state variable.",
+      "codeSnippet": "",
+      "tags": [
+        "state",
+        "key"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Props & State",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is lazy initial state in useState?",
+      "answer": "If you pass a function to useState, React calls it only on the first render to get the initial value. useState(expensive()) runs expensive() on every render and throws the result away after the first one; useState(() => expensive()) or useState(expensive) runs it once. Useful for reading localStorage or building large initial data.",
+      "codeSnippet": "const [todos, setTodos] = useState(() => JSON.parse(localStorage.getItem('todos') ?? '[]'));",
+      "tags": [
+        "state",
+        "performance"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Props & State",
+      "difficulty": "easy",
+      "isFree": true,
+      "question": "Which statement about props is correct?",
+      "options": [
+        "A child can change its props directly",
+        "Props are the same as state",
+        "Props can only be strings",
+        "Props are read-only inside the component that receives them"
+      ],
+      "correctAnswer": "Props are read-only inside the component that receives them",
+      "answer": "A component must never change its props. To change data, the parent changes its own state and passes new props.",
+      "codeSnippet": "",
+      "tags": [
+        "props"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Props & State",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "count is 0. After one click, what does the button show?",
+      "options": [
+        "3",
+        "0",
+        "2",
+        "1"
+      ],
+      "correctAnswer": "1",
+      "answer": "All three calls read the same snapshot (count = 0), so each sets 0 + 1. Use setCount(c => c + 1) to add 3.",
+      "codeSnippet": "function Counter() {\n  const [count, setCount] = useState(0);\n  return (\n    <button onClick={() => {\n      setCount(count + 1);\n      setCount(count + 1);\n      setCount(count + 1);\n    }}>{count}</button>\n  );\n}",
+      "tags": [
+        "state",
+        "updater"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Props & State",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Why does the list not update on screen?",
+      "options": [
+        "setItems only accepts objects",
+        "The same array is mutated, so React sees the same reference and skips the render",
+        "push is not allowed in JavaScript",
+        "State arrays cannot hold strings"
+      ],
+      "correctAnswer": "The same array is mutated, so React sees the same reference and skips the render",
+      "answer": "React compares with Object.is. Use setItems([...items, 'new']) to create a new array.",
+      "codeSnippet": "function addItem() {\n  items.push('new');\n  setItems(items);\n}",
+      "tags": [
+        "immutability"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Props & State",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Two siblings need to show and change the same value. What is the usual solution?",
+      "options": [
+        "Store the value in a global variable",
+        "Use a ref in each sibling",
+        "Give each sibling its own copy of the state and sync them with effects",
+        "Move the state to their closest common parent and pass it down as props"
+      ],
+      "correctAnswer": "Move the state to their closest common parent and pass it down as props",
+      "answer": "This is lifting state up: one source of truth in the parent.",
+      "codeSnippet": "",
+      "tags": [
+        "lifting-state"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Props & State",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is logged when the button is clicked once (count starts at 0)?",
+      "options": [
+        "Nothing, it throws an error",
+        "1",
+        "undefined",
+        "0"
+      ],
+      "correctAnswer": "0",
+      "answer": "The setter schedules a new render; the count variable in this render is a snapshot and stays 0.",
+      "codeSnippet": "const [count, setCount] = useState(0);\nfunction handleClick() {\n  setCount(count + 1);\n  console.log(count);\n}",
+      "tags": [
+        "state",
+        "snapshot"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Props & State",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is the cleanest way to reset all state of <ChatBox> when the user switches to another contact?",
+      "options": [
+        "Render <ChatBox key={contactId} contactId={contactId} />",
+        "Reload the page",
+        "Call every setter inside a useEffect that depends on contactId",
+        "Store the state in a ref"
+      ],
+      "correctAnswer": "Render <ChatBox key={contactId} contactId={contactId} />",
+      "answer": "A new key makes React mount a brand new component instance with fresh state.",
+      "codeSnippet": "",
+      "tags": [
+        "key",
+        "state"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Events & Forms",
+      "difficulty": "easy",
+      "isFree": true,
+      "question": "What is the difference between onClick={handleClick} and onClick={handleClick()}?",
+      "answer": "onClick={handleClick} passes the function, and React calls it when the user clicks. onClick={handleClick()} calls the function immediately during render and passes its return value, which usually causes bugs or an infinite render loop when it sets state. To pass arguments, wrap it: onClick={() => handleClick(id)}.",
+      "codeSnippet": "",
+      "tags": [
+        "events"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Events & Forms",
+      "difficulty": "easy",
+      "isFree": false,
+      "question": "What is a controlled input?",
+      "answer": "A controlled input gets its value from React state and reports every change with onChange, so state is the single source of truth. You can validate, format or reset the value easily. An uncontrolled input keeps its own value in the DOM; you read it with a ref or FormData and set the first value with defaultValue.",
+      "codeSnippet": "const [email, setEmail] = useState('');\n<input value={email} onChange={e => setEmail(e.target.value)} />",
+      "tags": [
+        "forms",
+        "controlled"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Events & Forms",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What are synthetic events in React?",
+      "answer": "React wraps the browser event in a SyntheticEvent object that works the same in all browsers and has the usual methods (preventDefault, stopPropagation, target). Since React 17 React listens at the root container of the app, not on document. You can still get the native event with e.nativeEvent.",
+      "codeSnippet": "",
+      "tags": [
+        "events",
+        "synthetic-events"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Events & Forms",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "How do you stop a form from reloading the page on submit?",
+      "answer": "Handle onSubmit on the form and call e.preventDefault() as the first line, then use the data. Put the handler on the form, not on the button's onClick, so pressing Enter also works. In React 19 you can also pass a function to the form's action prop, and React handles the submit for you.",
+      "codeSnippet": "function handleSubmit(e) {\n  e.preventDefault();\n  const data = new FormData(e.currentTarget);\n  login(data.get('email'), data.get('password'));\n}\n<form onSubmit={handleSubmit}>...</form>",
+      "tags": [
+        "forms",
+        "events"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Events & Forms",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Why do you get the warning 'A component is changing an uncontrolled input to be controlled'?",
+      "answer": "The input first got value={undefined} (uncontrolled) and later a real value (controlled), often because state started as undefined or an object field was missing. Start with a defined value like useState('') or use value={name ?? ''}. Pick one mode for the whole life of the input.",
+      "codeSnippet": "",
+      "tags": [
+        "forms",
+        "controlled"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Events & Forms",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "How do you handle many form fields without writing one handler per field?",
+      "answer": "Keep the fields in one state object and use the input's name attribute in a single handler with a computed key. For checkboxes read e.target.checked instead of value. For big forms a library like React Hook Form avoids re-rendering on every key press.",
+      "codeSnippet": "const [form, setForm] = useState({ name: '', email: '' });\nfunction handleChange(e) {\n  const { name, value } = e.target;\n  setForm(f => ({ ...f, [name]: value }));\n}\n<input name=\"email\" value={form.email} onChange={handleChange} />",
+      "tags": [
+        "forms"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Events & Forms",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is the difference between e.target and e.currentTarget?",
+      "answer": "e.target is the element where the event actually happened (for example a span inside a button). e.currentTarget is the element whose handler is running right now (the button). In a form's onSubmit, use e.currentTarget to get the form itself.",
+      "codeSnippet": "",
+      "tags": [
+        "events"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Events & Forms",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "How does event propagation work in React, and how do you stop it?",
+      "answer": "Events bubble from the clicked element up through its parents, and each parent's handler runs too. Call e.stopPropagation() to stop it. React also supports the capture phase with names like onClickCapture, which run from the top down before bubbling. Events from a portal bubble through the React tree, not the DOM tree.",
+      "codeSnippet": "<div onClick={() => console.log('div')}>\n  <button onClick={e => { e.stopPropagation(); console.log('button'); }}>Hi</button>\n</div>",
+      "tags": [
+        "events",
+        "propagation"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Events & Forms",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Why should you debounce a search input, and how?",
+      "answer": "Without debouncing, every key press sends an API request, which is slow and can show results in the wrong order. Debouncing waits until the user stops typing (e.g. 300 ms) before searching. In React you keep the input controlled and debounce the value with a timeout in an effect (clearing it in the cleanup) or use useDeferredValue for heavy rendering.",
+      "codeSnippet": "const [query, setQuery] = useState('');\nconst [debounced, setDebounced] = useState(query);\nuseEffect(() => {\n  const id = setTimeout(() => setDebounced(query), 300);\n  return () => clearTimeout(id);\n}, [query]);",
+      "tags": [
+        "forms",
+        "performance"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Events & Forms",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "How do forms work with actions in React 19?",
+      "answer": "You can pass a function to <form action={fn}>. React calls it with a FormData object when the form is submitted, without you calling preventDefault. The action can be async; useActionState gives you its result and a pending flag, and useFormStatus lets a submit button know if the form is sending. After a successful action React resets uncontrolled fields.",
+      "codeSnippet": "async function signup(formData) {\n  await api.register(formData.get('email'));\n}\n<form action={signup}>\n  <input name=\"email\" />\n  <button>Sign up</button>\n</form>",
+      "tags": [
+        "forms",
+        "actions",
+        "react-19"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Events & Forms",
+      "difficulty": "easy",
+      "isFree": true,
+      "question": "Which code correctly calls remove(id) only when the button is clicked?",
+      "options": [
+        "onClick={() => remove(id)}",
+        "onclick={remove}",
+        "onClick=\"remove(id)\"",
+        "onClick={remove(id)}"
+      ],
+      "correctAnswer": "onClick={() => remove(id)}",
+      "answer": "remove(id) without a wrapper runs during render. The arrow function runs remove only on click.",
+      "codeSnippet": "",
+      "tags": [
+        "events"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Events & Forms",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Where should e.preventDefault() go to stop a form submit reloading the page?",
+      "options": [
+        "In the component body",
+        "In the form's onSubmit handler",
+        "In useEffect",
+        "In the input's onChange handler"
+      ],
+      "correctAnswer": "In the form's onSubmit handler",
+      "answer": "The submit event fires on the form; handling it there also covers pressing Enter.",
+      "codeSnippet": "",
+      "tags": [
+        "forms"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Events & Forms",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is the value of an input written as <input value=\"Ali\" /> without onChange?",
+      "options": [
+        "It shows nothing",
+        "It always shows Ali and the user cannot change it",
+        "React throws an error and crashes",
+        "The user can type freely"
+      ],
+      "correctAnswer": "It always shows Ali and the user cannot change it",
+      "answer": "A fixed value makes it a read-only controlled input (React also warns). Add onChange, or use defaultValue for an uncontrolled input.",
+      "codeSnippet": "",
+      "tags": [
+        "controlled"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Events & Forms",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Which prop sets the starting value of an uncontrolled input?",
+      "options": [
+        "initialValue",
+        "startValue",
+        "defaultValue",
+        "value"
+      ],
+      "correctAnswer": "defaultValue",
+      "answer": "defaultValue sets the first value only; after that the DOM keeps the value itself.",
+      "codeSnippet": "",
+      "tags": [
+        "uncontrolled"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Events & Forms",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "The user clicks the button. What is logged?",
+      "options": [
+        "div",
+        "button, then div",
+        "div, then button",
+        "button"
+      ],
+      "correctAnswer": "button",
+      "answer": "stopPropagation stops the click from bubbling up to the div's handler.",
+      "codeSnippet": "<div onClick={() => console.log('div')}>\n  <button onClick={e => { e.stopPropagation(); console.log('button'); }}>Go</button>\n</div>",
+      "tags": [
+        "propagation"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Events & Forms",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "In React 19, what does a function passed to <form action={fn}> receive when the form is submitted?",
+      "options": [
+        "Nothing",
+        "The form's DOM node",
+        "The click event",
+        "A FormData object with the form's fields"
+      ],
+      "correctAnswer": "A FormData object with the form's fields",
+      "answer": "Form actions receive FormData; read fields with formData.get('name').",
+      "codeSnippet": "",
+      "tags": [
+        "actions",
+        "react-19"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "easy",
+      "isFree": true,
+      "question": "What is useEffect used for?",
+      "answer": "useEffect runs code after React has updated the screen, to sync the component with something outside React: fetching data, subscriptions, timers, or changing the document title. It is not for calculating values from props or state (do that during render) or for responding to clicks (use event handlers).",
+      "codeSnippet": "useEffect(() => {\n  document.title = `${count} new messages`;\n}, [count]);",
+      "tags": [
+        "useEffect"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is the difference between no dependency array, an empty array, and [a, b] in useEffect?",
+      "answer": "No array: the effect runs after every render. Empty array []: it runs once after the first render (mount), and its cleanup runs on unmount. [a, b]: it runs after the first render and again whenever a or b changed (compared with Object.is).",
+      "codeSnippet": "useEffect(() => {});          // every render\nuseEffect(() => {}, []);      // mount only\nuseEffect(() => {}, [userId]); // when userId changes",
+      "tags": [
+        "useEffect",
+        "dependencies"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is the cleanup function of an effect and when does it run?",
+      "answer": "The function you return from an effect is the cleanup. React runs it before running the effect again (with the old values) and when the component unmounts. Use it to undo what the effect did: clear timers, remove event listeners, unsubscribe, close connections or abort a fetch.",
+      "codeSnippet": "useEffect(() => {\n  const id = setInterval(tick, 1000);\n  return () => clearInterval(id);\n}, []);",
+      "tags": [
+        "useEffect",
+        "cleanup"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Why does an effect run twice in development?",
+      "answer": "In StrictMode React mounts the component, immediately unmounts it (running cleanup) and mounts it again, only in development. This shows effects that are missing a proper cleanup, for example two subscriptions or two intervals. If your effect is correct, mount-cleanup-mount behaves the same as one mount. It does not happen in production.",
+      "codeSnippet": "",
+      "tags": [
+        "useEffect",
+        "strict-mode"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Why can't the useEffect callback itself be async?",
+      "answer": "An async function always returns a Promise, but React expects the effect to return nothing or a cleanup function. Define an async function inside the effect and call it, and handle errors with try/catch.",
+      "codeSnippet": "useEffect(() => {\n  async function load() {\n    const res = await fetch(`/api/users/${id}`);\n    setUser(await res.json());\n  }\n  load();\n}, [id]);",
+      "tags": [
+        "useEffect",
+        "async"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What causes an infinite loop with useEffect?",
+      "answer": "An effect that sets state on every run, while its dependencies change on every render. Common causes: no dependency array plus setState, or a dependency that is a new object, array or function created during render. Fix it by adding correct dependencies, moving the object inside the effect, or memoizing it.",
+      "codeSnippet": "// loops forever: options is a new object every render\nconst options = { page };\nuseEffect(() => { fetchData(options).then(setData); }, [options]);",
+      "tags": [
+        "useEffect",
+        "pitfalls"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is a stale closure in an effect?",
+      "answer": "An effect captures the values from the render in which it was created. If it keeps running later (an interval, a listener) but its dependency array leaves out a value, it keeps seeing the old value. Fix it by listing the dependency, using the updater form setCount(c => c + 1), or keeping the latest value in a ref.",
+      "codeSnippet": "useEffect(() => {\n  const id = setInterval(() => setCount(count + 1), 1000); // count stays 0\n  return () => clearInterval(id);\n}, []);\n// fix: setCount(c => c + 1)",
+      "tags": [
+        "useEffect",
+        "closures"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "How do you avoid a race condition when fetching data in an effect?",
+      "answer": "If the dependency changes quickly, an older request can finish after a newer one and overwrite the right data. In the cleanup, set an ignore flag or abort the request with AbortController, and only set state if the request is still the current one. Data libraries like TanStack Query handle this for you.",
+      "codeSnippet": "useEffect(() => {\n  const controller = new AbortController();\n  fetch(`/api/search?q=${q}`, { signal: controller.signal })\n    .then(r => r.json())\n    .then(setResults)\n    .catch(err => { if (err.name !== 'AbortError') setError(err); });\n  return () => controller.abort();\n}, [q]);",
+      "tags": [
+        "useEffect",
+        "data-fetching"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is the difference between useEffect and useLayoutEffect?",
+      "answer": "useEffect runs after the browser has painted, so it does not block the screen. useLayoutEffect runs synchronously after React changes the DOM but before the browser paints. Use useLayoutEffect only when you must measure the DOM and change it before the user sees it (e.g. tooltip position) to avoid a flicker; it can slow down rendering.",
+      "codeSnippet": "",
+      "tags": [
+        "useEffect",
+        "useLayoutEffect"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "When do you NOT need an effect?",
+      "answer": "You do not need an effect to compute a value from props or state (calculate it during render), to respond to a user event (put the code in the event handler), to reset state when a prop changes (use a key), or to notify a parent of a change (call the parent's callback in the same handler). Effects are only for syncing with external systems.",
+      "codeSnippet": "",
+      "tags": [
+        "useEffect",
+        "best-practices"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "easy",
+      "isFree": true,
+      "question": "When does an effect with an empty dependency array run?",
+      "options": [
+        "Never",
+        "After every render",
+        "Before the first render",
+        "Once after the first render, with cleanup on unmount"
+      ],
+      "correctAnswer": "Once after the first render, with cleanup on unmount",
+      "answer": "[] means no dependencies can change, so React runs it after mount only (twice in StrictMode development).",
+      "codeSnippet": "",
+      "tags": [
+        "dependencies"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What does the returned function do here?",
+      "options": [
+        "Removes the listener before the effect runs again and on unmount",
+        "Adds a second listener",
+        "Runs before the first render",
+        "Nothing; React ignores returned functions"
+      ],
+      "correctAnswer": "Removes the listener before the effect runs again and on unmount",
+      "answer": "The returned function is the cleanup; it undoes the effect.",
+      "codeSnippet": "useEffect(() => {\n  window.addEventListener('resize', onResize);\n  return () => window.removeEventListener('resize', onResize);\n}, []);",
+      "tags": [
+        "cleanup"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Why is this a problem: useEffect(async () => { ... }, [])?",
+      "options": [
+        "It runs on every render",
+        "Effects cannot use await anywhere inside",
+        "The callback returns a Promise, but React expects nothing or a cleanup function",
+        "async functions cannot call fetch"
+      ],
+      "correctAnswer": "The callback returns a Promise, but React expects nothing or a cleanup function",
+      "answer": "Declare an async function inside the effect and call it instead.",
+      "codeSnippet": "",
+      "tags": [
+        "async"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "In development with StrictMode, a component logs 'connect' twice on mount. Why?",
+      "options": [
+        "useEffect always runs twice",
+        "The component has a bug in production too",
+        "The dependency array is wrong",
+        "React mounts, unmounts and mounts again to test the effect's cleanup"
+      ],
+      "correctAnswer": "React mounts, unmounts and mounts again to test the effect's cleanup",
+      "answer": "This only happens in development so missing cleanups are found early.",
+      "codeSnippet": "",
+      "tags": [
+        "strict-mode"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "After 5 seconds, what does the counter show?",
+      "options": [
+        "0",
+        "1",
+        "5",
+        "It keeps counting correctly"
+      ],
+      "correctAnswer": "1",
+      "answer": "The interval's callback closed over count = 0 from the first render, so it sets 0 + 1 every time. Use setCount(c => c + 1).",
+      "codeSnippet": "const [count, setCount] = useState(0);\nuseEffect(() => {\n  const id = setInterval(() => setCount(count + 1), 1000);\n  return () => clearInterval(id);\n}, []);",
+      "tags": [
+        "closures"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "useEffect & Side Effects",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Which hook should you use to measure an element and set a tooltip position before the browser paints?",
+      "options": [
+        "useId",
+        "useEffect",
+        "useLayoutEffect",
+        "useMemo"
+      ],
+      "correctAnswer": "useLayoutEffect",
+      "answer": "useLayoutEffect runs after DOM changes but before paint, so the user never sees the wrong position.",
+      "codeSnippet": "",
+      "tags": [
+        "useLayoutEffect"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "easy",
+      "isFree": false,
+      "question": "What are the Rules of Hooks?",
+      "answer": "Call hooks only at the top level of a component or custom hook, never inside conditions, loops, nested functions or after an early return. Call them only from React function components or custom hooks, not from normal functions or classes. The eslint-plugin-react-hooks plugin checks these rules.",
+      "codeSnippet": "",
+      "tags": [
+        "rules-of-hooks"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Why must hooks be called in the same order on every render?",
+      "answer": "React does not know hooks by name; it stores their data in a list for each component and matches them by call order. If a hook is skipped in one render (for example inside an if), every hook after it reads the wrong data. That is why hooks must not be called conditionally.",
+      "codeSnippet": "",
+      "tags": [
+        "rules-of-hooks",
+        "internals"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is useRef used for?",
+      "answer": "useRef returns an object { current } that stays the same for the whole life of the component. Changing ref.current does not re-render. Use it to access DOM elements (focus an input, measure size) and to keep values that are not shown on screen, such as a timer id or the previous value.",
+      "codeSnippet": "const inputRef = useRef(null);\n<input ref={inputRef} />\n<button onClick={() => inputRef.current.focus()}>Focus</button>",
+      "tags": [
+        "useRef"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is the difference between useMemo and useCallback?",
+      "answer": "useMemo caches the result of a calculation and recalculates only when its dependencies change. useCallback caches the function itself so it keeps the same reference between renders. useCallback(fn, deps) is the same as useMemo(() => fn, deps). Both are performance tools; with the React Compiler you rarely need to write them by hand.",
+      "codeSnippet": "const sorted = useMemo(() => [...items].sort(byName), [items]);\nconst handleSave = useCallback(() => save(id), [id]);",
+      "tags": [
+        "useMemo",
+        "useCallback"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "When would you choose useReducer over useState?",
+      "answer": "Use useReducer when state has several related values or many ways to change it (add, remove, edit, reset). All update logic lives in one pure reducer function (state, action) => newState, which is easy to test, and components only dispatch actions like { type: 'added', text }.",
+      "codeSnippet": "function reducer(state, action) {\n  switch (action.type) {\n    case 'added': return [...state, { id: action.id, text: action.text }];\n    case 'deleted': return state.filter(t => t.id !== action.id);\n    default: throw new Error('Unknown action ' + action.type);\n  }\n}\nconst [todos, dispatch] = useReducer(reducer, []);",
+      "tags": [
+        "useReducer"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is a custom hook?",
+      "answer": "A custom hook is a function whose name starts with use and that calls other hooks. It lets you reuse stateful logic, such as fetching data, reading window size or form handling, across components. Each component that calls it gets its own separate state; the hook shares logic, not data.",
+      "codeSnippet": "function useWindowWidth() {\n  const [width, setWidth] = useState(window.innerWidth);\n  useEffect(() => {\n    const onResize = () => setWidth(window.innerWidth);\n    window.addEventListener('resize', onResize);\n    return () => window.removeEventListener('resize', onResize);\n  }, []);\n  return width;\n}",
+      "tags": [
+        "custom-hooks"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is useId for?",
+      "answer": "useId creates a unique id that is the same on the server and the client, so it is safe with server rendering. Use it to connect labels and inputs or aria attributes (htmlFor and id, aria-describedby). Do not use it for list keys.",
+      "codeSnippet": "const id = useId();\n<label htmlFor={id}>Email</label>\n<input id={id} />",
+      "tags": [
+        "useId",
+        "accessibility"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is the difference between storing a value in useRef and in useState?",
+      "answer": "Changing state re-renders the component and the new value shows on screen; the value is a snapshot per render. Changing ref.current happens immediately and does not re-render, so the screen does not update. Use state for anything shown in the UI and refs for values used only in event handlers or effects. Do not read or write ref.current during render.",
+      "codeSnippet": "",
+      "tags": [
+        "useRef",
+        "useState"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What do useImperativeHandle and useSyncExternalStore do?",
+      "answer": "useImperativeHandle lets a component choose what a parent gets through its ref, for example only focus() and scrollIntoView() instead of the whole DOM node. useSyncExternalStore safely subscribes a component to a store outside React (like browser online status or a state library), giving it the current snapshot without tearing during concurrent rendering.",
+      "codeSnippet": "const isOnline = useSyncExternalStore(\n  cb => { window.addEventListener('online', cb); window.addEventListener('offline', cb); return () => { window.removeEventListener('online', cb); window.removeEventListener('offline', cb); }; },\n  () => navigator.onLine\n);",
+      "tags": [
+        "useImperativeHandle",
+        "useSyncExternalStore"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "How would you write a usePrevious hook, and why does it use a ref?",
+      "answer": "Store the value in a ref inside an effect, after the render. During the render the ref still holds the value from the previous render. A ref is used because updating it must not cause another render. Note: React docs prefer storing the previous value in state when you need it for rendering, because reading refs during render is discouraged.",
+      "codeSnippet": "function usePrevious(value) {\n  const ref = useRef();\n  useEffect(() => {\n    ref.current = value;\n  }, [value]);\n  return ref.current;\n}",
+      "tags": [
+        "custom-hooks",
+        "useRef"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "easy",
+      "isFree": true,
+      "question": "Which is a valid name for a custom hook?",
+      "options": [
+        "useFetch",
+        "hookFetch",
+        "fetchHook",
+        "UseFetch"
+      ],
+      "correctAnswer": "useFetch",
+      "answer": "Custom hooks must start with 'use' followed by a capital letter so React and the linter recognise them.",
+      "codeSnippet": "",
+      "tags": [
+        "custom-hooks"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What happens when you change ref.current?",
+      "options": [
+        "The component re-renders",
+        "The value changes but the component does not re-render",
+        "The ref is reset to null",
+        "React throws an error"
+      ],
+      "correctAnswer": "The value changes but the component does not re-render",
+      "answer": "Refs are mutable containers that React does not track for rendering.",
+      "codeSnippet": "",
+      "tags": [
+        "useRef"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Why is this code wrong?",
+      "options": [
+        "The hook is called conditionally, so the order of hooks can change between renders",
+        "Components cannot have if statements",
+        "useState cannot hold booleans",
+        "useState must be imported from react-dom"
+      ],
+      "correctAnswer": "The hook is called conditionally, so the order of hooks can change between renders",
+      "answer": "Hooks must run in the same order on every render; move the condition inside or after the hook call.",
+      "codeSnippet": "function Panel({ isOpen }) {\n  if (isOpen) {\n    const [tab, setTab] = useState('info');\n  }\n  // ...\n}",
+      "tags": [
+        "rules-of-hooks"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Two components call the same custom hook useCounter(). What is true?",
+      "options": [
+        "They share one state value",
+        "Each component gets its own independent state",
+        "The second call returns undefined",
+        "Only the first component works"
+      ],
+      "correctAnswer": "Each component gets its own independent state",
+      "answer": "Custom hooks share logic, not state. To share data use lifted state, context or a store.",
+      "codeSnippet": "",
+      "tags": [
+        "custom-hooks"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "useCallback(fn, deps) is equivalent to which expression?",
+      "options": [
+        "useRef(fn)",
+        "useMemo(fn, deps)",
+        "useEffect(fn, deps)",
+        "useMemo(() => fn, deps)"
+      ],
+      "correctAnswer": "useMemo(() => fn, deps)",
+      "answer": "useCallback caches the function itself; useMemo caches what its function returns.",
+      "codeSnippet": "",
+      "tags": [
+        "useCallback",
+        "useMemo"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Hooks Deep Dive",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What must a reducer function passed to useReducer be?",
+      "options": [
+        "A function that calls setState",
+        "An async function that fetches data",
+        "A pure function that returns a new state without mutating the old one",
+        "A function that changes state in place and returns nothing"
+      ],
+      "correctAnswer": "A pure function that returns a new state without mutating the old one",
+      "answer": "Reducers must be pure; React may call them more than once in development.",
+      "codeSnippet": "",
+      "tags": [
+        "useReducer"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Context & State Management",
+      "difficulty": "easy",
+      "isFree": false,
+      "question": "What problem does the Context API solve?",
+      "answer": "Context lets a parent provide a value that any component below it can read, without passing props through every level. It is used for app-wide data such as the logged-in user, theme or language. You create it with createContext, provide it near the top of the tree, and read it with useContext (or use in React 19).",
+      "codeSnippet": "const ThemeContext = createContext('light');\n\nfunction App() {\n  return (\n    <ThemeContext value=\"dark\">\n      <Page />\n    </ThemeContext>\n  );\n}\n\nfunction Button() {\n  const theme = useContext(ThemeContext);\n  return <button className={theme}>OK</button>;\n}",
+      "tags": [
+        "context"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Context & State Management",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What happens when a context value changes?",
+      "answer": "Every component that reads that context re-renders, even if it is wrapped in React.memo and even if it only uses part of the value. React compares the old and new value with Object.is. If you pass a new object on every render ({ user, logout }), all consumers re-render every time the provider renders.",
+      "codeSnippet": "",
+      "tags": [
+        "context",
+        "performance"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Context & State Management",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "How do you stop a context provider from re-rendering all consumers on every parent render?",
+      "answer": "Keep the value stable: wrap the object in useMemo and the functions in useCallback, so a new value is created only when the data really changes. You can also split one big context into smaller ones (for example state and dispatch separately) so components only subscribe to what they use.",
+      "codeSnippet": "const value = useMemo(() => ({ user, login, logout }), [user, login, logout]);\nreturn <AuthContext value={value}>{children}</AuthContext>;",
+      "tags": [
+        "context",
+        "useMemo"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Context & State Management",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is the default value in createContext used for?",
+      "answer": "It is the value a component gets from useContext when there is no matching provider above it. It is useful for tests and simple defaults. It is not updated later; to change a context value you need a provider with state.",
+      "codeSnippet": "",
+      "tags": [
+        "context"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Context & State Management",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "How do you combine Context and useReducer for app state?",
+      "answer": "Keep the state with useReducer in a provider component and put state and dispatch into context (often two separate contexts). Any component can read the state or dispatch actions without prop drilling. Wrapping useContext in custom hooks like useTasks() keeps the code clean and can throw a clear error when the provider is missing.",
+      "codeSnippet": "",
+      "tags": [
+        "context",
+        "useReducer"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Context & State Management",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is the difference between local state, global state and server state?",
+      "answer": "Local state belongs to one component (an input's text, an open menu). Global client state is needed in many places (logged-in user, theme, cart). Server state is data that lives on the server and is cached in the browser (lists, profiles); it can be outdated and needs loading, errors and refetching, so tools like TanStack Query or SWR are better for it than useState.",
+      "codeSnippet": "",
+      "tags": [
+        "state-management",
+        "server-state"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Context & State Management",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "When would you pick Redux Toolkit or Zustand instead of Context?",
+      "answer": "Context is a way to pass values, not a full state manager; every consumer re-renders when the value changes. For large, often-changing shared state, libraries like Redux Toolkit or Zustand let components subscribe to only the slice they need (selectors), avoid extra renders, and offer devtools, middleware and patterns for big teams. For a small app, Context plus useReducer is usually enough.",
+      "codeSnippet": "",
+      "tags": [
+        "state-management",
+        "redux",
+        "zustand"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Context & State Management",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What are the main ideas of Redux?",
+      "answer": "One store holds the app state. State is read-only; the only way to change it is to dispatch an action (a plain object describing what happened). Pure reducer functions take the current state and the action and return the new state. Redux Toolkit is the recommended way today: createSlice writes the actions and reducers, and lets you write 'mutating' code safely with Immer.",
+      "codeSnippet": "const counterSlice = createSlice({\n  name: 'counter',\n  initialState: { value: 0 },\n  reducers: {\n    increment: state => { state.value += 1; }, // Immer makes this safe\n  },\n});",
+      "tags": [
+        "redux"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Context & State Management",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Where should you keep state like filters, search text and current page?",
+      "answer": "Often in the URL (search params), not only in useState. Then a page refresh keeps the filters, users can share or bookmark the link, and the browser back button works. With React Router you read and change them with useSearchParams.",
+      "codeSnippet": "const [params, setParams] = useSearchParams();\nconst page = Number(params.get('page') ?? 1);\nsetParams({ q: 'hooks', page: 2 });",
+      "tags": [
+        "state-management",
+        "url-state"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Context & State Management",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Can context be read conditionally?",
+      "answer": "Not with useContext, because it is a hook and must follow the Rules of Hooks. In React 19 the use API can read a context and can be called inside if statements and loops (but still only inside components or hooks), e.g. if (show) { const theme = use(ThemeContext); }.",
+      "codeSnippet": "",
+      "tags": [
+        "context",
+        "use",
+        "react-19"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Context & State Management",
+      "difficulty": "easy",
+      "isFree": false,
+      "question": "Which hook reads a value from Context?",
+      "options": [
+        "useProvider",
+        "useRef",
+        "useReducer",
+        "useContext"
+      ],
+      "correctAnswer": "useContext",
+      "answer": "useContext(MyContext) returns the value of the nearest provider above.",
+      "codeSnippet": "",
+      "tags": [
+        "context"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Context & State Management",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "A component calls useContext(ThemeContext) but there is no provider above it. What does it get?",
+      "options": [
+        "An error is thrown",
+        "undefined always",
+        "The value of the nearest sibling provider",
+        "The default value passed to createContext"
+      ],
+      "correctAnswer": "The default value passed to createContext",
+      "answer": "Without a provider, React uses the default value given to createContext.",
+      "codeSnippet": "",
+      "tags": [
+        "context"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Context & State Management",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Why do all consumers re-render every time App renders?",
+      "options": [
+        "Context always re-renders everything",
+        "Consumers forgot to use React.memo",
+        "A new object is created for value on every render",
+        "useState is used in App"
+      ],
+      "correctAnswer": "A new object is created for value on every render",
+      "answer": "Object.is sees a new object each time. Memoize the value with useMemo.",
+      "codeSnippet": "function App() {\n  const [user, setUser] = useState(null);\n  return (\n    <AuthContext value={{ user, setUser }}>\n      <Routes />\n    </AuthContext>\n  );\n}",
+      "tags": [
+        "context",
+        "performance"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Context & State Management",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "In React 19, how can you provide a context value?",
+      "options": [
+        "<ThemeContext.Default value=\"dark\">",
+        "ThemeContext.set('dark')",
+        "<ThemeContext value=\"dark\">",
+        "<ThemeContext.Consumer value=\"dark\">"
+      ],
+      "correctAnswer": "<ThemeContext value=\"dark\">",
+      "answer": "React 19 lets you render the context itself as the provider; <Context.Provider> still works but will be deprecated.",
+      "codeSnippet": "",
+      "tags": [
+        "context",
+        "react-19"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Context & State Management",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Which kind of data is best handled by a tool like TanStack Query?",
+      "options": [
+        "A CSS class name",
+        "Data fetched from the server that needs caching and refetching",
+        "Whether a dropdown is open",
+        "The text in a single input"
+      ],
+      "correctAnswer": "Data fetched from the server that needs caching and refetching",
+      "answer": "Server state has loading, errors, caching and staleness; query libraries are built for it.",
+      "codeSnippet": "",
+      "tags": [
+        "server-state"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Context & State Management",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "In Redux, how is the state changed?",
+      "options": [
+        "By dispatching an action that a reducer turns into a new state",
+        "By editing the state inside a component",
+        "By calling setState on the store",
+        "By assigning store.state directly"
+      ],
+      "correctAnswer": "By dispatching an action that a reducer turns into a new state",
+      "answer": "State is read-only; actions describe what happened and reducers return the next state.",
+      "codeSnippet": "",
+      "tags": [
+        "redux"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is the Virtual DOM?",
+      "answer": "It is a lightweight JavaScript description of the UI (the tree of React elements). When state changes, React renders a new tree, compares it with the previous one, and applies only the needed changes to the real DOM. This makes updates declarative: you describe what the UI should look like and React works out the DOM operations.",
+      "codeSnippet": "",
+      "tags": [
+        "virtual-dom"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is reconciliation?",
+      "answer": "Reconciliation is how React compares the new element tree with the old one to decide what to change. If the element type at a position is the same, React keeps the component and its state and updates its props. If the type is different, React destroys the old subtree (and its state) and builds a new one. In lists React uses keys to match items.",
+      "codeSnippet": "",
+      "tags": [
+        "reconciliation"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "easy",
+      "isFree": false,
+      "question": "Why does React need a key when rendering a list?",
+      "answer": "Keys tell React which item is which between renders, so it can keep, move or remove the right component and its state. A key must be stable and unique among siblings, usually an id from the data. Without good keys React may update the wrong item, for example an input keeping text from another row.",
+      "codeSnippet": "{todos.map(todo => <TodoItem key={todo.id} todo={todo} />)}",
+      "tags": [
+        "keys",
+        "lists"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Why is using the array index as a key a problem?",
+      "answer": "If items are added, removed or reordered, the index of an item changes, so React thinks a different item is at that position. Component state and uncontrolled inputs then stay with the wrong row, and React does extra work. Index keys are only acceptable for static lists that never change order.",
+      "codeSnippet": "",
+      "tags": [
+        "keys"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What causes a component to re-render?",
+      "answer": "A component re-renders when its own state changes, when its parent re-renders (by default children render again even if props did not change), or when a context it reads changes. A re-render means React calls the function again; it does not always change the DOM.",
+      "codeSnippet": "",
+      "tags": [
+        "rendering"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is automatic batching?",
+      "answer": "React groups several state updates that happen together into one re-render. Since React 18 (with createRoot) this happens everywhere: in event handlers, timeouts, promises and native events. It avoids extra renders. flushSync from react-dom can force an update to apply immediately when you really need it.",
+      "codeSnippet": "setTimeout(() => {\n  setCount(c => c + 1);\n  setFlag(f => !f);\n  // one re-render, not two\n}, 1000);",
+      "tags": [
+        "batching"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What does StrictMode do?",
+      "answer": "StrictMode is a development-only helper. It renders components twice, runs effects twice (mount, unmount, mount) and calls ref callbacks twice to find impure code and missing cleanups, and it warns about deprecated APIs. It does nothing in production and does not render any UI.",
+      "codeSnippet": "",
+      "tags": [
+        "strict-mode"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What are the render and commit phases?",
+      "answer": "In the render phase React calls your components and works out what changed; this must be pure and can be paused, repeated or thrown away in concurrent rendering. In the commit phase React applies the changes to the DOM, then runs layout effects, and after the browser paints it runs normal effects. Side effects belong in the commit phase (effects, handlers).",
+      "codeSnippet": "",
+      "tags": [
+        "rendering",
+        "internals"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is a portal and how do events behave in it?",
+      "answer": "createPortal(children, domNode) renders children into another DOM node, for example document.body for a modal or tooltip, so it is not clipped by parent overflow or z-index. It still belongs to the React tree: it reads context from its React parents, and events bubble to React parents even though the DOM parent is different.",
+      "codeSnippet": "return createPortal(<div className=\"modal\">{children}</div>, document.body);",
+      "tags": [
+        "portals"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is hydration?",
+      "answer": "With server rendering the HTML arrives first so the user sees content fast. Hydration is when React runs in the browser, builds the same tree and attaches event handlers to that existing HTML instead of re-creating it (hydrateRoot). If the client renders something different from the server (for example Date.now() or window checks during render), you get a hydration mismatch warning.",
+      "codeSnippet": "",
+      "tags": [
+        "ssr",
+        "hydration"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "easy",
+      "isFree": false,
+      "question": "What is the best key for a list of users from an API?",
+      "options": [
+        "Math.random()",
+        "The user's position on screen",
+        "The array index",
+        "user.id"
+      ],
+      "correctAnswer": "user.id",
+      "answer": "A stable unique id from the data lets React track each item correctly.",
+      "codeSnippet": "",
+      "tags": [
+        "keys"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Parent's state changes and it re-renders. What happens to a child that receives no props?",
+      "options": [
+        "It re-renders only in production",
+        "It unmounts",
+        "It never re-renders",
+        "It re-renders too, unless it is memoized"
+      ],
+      "correctAnswer": "It re-renders too, unless it is memoized",
+      "answer": "By default React renders the whole subtree below the component whose state changed.",
+      "codeSnippet": "",
+      "tags": [
+        "rendering"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "At the same position, a <div> is replaced by a <section> with the same children. What happens to the children's state?",
+      "options": [
+        "React throws an error",
+        "It is kept",
+        "It is copied into the new element",
+        "It is lost; React rebuilds the whole subtree"
+      ],
+      "correctAnswer": "It is lost; React rebuilds the whole subtree",
+      "answer": "A different element type at the same position makes React unmount the old tree and mount a new one.",
+      "codeSnippet": "",
+      "tags": [
+        "reconciliation"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Since React 18, how many re-renders happen when two state setters run inside a setTimeout callback?",
+      "options": [
+        "It depends on the browser",
+        "Two",
+        "One",
+        "Zero"
+      ],
+      "correctAnswer": "One",
+      "answer": "Automatic batching groups updates in timeouts and promises too.",
+      "codeSnippet": "",
+      "tags": [
+        "batching"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Which statement about StrictMode is correct?",
+      "options": [
+        "It makes the production app faster",
+        "It disables hooks",
+        "It double-invokes renders and effects only in development",
+        "It renders a visible border around components"
+      ],
+      "correctAnswer": "It double-invokes renders and effects only in development",
+      "answer": "StrictMode is a development check for impure renders and missing effect cleanups.",
+      "codeSnippet": "",
+      "tags": [
+        "strict-mode"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Rendering & Reconciliation",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "A modal is rendered with createPortal into document.body. A click inside it...",
+      "options": [
+        "never reaches any React handler",
+        "bubbles to its React parent components' handlers",
+        "reloads the page",
+        "only reaches handlers on document.body"
+      ],
+      "correctAnswer": "bubbles to its React parent components' handlers",
+      "answer": "Portal events follow the React tree, not the DOM tree.",
+      "codeSnippet": "",
+      "tags": [
+        "portals"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance Optimization",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What does React.memo do?",
+      "answer": "React.memo wraps a component so it skips re-rendering when its props are the same as last time (shallow comparison with Object.is for each prop). It only helps if the props are really stable: a new object, array or function passed on every render breaks it, so you combine it with useMemo and useCallback.",
+      "codeSnippet": "const Row = memo(function Row({ item, onSelect }) {\n  return <li onClick={() => onSelect(item.id)}>{item.name}</li>;\n});",
+      "tags": [
+        "memo"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance Optimization",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "When is useMemo actually worth using?",
+      "answer": "When a calculation is noticeably slow (sorting or filtering thousands of items, heavy math) and its inputs do not change on every render, or when you need a stable object or array for a memoized child or an effect dependency. For cheap calculations it only adds code and memory. Measure with the React Profiler first.",
+      "codeSnippet": "",
+      "tags": [
+        "useMemo",
+        "performance"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance Optimization",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is code splitting and how do you do it in React?",
+      "answer": "Code splitting breaks the JavaScript bundle into smaller files that load only when needed, so the first page loads faster. In React you use lazy() with a dynamic import and wrap the component in Suspense to show a fallback while it loads. Route-level splitting (one chunk per page) is the most common.",
+      "codeSnippet": "const AdminPage = lazy(() => import('./pages/AdminPage'));\n\n<Suspense fallback={<Spinner />}>\n  <AdminPage />\n</Suspense>",
+      "tags": [
+        "code-splitting",
+        "lazy",
+        "suspense"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance Optimization",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "How do you render a list of 10,000 items without the page becoming slow?",
+      "answer": "Use virtualization (windowing): only the rows visible in the scroll area are rendered, and rows are swapped as the user scrolls. Libraries like react-window or TanStack Virtual do this. Pagination or infinite loading are other options. Also give items stable keys and memoize row components.",
+      "codeSnippet": "",
+      "tags": [
+        "virtualization",
+        "lists"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance Optimization",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "How do you find out why a React app is slow?",
+      "answer": "Use the Profiler tab in React DevTools to record an interaction and see which components rendered, how often and how long each took; turn on 'highlight updates' to see re-renders. Check the browser Performance tab for long tasks, and Lighthouse for loading. Always test a production build, because development mode is slower.",
+      "codeSnippet": "",
+      "tags": [
+        "profiling",
+        "devtools"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance Optimization",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Why can passing an inline function or object as a prop break React.memo?",
+      "answer": "Every render creates a new function or object, so the memoized child sees a prop that is not equal (Object.is) to the old one and re-renders anyway. Fix it with useCallback for functions and useMemo for objects or arrays, or move constant objects outside the component.",
+      "codeSnippet": "// child re-renders every time\n<Chart options={{ color: 'blue' }} onClick={() => select(id)} />\n// stable\nconst options = useMemo(() => ({ color: 'blue' }), []);\nconst handleClick = useCallback(() => select(id), [id]);",
+      "tags": [
+        "memo",
+        "useCallback"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance Optimization",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What do useTransition and useDeferredValue do?",
+      "answer": "Both mark some updates as non-urgent so React keeps the UI responsive. useTransition gives startTransition to wrap a state update (e.g. switching tabs or filtering a big list) plus an isPending flag; urgent updates like typing can interrupt it. useDeferredValue gives a 'lagging' copy of a value, so the heavy part renders with the old value until React has time.",
+      "codeSnippet": "const [isPending, startTransition] = useTransition();\nfunction selectTab(tab) {\n  startTransition(() => setTab(tab));\n}",
+      "tags": [
+        "useTransition",
+        "useDeferredValue",
+        "concurrent"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance Optimization",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "How can moving state down or passing children as props improve performance?",
+      "answer": "If only a small part of a page uses some state, move that state into a small component so changing it re-renders only that part. And if a wrapper with state receives the rest of the page as children, those children were created by the parent and are not re-rendered when the wrapper's state changes. Both avoid React.memo entirely.",
+      "codeSnippet": "function ScrollTracker({ children }) {\n  const [y, setY] = useState(0); // changes often\n  // ...\n  return <div>{children}</div>; // children do not re-render when y changes\n}",
+      "tags": [
+        "performance",
+        "composition"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance Optimization",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is the React Compiler?",
+      "answer": "The React Compiler is a build tool (stable since 2025) that automatically adds memoization to components and hooks, the same work you would do with memo, useMemo and useCallback. It relies on your code following the Rules of React (pure components, no mutation of props or state). With it, most manual memoization is no longer needed.",
+      "codeSnippet": "",
+      "tags": [
+        "react-compiler",
+        "performance"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance Optimization",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "How do you make images and assets load faster in a React app?",
+      "answer": "Lazy-load images below the fold (loading=\"lazy\"), give width and height to avoid layout shift, use modern formats (WebP/AVIF) and correct sizes (srcSet), and serve them from a CDN. For code: route-based splitting, removing unused libraries (check bundle size), and preloading the critical resources.",
+      "codeSnippet": "",
+      "tags": [
+        "performance",
+        "loading"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Performance Optimization",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "React.memo compares props using...",
+      "options": [
+        "JSON.stringify of all props",
+        "A deep comparison of every nested value",
+        "Only the children prop",
+        "A shallow comparison of each prop with Object.is"
+      ],
+      "correctAnswer": "A shallow comparison of each prop with Object.is",
+      "answer": "Each prop is compared by reference; a new object with the same contents counts as changed.",
+      "codeSnippet": "",
+      "tags": [
+        "memo"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Performance Optimization",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What must wrap a component loaded with lazy()?",
+      "options": [
+        "<StrictMode>",
+        "<Suspense fallback={...}>",
+        "<Fragment>",
+        "<Profiler>"
+      ],
+      "correctAnswer": "<Suspense fallback={...}>",
+      "answer": "Suspense shows the fallback while the component's code is loading.",
+      "codeSnippet": "",
+      "tags": [
+        "lazy",
+        "suspense"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Performance Optimization",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Which technique renders only the visible rows of a very long list?",
+      "options": [
+        "Virtualization (windowing)",
+        "Hydration",
+        "Prop drilling",
+        "Reconciliation"
+      ],
+      "correctAnswer": "Virtualization (windowing)",
+      "answer": "Libraries like react-window render only what is in view.",
+      "codeSnippet": "",
+      "tags": [
+        "virtualization"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Performance Optimization",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Row is wrapped in memo, but still re-renders every time List renders. Why?",
+      "options": [
+        "onSelect is a new function on every render",
+        "memo does not work with lists",
+        "Row has no state",
+        "key must be the index"
+      ],
+      "correctAnswer": "onSelect is a new function on every render",
+      "answer": "The inline arrow function is a new reference each render; wrap it in useCallback.",
+      "codeSnippet": "function List({ items }) {\n  return items.map(item => (\n    <Row key={item.id} item={item} onSelect={() => console.log(item.id)} />\n  ));\n}",
+      "tags": [
+        "memo",
+        "useCallback"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Performance Optimization",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What does isPending from useTransition tell you?",
+      "options": [
+        "The component is unmounting",
+        "A transition update is still being rendered in the background",
+        "A fetch request is pending",
+        "An error happened"
+      ],
+      "correctAnswer": "A transition update is still being rendered in the background",
+      "answer": "Use it to show a loading hint while the non-urgent update is in progress.",
+      "codeSnippet": "",
+      "tags": [
+        "useTransition"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Performance Optimization",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What does the React Compiler do?",
+      "options": [
+        "Turns class components into hooks",
+        "Replaces the Virtual DOM with direct DOM updates",
+        "Automatically memoizes components and values at build time",
+        "Converts React code to Angular"
+      ],
+      "correctAnswer": "Automatically memoizes components and values at build time",
+      "answer": "It adds memoization for you, so manual useMemo/useCallback/memo are rarely needed.",
+      "codeSnippet": "",
+      "tags": [
+        "react-compiler"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "How does client-side routing work in a React app?",
+      "answer": "A router library like React Router watches the URL and renders the matching component without asking the server for a new HTML page. <Link> changes the URL with the History API instead of a full reload, so navigation is fast and state can be kept. On a static host you need a rewrite so every path returns index.html.",
+      "codeSnippet": "<Routes>\n  <Route path=\"/\" element={<Home />} />\n  <Route path=\"/users/:id\" element={<UserPage />} />\n  <Route path=\"*\" element={<NotFound />} />\n</Routes>",
+      "tags": [
+        "routing",
+        "react-router"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "How do you read URL parameters and navigate in code with React Router?",
+      "answer": "useParams() returns the dynamic parts of the URL, e.g. { id } for /users/:id. useNavigate() returns a navigate function to go to another page after an action (navigate('/login'), navigate(-1) to go back). useSearchParams() reads and changes the query string.",
+      "codeSnippet": "function UserPage() {\n  const { id } = useParams();\n  const navigate = useNavigate();\n  // after delete: navigate('/users', { replace: true });\n}",
+      "tags": [
+        "react-router"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What are nested routes and Outlet?",
+      "answer": "Nested routes let a parent route render a shared layout (navbar, sidebar) and show the child route inside it. The parent component places <Outlet /> where the child should appear. The URL /admin/users renders the AdminLayout with the Users page in its Outlet.",
+      "codeSnippet": "<Route path=\"/admin\" element={<AdminLayout />}>\n  <Route index element={<Dashboard />} />\n  <Route path=\"users\" element={<Users />} />\n</Route>\n\n// AdminLayout: <Sidebar /><Outlet />",
+      "tags": [
+        "react-router",
+        "nested-routes"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "How do you protect a route so only logged-in users can see it?",
+      "answer": "Make a guard component that checks the auth state: if the user is logged in it renders <Outlet /> (or its children), otherwise it returns <Navigate to=\"/login\" replace /> and can remember the page in state to return to it after login. Remember that this only hides UI; the server must also check permissions on every API request.",
+      "codeSnippet": "function PrivateRoute() {\n  const { user } = useAuth();\n  const location = useLocation();\n  return user ? <Outlet /> : <Navigate to=\"/login\" replace state={{ from: location }} />;\n}",
+      "tags": [
+        "react-router",
+        "auth"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What should a component show while fetching data?",
+      "answer": "Handle three states: loading (a spinner or skeleton), error (a message and a retry button) and success (the data, including an empty state when the list is empty). Forgetting the error and empty states is a common bug. Libraries like TanStack Query give isPending, error and data for you.",
+      "codeSnippet": "",
+      "tags": [
+        "data-fetching",
+        "ux"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is an error boundary?",
+      "answer": "An error boundary is a component that catches errors thrown while rendering its children and shows a fallback UI instead of a blank page. It must be a class component with static getDerivedStateFromError (to show the fallback) and optionally componentDidCatch (to log). Many apps use the react-error-boundary package for a hook-friendly version.",
+      "codeSnippet": "class ErrorBoundary extends React.Component {\n  state = { hasError: false };\n  static getDerivedStateFromError() { return { hasError: true }; }\n  componentDidCatch(error, info) { logError(error, info); }\n  render() { return this.state.hasError ? <p>Something went wrong</p> : this.props.children; }\n}",
+      "tags": [
+        "error-boundary"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Which errors does an error boundary NOT catch?",
+      "answer": "It does not catch errors in event handlers (use try/catch there), in async code like setTimeout or a fetch promise (unless you put the error into state and throw it during render), during server rendering, or errors thrown inside the error boundary itself. It only catches errors during rendering, in lifecycle methods and constructors of components below it.",
+      "codeSnippet": "",
+      "tags": [
+        "error-boundary"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What does Suspense do for data fetching?",
+      "answer": "Suspense lets a component 'wait' for something (lazy code, or data through a Suspense-enabled source such as use(promise), a framework loader or TanStack Query's suspense mode) and shows the nearest fallback meanwhile. Loading states move up to <Suspense fallback> boundaries instead of every component handling isLoading. Combine it with an error boundary for failures.",
+      "codeSnippet": "<ErrorBoundary fallback={<p>Could not load</p>}>\n  <Suspense fallback={<Spinner />}>\n    <Comments />\n  </Suspense>\n</ErrorBoundary>",
+      "tags": [
+        "suspense",
+        "data-fetching"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Why use TanStack Query (React Query) instead of useEffect + fetch?",
+      "answer": "It caches responses by key, so going back to a page shows data instantly; removes duplicate requests; refetches stale data on focus or reconnect; retries failed requests; and handles loading, error, pagination and mutations with cache updates. Doing all of this correctly with useEffect is a lot of code and easy to get wrong (race conditions, no cache).",
+      "codeSnippet": "const { data, isPending, error } = useQuery({\n  queryKey: ['user', id],\n  queryFn: () => api.get(`/users/${id}`).then(r => r.data),\n});",
+      "tags": [
+        "tanstack-query",
+        "data-fetching"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "How do you test React components?",
+      "answer": "Use a test runner (Vitest or Jest) with React Testing Library. Render the component, find elements the way a user would (getByRole, getByLabelText, getByText), act with user-event (click, type), and assert what appears on screen. Mock network calls (for example with MSW). Test behaviour, not internal state or implementation details.",
+      "codeSnippet": "test('shows error for empty email', async () => {\n  render(<LoginForm />);\n  await userEvent.click(screen.getByRole('button', { name: /log in/i }));\n  expect(screen.getByText(/email is required/i)).toBeInTheDocument();\n});",
+      "tags": [
+        "testing"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "Which component changes the page in React Router without a full page reload?",
+      "options": [
+        "<a href=\"/about\">",
+        "<Route to=\"/about\">",
+        "<Link to=\"/about\">",
+        "<Outlet to=\"/about\">"
+      ],
+      "correctAnswer": "<Link to=\"/about\">",
+      "answer": "Link updates the URL with the History API; a plain <a> reloads the whole page.",
+      "codeSnippet": "",
+      "tags": [
+        "react-router"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "For the route /users/:id and the URL /users/42, what does useParams() return?",
+      "options": [
+        "{ id: '42' }",
+        "{ id: 42 }",
+        "['users', '42']",
+        "'42'"
+      ],
+      "correctAnswer": "{ id: '42' }",
+      "answer": "URL params are always strings; convert with Number(id) if needed.",
+      "codeSnippet": "",
+      "tags": [
+        "react-router"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "In a layout route, where are child routes rendered?",
+      "options": [
+        "Where the layout renders <Outlet />",
+        "Always at the top of the page",
+        "Inside <Suspense>",
+        "In a new browser tab"
+      ],
+      "correctAnswer": "Where the layout renders <Outlet />",
+      "answer": "Outlet is the placeholder for the matched child route.",
+      "codeSnippet": "",
+      "tags": [
+        "nested-routes"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Which error will an error boundary catch?",
+      "options": [
+        "A failed fetch inside an event handler",
+        "An error thrown while a child component renders",
+        "An error inside an onClick handler",
+        "An error in a setTimeout callback"
+      ],
+      "correctAnswer": "An error thrown while a child component renders",
+      "answer": "Error boundaries catch render and lifecycle errors, not errors in handlers or async callbacks.",
+      "codeSnippet": "",
+      "tags": [
+        "error-boundary"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Why must an error boundary be a class component?",
+      "options": [
+        "Function components cannot have children",
+        "The needed methods getDerivedStateFromError and componentDidCatch exist only for classes",
+        "Hooks cannot render JSX",
+        "Classes are faster"
+      ],
+      "correctAnswer": "The needed methods getDerivedStateFromError and componentDidCatch exist only for classes",
+      "answer": "There is no hook equivalent yet; packages like react-error-boundary wrap a class for you.",
+      "codeSnippet": "",
+      "tags": [
+        "error-boundary"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Routing, Data Fetching & Errors",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Your Vercel-hosted React app shows 404 when you refresh /dashboard. What is the usual fix?",
+      "options": [
+        "Add a key to the Route",
+        "Add a rewrite so all paths serve index.html",
+        "Switching to HashRouter is the only option",
+        "Move the route above the others"
+      ],
+      "correctAnswer": "Add a rewrite so all paths serve index.html",
+      "answer": "The server has no file at /dashboard; a rewrite returns index.html and React Router handles the path.",
+      "codeSnippet": "",
+      "tags": [
+        "routing",
+        "deployment"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "React 19 & Modern React",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What are the main new features in React 19?",
+      "answer": "Actions (async functions in transitions and <form action>), new hooks useActionState, useFormStatus and useOptimistic, the use API for promises and context, ref as a normal prop (no forwardRef), <Context> as a provider, ref cleanup functions, document metadata (<title>, <meta>) rendered from components, stable Server Components and Server Functions, and better hydration error messages.",
+      "codeSnippet": "",
+      "tags": [
+        "react-19"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "React 19 & Modern React",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "How do refs work for function components in React 19?",
+      "answer": "A function component can receive ref as a normal prop and pass it to a DOM element, so forwardRef is no longer needed (it will be deprecated). Ref callbacks can also return a cleanup function that runs when the element is removed.",
+      "codeSnippet": "function MyInput({ placeholder, ref }) {\n  return <input placeholder={placeholder} ref={ref} />;\n}\n\n<MyInput ref={inputRef} placeholder=\"Name\" />",
+      "tags": [
+        "refs",
+        "react-19"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "React 19 & Modern React",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What does useActionState do?",
+      "answer": "useActionState(action, initialState) wraps an action function and returns [state, formAction, isPending]. The action receives the previous state and the form data and returns the new state, for example an error message. You pass formAction to <form action> and React tracks the pending state and result for you.",
+      "codeSnippet": "const [error, submitAction, isPending] = useActionState(async (prev, formData) => {\n  const res = await updateName(formData.get('name'));\n  return res.error ?? null;\n}, null);\n\n<form action={submitAction}>\n  <input name=\"name\" />\n  <button disabled={isPending}>Save</button>\n  {error && <p>{error}</p>}\n</form>",
+      "tags": [
+        "useActionState",
+        "react-19"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "React 19 & Modern React",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What is useFormStatus?",
+      "answer": "useFormStatus (from react-dom) gives a component the status of the form it is inside: pending, data, method and action. It is used to build a reusable submit button that disables itself while the form is sending, without passing props. It must be called in a component rendered inside the <form>, not in the component that renders the form.",
+      "codeSnippet": "function SubmitButton() {\n  const { pending } = useFormStatus();\n  return <button disabled={pending}>{pending ? 'Saving...' : 'Save'}</button>;\n}",
+      "tags": [
+        "useFormStatus",
+        "react-19"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "React 19 & Modern React",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is useOptimistic used for?",
+      "answer": "useOptimistic shows the expected result immediately while an async action is still running, for example a new message or a like appears at once. It returns [optimisticState, addOptimistic]. When the action finishes, React switches back to the real state; if the request failed, the optimistic change disappears.",
+      "codeSnippet": "const [optimisticTodos, addOptimisticTodo] = useOptimistic(\n  todos,\n  (current, newTodo) => [...current, { ...newTodo, sending: true }]\n);",
+      "tags": [
+        "useOptimistic",
+        "react-19"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "React 19 & Modern React",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is the use API in React 19?",
+      "answer": "use(resource) reads the value of a promise or a context during render. With a promise, the component suspends until it resolves (showing the nearest Suspense fallback) and errors go to the nearest error boundary. Unlike hooks, use can be called inside if statements and loops. Do not create the promise during render of the same component; pass in a cached promise (e.g. from a Server Component or a library).",
+      "codeSnippet": "function Comments({ commentsPromise }) {\n  const comments = use(commentsPromise);\n  return comments.map(c => <p key={c.id}>{c.text}</p>);\n}",
+      "tags": [
+        "use",
+        "suspense",
+        "react-19"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "React 19 & Modern React",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What are React Server Components?",
+      "answer": "Server Components run only on the server (at build time or per request). They can be async, read databases or files directly and keep secrets, and their code is not sent to the browser, which makes bundles smaller. They cannot use state, effects or browser APIs. Interactive parts are Client Components marked with 'use client'. They are used through frameworks such as Next.js.",
+      "codeSnippet": "// Server Component\nexport default async function Page() {\n  const posts = await db.post.findMany();\n  return <PostList posts={posts} />;\n}",
+      "tags": [
+        "server-components",
+        "react-19"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "React 19 & Modern React",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What do the 'use client' and 'use server' directives mean?",
+      "answer": "'use client' at the top of a file marks the boundary where Client Components start: that file and what it imports are sent to the browser and can use state and effects. 'use server' marks Server Functions (Server Actions): async functions that run on the server but can be called from client code, for example as a form action. Server Components need no directive.",
+      "codeSnippet": "'use server';\nexport async function createPost(formData) {\n  await db.post.create({ data: { title: formData.get('title') } });\n}",
+      "tags": [
+        "server-components",
+        "server-actions"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "React 19 & Modern React",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is the difference between SSR, SSG and Server Components?",
+      "answer": "SSR (server-side rendering) builds the HTML on each request and then hydrates it in the browser; SSG builds the HTML once at build time. Both still send all component code to the browser for hydration. Server Components are a different idea: some components never ship JavaScript to the client at all and only send their rendered result. Frameworks like Next.js combine all three.",
+      "codeSnippet": "",
+      "tags": [
+        "ssr",
+        "ssg",
+        "server-components"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "React 19 & Modern React",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "How can you set the page title in React 19 without a library?",
+      "answer": "Render <title>, <meta> or <link> tags inside any component; React 19 moves them into the document <head> automatically. Before React 19 you needed a library like react-helmet or a useEffect that set document.title.",
+      "codeSnippet": "function BlogPost({ post }) {\n  return (\n    <article>\n      <title>{post.title}</title>\n      <meta name=\"description\" content={post.summary} />\n      <h1>{post.title}</h1>\n    </article>\n  );\n}",
+      "tags": [
+        "metadata",
+        "react-19"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "React 19 & Modern React",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "In React 19, how does a function component receive a ref from its parent?",
+      "options": [
+        "It cannot receive refs",
+        "Only through forwardRef",
+        "As a normal ref prop",
+        "Through useContext"
+      ],
+      "correctAnswer": "As a normal ref prop",
+      "answer": "React 19 passes ref like any other prop; forwardRef is no longer needed.",
+      "codeSnippet": "",
+      "tags": [
+        "refs",
+        "react-19"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "React 19 & Modern React",
+      "difficulty": "medium",
+      "isFree": false,
+      "question": "What does useActionState return?",
+      "options": [
+        "[state, formAction, isPending]",
+        "{ data, error, loading }",
+        "[state, setState]",
+        "A Promise"
+      ],
+      "correctAnswer": "[state, formAction, isPending]",
+      "answer": "It returns the latest action result, the wrapped action and a pending flag.",
+      "codeSnippet": "",
+      "tags": [
+        "useActionState"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "React 19 & Modern React",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Where must useFormStatus be called to get the form's pending state?",
+      "options": [
+        "In a Server Component",
+        "In the component that renders the <form>",
+        "In a component rendered inside the <form>",
+        "In the root App component"
+      ],
+      "correctAnswer": "In a component rendered inside the <form>",
+      "answer": "useFormStatus reads the status of the parent form, like a context.",
+      "codeSnippet": "",
+      "tags": [
+        "useFormStatus"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "React 19 & Modern React",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What is special about the use API compared to hooks?",
+      "options": [
+        "It replaces useState",
+        "It can be called inside if statements and loops",
+        "It can be called in normal functions outside components",
+        "It runs only on the server"
+      ],
+      "correctAnswer": "It can be called inside if statements and loops",
+      "answer": "use must still be called during render of a component or hook, but conditionally is allowed.",
+      "codeSnippet": "",
+      "tags": [
+        "use"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "React 19 & Modern React",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "Which of these can a Server Component do?",
+      "options": [
+        "Add an onClick handler",
+        "Read from the database directly with async/await",
+        "Use useEffect",
+        "Use useState"
+      ],
+      "correctAnswer": "Read from the database directly with async/await",
+      "answer": "Server Components run on the server; interactivity needs a Client Component with 'use client'.",
+      "codeSnippet": "",
+      "tags": [
+        "server-components"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "React 19 & Modern React",
+      "difficulty": "hard",
+      "isFree": false,
+      "question": "What does useOptimistic do while the action is running?",
+      "options": [
+        "Caches the server response",
+        "Blocks the UI until the server answers",
+        "Shows a temporary expected state that is replaced by the real state when the action ends",
+        "Retries the request until it succeeds"
+      ],
+      "correctAnswer": "Shows a temporary expected state that is replaced by the real state when the action ends",
+      "answer": "It makes the UI feel instant; if the action fails the optimistic value disappears.",
+      "codeSnippet": "",
+      "tags": [
+        "useOptimistic"
+      ]
+    }
+  ]
+}

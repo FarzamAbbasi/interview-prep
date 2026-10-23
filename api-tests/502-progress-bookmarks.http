@@ -5,7 +5,7 @@
 @baseUrl = http://localhost:5000/api
 
 ### Put real passwords only while testing, then put CHANGE_ME back
-@adminEmail = raeeschechi302@gmail.com
+@adminEmail = askedin143@gmail.com
 @adminPassword = dingdongdingdonghilalkidingdongbubble
 @userEmail = arsalmustafa62+ipp2@gmail.com
 @userPassword = secret456

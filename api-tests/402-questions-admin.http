@@ -4,7 +4,7 @@
 @baseUrl = http://localhost:5000/api
 
 ### Admin login: put ADMIN_PASSWORD from server/.env here. Put it back to CHANGE_ME after testing.
-@adminEmail = raeeschechi302@gmail.com
+@adminEmail = askedin143@gmail.com
 @adminPassword = CHANGE_ME
 
 ### PHP language id (from 401 tests)

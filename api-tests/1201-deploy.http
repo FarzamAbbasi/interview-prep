@@ -2,13 +2,13 @@
 ### How to use: put your real addresses below, then "Send Request" top to bottom.
 ### The first request can take up to ~1 minute (free Render server waking up).
 
-@api = https://YOUR-RENDER-APP.onrender.com/api
-@site = https://YOUR-VERCEL-APP.vercel.app
+@api = https://ipp-api.onrender.com/api
+@site = https://askedin.vercel.app
 @testEmail = arsalmustafa62+ipp-live1@gmail.com
 
 
 ### 1. Health -> expect 200 { success: true, message: "API is running", data: { ip } }
-###    "ip" must be YOUR internet IP (check whatismyip.com). If it is another IP, set TRUST_PROXY=2 on Render.
+###    "ip" must be YOUR internet IP (check whatismyip.com). If not: 10.x -> raise TRUST_PROXY, Cloudflare 104.x -> raise by one (Render needed 3).
 GET {{api}}/health
 
 
@@ -17,7 +17,8 @@ GET {{api}}/languages
 Origin: {{site}}
 
 
-### 3. CORS from another site -> expect NO Access-Control-Allow-Origin header (browser would block it)
+### 3. CORS from another site -> header still says Access-Control-Allow-Origin: {{site}} (not evil.example.com),
+###    so a browser on another site blocks the response
 GET {{api}}/languages
 Origin: https://evil.example.com
 

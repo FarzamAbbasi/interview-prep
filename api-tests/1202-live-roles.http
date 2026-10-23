@@ -3,18 +3,18 @@
 ### Order: guest (1-5) -> free user (6-10) -> admin (11-14) -> paid user (15-18) -> blocked (19-21) -> clean up (22-23).
 ### First request can take ~1 minute (Render waking up).
 
-@api = https://YOUR-RENDER-APP.onrender.com/api
-@adminEmail = CHANGE_ME
+@api = https://ipp-api.onrender.com/api
+@adminEmail = askedin143@gmail.com
 @adminPassword = CHANGE_ME
 ### a verified test user (register it on the live site first, open the email link)
 @userEmail = arsalmustafa62+ipp-live1@gmail.com
-@userPassword = secret456
+@userPassword = CHANGE_ME
 
 @userToken = {{userLogin.response.body.data.token}}
 @adminToken = {{adminLogin.response.body.data.token}}
 @userId = {{findUser.response.body.data.users[0]._id}}
 @paidQuizId = {{paidQuiz.response.body.data.attemptId}}
-@paidQ1 = {{paidQuiz.response.body.data.questions[0]._id}}
+@paidQ1 = {{paidQa.response.body.data.questions[0]._id}}
 
 
 ### ===== Guest =====
@@ -80,9 +80,9 @@ Content-Type: application/json
 GET {{api}}/admin/stats
 Authorization: Bearer {{adminToken}}
 
-### 13. Find the test user
+### 13. Find the test user (search text without "+": a + in a URL means a space) -> users[0] is the test user
 # @name findUser
-GET {{api}}/admin/users?search={{userEmail}}
+GET {{api}}/admin/users?search=ipp-live1
 Authorization: Bearer {{adminToken}}
 
 ### 14. Give full access -> 200, isPaid true
@@ -100,6 +100,7 @@ GET {{api}}/auth/me
 Authorization: Bearer {{userToken}}
 
 ### 16. All answers open -> every question isLocked false
+# @name paidQa
 GET {{api}}/questions?language=php&type=qa&limit=50
 Authorization: Bearer {{userToken}}
 
@@ -111,7 +112,7 @@ Content-Type: application/json
 
 { "language": "php", "difficulty": "mixed" }
 
-### 18. Bookmark a question -> 200 (send again to remove it)
+### 18. Bookmark a Q&A question from request 16 -> 200 (send again to remove it). MCQs cannot be bookmarked (404).
 POST {{api}}/bookmarks/{{paidQ1}}
 Authorization: Bearer {{userToken}}
 
