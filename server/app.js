@@ -7,7 +7,7 @@ const { notFound, errorHandler } = require('./middleware/errorHandler');
 const app = express();
 
 // Render sits behind a proxy; this lets rate limiting see the real user IP.
-// Check on live: GET /api/health shows "ip" = your own IP. If not, set TRUST_PROXY=2 on Render.
+// Check on live: GET /api/health shows "ip" = your own IP. Render (Cloudflare + proxy) needs TRUST_PROXY=3.
 app.set('trust proxy', Number(process.env.TRUST_PROXY) || 1);
 
 app.use(helmet());

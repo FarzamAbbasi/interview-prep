@@ -87,6 +87,7 @@ Note: with a Gmail sender (no own domain) some emails may land in **Spam**. An o
    | `BREVO_API_KEY` | from step 2 |
    | `EMAIL_FROM` | the verified Brevo sender |
    | `EMAIL_FROM_NAME` | `Interview Prep Portal` |
+   | `TRUST_PROXY` | `3` (Render sits behind Cloudflare + its own proxy; check `/api/health` shows your IP) |
 
    New JWT secret:
    ```bash
@@ -199,4 +200,4 @@ Fill in and send `docs/HANDOVER.md` to the client (send the admin password separ
 | Vercel 404 on page refresh | `client/vercel.json` missing or Root Directory is not `client` |
 | Seed: `Settings file not found` | Create `server/.env.live` (step 7.1) and run the command inside `server` |
 | Seed output shows the wrong database | Check the database name in `MONGO_URI` in `.env.live` (`.../interview-prep-prod?...`) |
-| `/api/health` shows an `ip` that is not yours | Render → Environment → `TRUST_PROXY=2` (rate limits then count real users) |
+| `/api/health` shows an `ip` that is not yours | `10.x` = too low, `104.x`/`172.x` (Cloudflare) = one more: raise `TRUST_PROXY` (Render needed `3`) |

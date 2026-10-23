@@ -5,7 +5,7 @@
 
 ### Login details (put real passwords here only while testing, then put CHANGE_ME back)
 @adminEmail = askedin143@gmail.com
-@adminPassword = change_me
+@adminPassword = CHANGE_ME
 ### Any normal (unpaid) verified user
 @userEmail = arsalmustafa62+ipp2@gmail.com
 @userPassword =  secret456

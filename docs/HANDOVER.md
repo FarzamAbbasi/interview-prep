@@ -21,10 +21,10 @@ Fill in the blanks before sending. **Send the admin password in a separate messa
 
 | Service | Used for | Login / owner | Free limit |
 |---|---|---|---|
-| MongoDB Atlas | Database (`interview-prep-prod`) | ______________ | 512 MB storage |
-| Render | API server | ______________ | Sleeps after 15 min idle; first visit then waits ~1 minute |
-| Vercel | Website | ______________ | Hobby plan |
-| Brevo | Verification and password emails | ______________ | 300 emails per day. The API key expires after 1 year or 90 days unused: then create a new one and update `BREVO_API_KEY` on Render |
+| MongoDB Atlas | Database (`interview-prep-prod`), org "Askedin" | askedin143@gmail.com (Organization Owner) | 512 MB storage |
+| Render | API server (`ipp-api`) | Developer account (arsalmustafa62@gmail.com) | Sleeps after 15 min idle; first visit then waits ~1 minute |
+| Vercel | Website (`askedin.vercel.app`) | Developer account (arsalmustafa62@gmail.com) | Hobby plan |
+| Brevo | Verification and password emails | Developer account (arsalmustafa62@gmail.com) | 300 emails per day. The API key expires after 1 year or 90 days unused: then create a new one and update `BREVO_API_KEY` on Render |
 
 Recommended: move each account to the client's own email (or add the client as owner) so the project does not depend on the developer.
 
