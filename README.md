@@ -13,13 +13,14 @@ A website for preparing programming interviews: questions with answers, timed qu
 | **Guest** | Languages, 5 free Q&A per language, pricing page |
 | **Free user** (account, no full access) | Everything above + 5-question sample quiz, quiz history |
 | **Full access** (paid, turned on by the admin) | All answers, quizzes by language / topic / difficulty, bookmarks |
-| **Admin** | Dashboard stats, users (full access, block), languages and topics, questions (Q&A + MCQ), backup |
+| **Admin** | Dashboard stats, users (full access, block), languages and topics, questions (Q&A + MCQ), bulk upload, backup |
 
 - Sign up with email verification, login, forgot / reset password
 - Questions: topic tabs, difficulty, tags, search, pages; paid answers locked for others
 - Quiz: 6 random MCQs (sample: 5 free MCQs), 30 seconds each, timer kept by the server, auto-submit, review with explanations
 - Dashboard: scores per language and quiz history
 - Admin backup: download all content as JSON, import with a preview (never deletes)
+- Admin bulk upload: one JSON file per language (language + topics + questions), row-by-row preview, sample file
 
 ---
 
@@ -35,7 +36,7 @@ interview-prep-portal/
 │   ├── routes/            URL → controller
 │   ├── utils/             email, tokens, filters, backup/import
 │   ├── scripts/           seed, backup, test email, dev token
-│   ├── data/              languages.json, questions.json, backups/
+│   ├── data/              languages.json, questions.json, uploads/ (bulk upload files), backups/
 │   ├── app.js             Express app (routes + middleware)
 │   └── server.js          starts the app after the database connects
 ├── client/                React website
@@ -48,7 +49,8 @@ interview-prep-portal/
 ├── api-tests/             .http files for VS Code REST Client, one per ticket
 └── docs/
     ├── TEST-CHECKLIST.md  manual test list for every role
-    └── DEPLOY.md          hosting guide (Atlas, Render, Vercel, Brevo)
+    ├── DEPLOY.md          hosting guide (Atlas, Render, Vercel, Brevo) + go-live steps
+    └── HANDOVER.md        for the client: links, accounts, daily admin work
 ```
 
 ---
@@ -110,11 +112,13 @@ If the API says **"Could not connect to any servers"**, your internet IP changed
 | `npm run dev` | Start the API with auto-restart |
 | `npm start` | Start the API (production) |
 | `npm run seed` | Add / update languages and questions from `data/*.json`, create the first admin. Safe to run again (no duplicates, never deletes) |
-| `npm run seed -- --file=data/backups/<file>.json` | Restore from a backup file |
-| `npm run seed:fresh` | **Deletes** all languages, questions and quiz results, then seeds |
+| `npm run seed -- --file=data/backups/<file>.json` | Restore from a backup file (a bulk upload file also works) |
+| `npm run seed -- --env=.env.live` | Seed the live database using `server/.env.live` (see `docs/DEPLOY.md` step 7) |
+| `npm run seed:fresh` | **Deletes** all languages, questions and quiz results, then seeds (refused on the live database without `--confirm-delete`) |
 | `npm run backup` | Save all content to `data/backups/backup-<date>.json` |
 | `npm run test:email -- you@email.com` | Check the email settings (Brevo or Gmail) and send test emails |
 | `npm run dev:token -- user@email.com` | Print a login token for testing |
+| `npm run set:password -- [--env=.env.live] user@email.com "NewPass"` | Set a new password for any account (e.g. admin) without email |
 
 ---
 
@@ -124,6 +128,7 @@ If the API says **"Could not connect to any servers"**, your internet IP changed
 - **Block a user:** Admin → Users → *Block* (they are logged out and cannot log in).
 - **Add a language:** Admin → Languages → *Add language* (name, logo, description, topics).
 - **Add questions:** Admin → Questions → *Add question*. Choose Q&A or MCQ; an MCQ needs 4 different options and the correct one. Mark *Free* to show it to everyone (free MCQs form the sample quiz).
+- **Bulk upload (many questions at once):** Admin → Bulk upload → *Download sample file* → fill in one language, its topics and questions → upload → check the preview (every row shows New / Update / Problem) → *Import now*. To edit an existing language offline, choose it and click *Download as upload file*. Same question text = updated, never duplicated; nothing is deleted.
 - **Hide instead of delete:** a language with questions, or an MCQ used in a quiz, cannot be deleted. Use *Deactivate*.
 - **Backup:** Admin → Backup → *Download backup* regularly. Import shows a preview first and never deletes.
 

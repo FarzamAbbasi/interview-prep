@@ -1,0 +1,153 @@
+### IPP-1202 live test of every role (after the live seed)
+### Fill in the URLs and passwords at the top while testing, then put CHANGE_ME back. Never commit real passwords.
+### Order: guest (1-5) -> free user (6-10) -> admin (11-14) -> paid user (15-18) -> blocked (19-21) -> clean up (22-23).
+### First request can take ~1 minute (Render waking up).
+
+@api = https://YOUR-RENDER-APP.onrender.com/api
+@adminEmail = CHANGE_ME
+@adminPassword = CHANGE_ME
+### a verified test user (register it on the live site first, open the email link)
+@userEmail = arsalmustafa62+ipp-live1@gmail.com
+@userPassword = secret456
+
+@userToken = {{userLogin.response.body.data.token}}
+@adminToken = {{adminLogin.response.body.data.token}}
+@userId = {{findUser.response.body.data.users[0]._id}}
+@paidQuizId = {{paidQuiz.response.body.data.attemptId}}
+@paidQ1 = {{paidQuiz.response.body.data.questions[0]._id}}
+
+
+### ===== Guest =====
+
+### 1. Health -> 200
+GET {{api}}/health
+
+### 2. Languages -> 200, PHP active (React only after you activate it)
+GET {{api}}/languages
+
+### 3. PHP Q&A as guest -> 200, hasFullAccess false; exactly 5 questions with isLocked false, the rest isLocked true (no answer)
+GET {{api}}/questions?language=php&type=qa&limit=50
+
+### 4. Quiz without login -> 401
+POST {{api}}/quiz/start
+Content-Type: application/json
+
+{ "language": "php" }
+
+### 5. Admin API without login -> 401
+GET {{api}}/admin/stats
+
+
+### ===== Free (unpaid) user =====
+
+### 6. Login -> 200
+# @name userLogin
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{userEmail}}", "password": "{{userPassword}}" }
+
+### 7. Me -> isPaid false, role user
+GET {{api}}/auth/me
+Authorization: Bearer {{userToken}}
+
+### 8. Sample quiz -> 201 with 5 questions (the free MCQs) and no correct answers. Leave it; it auto-submits when time runs out.
+POST {{api}}/quiz/start
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "language": "php" }
+
+### 9. Bookmarks -> 403 (full access only)
+GET {{api}}/bookmarks
+Authorization: Bearer {{userToken}}
+
+### 10. Admin API as user -> 403
+GET {{api}}/admin/stats
+Authorization: Bearer {{userToken}}
+
+
+### ===== Admin =====
+
+### 11. Admin login -> 200, data.user.role "admin"
+# @name adminLogin
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+### 12. Stats -> 200 with counts (PHP 20 Q&A + 20 MCQs, React 100 + 60 if uploaded)
+GET {{api}}/admin/stats
+Authorization: Bearer {{adminToken}}
+
+### 13. Find the test user
+# @name findUser
+GET {{api}}/admin/users?search={{userEmail}}
+Authorization: Bearer {{adminToken}}
+
+### 14. Give full access -> 200, isPaid true
+PUT {{api}}/admin/users/{{userId}}/access
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "isPaid": true }
+
+
+### ===== Paid user (same user, same token) =====
+
+### 15. Me -> isPaid true
+GET {{api}}/auth/me
+Authorization: Bearer {{userToken}}
+
+### 16. All answers open -> every question isLocked false
+GET {{api}}/questions?language=php&type=qa&limit=50
+Authorization: Bearer {{userToken}}
+
+### 17. Full quiz -> 201 with 6 questions
+# @name paidQuiz
+POST {{api}}/quiz/start
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "language": "php", "difficulty": "mixed" }
+
+### 18. Bookmark a question -> 200 (send again to remove it)
+POST {{api}}/bookmarks/{{paidQ1}}
+Authorization: Bearer {{userToken}}
+
+
+### ===== Blocked user =====
+
+### 19. Block -> 200 "... is blocked"
+PUT {{api}}/admin/users/{{userId}}/block
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "isBlocked": true }
+
+### 20. Blocked user's old token -> 403, code ACCOUNT_BLOCKED
+GET {{api}}/auth/me
+Authorization: Bearer {{userToken}}
+
+### 21. Blocked user login -> 403 "Your account has been blocked..."
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{userEmail}}", "password": "{{userPassword}}" }
+
+
+### ===== Clean up =====
+
+### 22. Unblock -> 200
+PUT {{api}}/admin/users/{{userId}}/block
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "isBlocked": false }
+
+### 23. Remove full access again (or keep it for the client demo) -> 200, isPaid false
+PUT {{api}}/admin/users/{{userId}}/access
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "isPaid": false }

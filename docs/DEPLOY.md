@@ -142,7 +142,46 @@ Run `api-tests/1201-deploy.http` (put the two URLs at the top). Then in the brow
 - Register → email arrives (check Spam) → link opens the Vercel site → verified → login works
 - Forgot password → reset email → new password works
 
-Admin login and content come in IPP-1202 (`npm run seed` against the live `MONGO_URI`).
+Admin login and content come in step 7.
+
+---
+
+## 7. Go live (IPP-1202)
+
+### 7.1 Live settings file (on your computer only)
+Create `server/.env.live` (git ignores it) with only what the seed needs:
+```
+NODE_ENV=production
+MONGO_URI=<the live string from step 1>
+ADMIN_NAME=Admin
+ADMIN_EMAIL=<client's admin email>
+ADMIN_PASSWORD=<new strong password, 16+ characters>
+```
+Strong password: `node -e "console.log(require('crypto').randomBytes(12).toString('base64url'))"`
+
+### 7.2 Seed the live database
+```bash
+cd server
+npm run seed -- --env=.env.live                                # PHP + admin account
+npm run seed -- --env=.env.live --file=data/uploads/react.json # React (inactive)
+```
+The first line of the output must say `database "interview-prep-prod"`. Running it again is safe (no duplicates).
+`--fresh` is refused on the live database unless `--confirm-delete` is added — do not use it after real users join.
+
+### 7.3 Passwords
+- **Atlas:** Database Access → the old development user → *Edit → Edit Password* (new password), then update local `server/.env`. The live site uses only `ipp-prod`.
+- **Admin:** log in on the live site with `ADMIN_PASSWORD`. To change it later without email:
+  `npm run set:password -- --env=.env.live <admin email> "<new password>"`
+- Delete `ADMIN_PASSWORD` from `.env.live` after the hand-over (keep it in a password manager).
+
+### 7.4 Test every role live
+- `api-tests/1202-live-roles.http` (guest, free user, admin, paid user, blocked)
+- `docs/TEST-CHECKLIST.md` in the browser on the live site, also on a phone
+- Review React questions in Admin → Questions, then Admin → Languages → React → *Activate*
+- Admin → Backup → *Download backup* (first live backup)
+
+### 7.5 Hand over
+Fill in and send `docs/HANDOVER.md` to the client (send the admin password separately, not in the same message).
 
 ---
 
@@ -158,4 +197,6 @@ Admin login and content come in IPP-1202 (`npm run seed` against the live `MONGO
 | Website: "The server is waking up" | Free Render was asleep; try again after a few seconds |
 | Register works but `emailSent: false` | Render Logs → `[email] ...`: `Brevo 401` = wrong key or Authorized IPs still on; sender error = `EMAIL_FROM` not verified |
 | Vercel 404 on page refresh | `client/vercel.json` missing or Root Directory is not `client` |
+| Seed: `Settings file not found` | Create `server/.env.live` (step 7.1) and run the command inside `server` |
+| Seed output shows the wrong database | Check the database name in `MONGO_URI` in `.env.live` (`.../interview-prep-prod?...`) |
 | `/api/health` shows an `ip` that is not yours | Render → Environment → `TRUST_PROXY=2` (rate limits then count real users) |

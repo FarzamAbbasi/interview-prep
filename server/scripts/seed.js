@@ -4,14 +4,27 @@
  *   npm run seed                          -> add/update data from data/languages.json + data/questions.json
  *   npm run seed:fresh                    -> delete languages, questions and quiz attempts first, then seed
  *   npm run seed -- --file=data/backups/backup-2026-10-21-1530.json   -> restore from a backup file
- *   npm run seed -- --file=data/uploads/javascript.json               -> an upload file for one language (IPP-1006)
+ *   npm run seed -- --file=data/uploads/react.json                    -> an upload file for one language (IPP-1006)
+ *   npm run seed -- --env=.env.live                                   -> use another settings file (live database, IPP-1202)
+ *
+ * --fresh on a live database (NODE_ENV=production or a database name ending in "-prod")
+ * is refused unless --confirm-delete is added too.
  *
  * Safe to run many times: existing questions are updated, not duplicated.
  * Also creates the first admin from ADMIN_* values in .env (only if that email does not exist).
  */
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+const args = process.argv.slice(2);
+const envArg = args.find((a) => a.startsWith('--env='));
+const envFile = envArg ? envArg.split('=')[1] : '.env';
+const envPath = path.resolve(path.join(__dirname, '..'), envFile);
+if (!fs.existsSync(envPath)) {
+  console.error(`Settings file not found: ${envPath}`);
+  process.exit(1);
+}
+require('dotenv').config({ path: envPath, quiet: true });
 
 const mongoose = require('mongoose');
 const Language = require('../models/Language');
@@ -20,7 +33,6 @@ const QuizAttempt = require('../models/QuizAttempt');
 const User = require('../models/User');
 const { importContent, normalizeUpload } = require('../utils/contentBackup');
 
-const args = process.argv.slice(2);
 const isFresh = args.includes('--fresh');
 const fileArg = args.find((a) => a.startsWith('--file='));
 
@@ -82,8 +94,17 @@ async function seedAdmin() {
 
 async function run() {
   try {
-    await mongoose.connect(process.env.MONGO_URI, { autoIndex: false }); // indexes are handled below
-    console.log('MongoDB connected');
+    const conn = await mongoose.connect(process.env.MONGO_URI, { autoIndex: false }); // indexes are handled below
+    const dbName = conn.connection.name;
+    console.log(`MongoDB connected: ${conn.connection.host} / database "${dbName}" (settings: ${envFile})`);
+
+    const isLive = process.env.NODE_ENV === 'production' || /-prod$/i.test(dbName);
+    if (isFresh && isLive && !args.includes('--confirm-delete')) {
+      throw new Error(
+        `--fresh would DELETE all content of the live database "${dbName}". ` +
+          'Download a backup first; add --confirm-delete if you really mean it.'
+      );
+    }
 
     if (isFresh) {
       await Promise.all([Language.deleteMany(), Question.deleteMany(), QuizAttempt.deleteMany()]);

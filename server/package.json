@@ -10,7 +10,8 @@
     "seed:fresh": "node scripts/seed.js --fresh",
     "backup": "node scripts/backup.js",
     "test:email": "node scripts/testEmail.js",
-    "dev:token": "node scripts/devToken.js"
+    "dev:token": "node scripts/devToken.js",
+    "set:password": "node scripts/setPassword.js"
   },
   "keywords": [],
   "author": "",
