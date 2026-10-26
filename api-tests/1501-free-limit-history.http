@@ -1,0 +1,80 @@
+### IPP-1501 Free limit (only free questions without full access) + IPP-1502 delete quiz history
+### Use a NORMAL unpaid user. Put passwords while testing, then put CHANGE_ME back.
+
+@baseUrl = http://localhost:5000/api
+@userEmail = arsalmustafa62+ipp2@gmail.com
+@userPassword = CHANGE_ME
+@userToken = {{userLogin.response.body.data.token}}
+
+
+### ---- IPP-1501: guest ----
+
+### 1. PHP as guest -> 200, ONLY the first topic (PHP: Basics & Syntax, 4 questions, with answers), total 4, "hiddenCount": 16 (IPP-1607)
+GET {{baseUrl}}/questions?language=php&limit=50
+
+
+### 2. Tags as guest -> only tags used by the free questions
+GET {{baseUrl}}/questions/tags?language=php
+
+
+### 3. A paid question by id as guest -> 403, code NEEDS_FULL_ACCESS
+###    (put the _id of a NOT free question from Admin -> Questions)
+GET {{baseUrl}}/questions/PUT_PAID_QUESTION_ID
+
+
+### 4. Language -> every topic has qaCount AND freeQaCount (topic tabs show freeQaCount without full access)
+GET {{baseUrl}}/languages/php
+
+
+### ---- unpaid user ----
+
+### 5. Login -> 200
+# @name userLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{userEmail}}", "password": "{{userPassword}}" }
+
+
+### 6. PHP as unpaid user -> same as guest: first topic only, "hiddenCount": 16, "hasFullAccess": false
+GET {{baseUrl}}/questions?language=php&limit=50
+Authorization: Bearer {{userToken}}
+
+
+### ---- IPP-1502: delete quiz history (any logged-in user) ----
+
+### 7. History -> note one attempts[]._id (take a sample quiz first if empty)
+GET {{baseUrl}}/quiz/history
+Authorization: Bearer {{userToken}}
+
+
+### 8. Delete one quiz -> 200 "Quiz deleted from your history" (put the _id from 7)
+DELETE {{baseUrl}}/quiz/PUT_ATTEMPT_ID
+Authorization: Bearer {{userToken}}
+
+
+### 9. Same again -> 404 "Quiz not found" (also 404 for another user's quiz)
+DELETE {{baseUrl}}/quiz/PUT_ATTEMPT_ID
+Authorization: Bearer {{userToken}}
+
+
+### 10. Clear all -> 200 "Quiz history cleared (N quizzes)" or "Your quiz history is already empty", data.deleted
+DELETE {{baseUrl}}/quiz/history
+Authorization: Bearer {{userToken}}
+
+
+### 11. History after clearing -> stats.totalAttempts 0, attempts []
+GET {{baseUrl}}/quiz/history
+Authorization: Bearer {{userToken}}
+
+
+### 12. Not logged in -> 401
+DELETE {{baseUrl}}/quiz/history
+
+
+### ---- In the browser (by hand) ----
+### Guest or unpaid: /languages/php opens only the first topic (others show "Full access"); scroll to the end -> popup
+###   "That's all the free PHP questions" (guest: Create free account / See pricing; user: Get full access / Not now)
+###   + a dashed card at the end. Paid user: all 20, no popup.
+### Unpaid: finish the sample quiz -> popup "That was the free sample quiz" (once; not again after reload).
+### Dashboard -> trash icon on a quiz -> confirm -> gone. "Clear history" -> confirm -> "No quizzes yet".

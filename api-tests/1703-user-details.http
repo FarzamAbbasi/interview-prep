@@ -1,0 +1,74 @@
+### IPP-1703 Admin -> Users -> Details (study progress + quiz performance)
+### Put ADMIN_PASSWORD from server/.env while testing, then put CHANGE_ME back.
+### Use a normal user who has some "done" questions and a few quizzes.
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = CHANGE_ME
+@userEmail = arsalmustafa62+ipp2@gmail.com
+@userPassword = CHANGE_ME
+@userSearch = arsalmustafa62%2Bipp2@gmail.com
+@adminToken = {{adminLogin.response.body.data.token}}
+@userToken = {{userLogin.response.body.data.token}}
+@userId = {{userList.response.body.data.users.0._id}}
+
+
+### 1. Admin login -> 200, data.user.lastLoginAt = now
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Normal user login -> 200, data.user.lastLoginAt + lastSeenAt = now
+# @name userLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{userEmail}}", "password": "{{userPassword}}" }
+
+
+### 3. Find the user -> 200, 1 user ("+" sent as %2B, else the search finds nobody)
+# @name userList
+GET {{baseUrl}}/admin/users?search={{userSearch}}
+Authorization: Bearer {{adminToken}}
+
+
+### 4. Details -> 200 with:
+###   user (no bookmarks array, bookmarksCount, paidBy {name,email} or null)
+###   activity { lastSeenAt, lastLoginAt, lastStudied, lastQuiz }
+###   study { done, total, percent, thisWeek, languages[ { done, total, topics[ { done, total, locked } ] } ], recentDone (max 5), bookmarks (max 10) }
+###   quizzes { count, sampleCount, average, best, trend { direction, points (max 10) }, languages, weakTopics (max 5), recent (max 10) }
+###   Unpaid user: topics after the first one have locked: true
+GET {{baseUrl}}/admin/users/{{userId}}/details
+Authorization: Bearer {{adminToken}}
+
+
+### 5. Give full access -> 200 (if already on, turn it off first in the UI). Then step 4 again: user.paidBy = admin
+PUT {{baseUrl}}/admin/users/{{userId}}/access
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "isPaid": true }
+
+
+### 6. Normal user cannot open details -> 403
+GET {{baseUrl}}/admin/users/{{userId}}/details
+Authorization: Bearer {{userToken}}
+
+
+### 7. Bad id -> 400 "Invalid user id"
+GET {{baseUrl}}/admin/users/abc/details
+Authorization: Bearer {{adminToken}}
+
+
+### 8. Unknown id -> 404 "User not found"
+GET {{baseUrl}}/admin/users/000000000000000000000000/details
+Authorization: Bearer {{adminToken}}
+
+
+### 9. Browser: Admin -> Users -> click a name or "Details" -> side panel opens.
+###    Study progress tab: language click opens topics; Quizzes tab: trend bars, weak topics, last 10.
+###    Esc / X / click outside closes. Check dark mode too.
+### 10. Admin -> Backup -> Download full backup -> users have paidBy (email), lastLoginAt, lastSeenAt.

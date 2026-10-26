@@ -1,14 +1,135 @@
 @import "tailwindcss";
+@import "@fontsource-variable/schibsted-grotesk";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
 
-/* Brand colors: use as bg-brand-600, text-brand-700, etc.
-   Change these values to re-color the whole site. */
+/*
+ * AskedIn design tokens (IPP-1401)
+ * - brand: violet for actions and links (IPP-1602) (bg-brand-600, text-brand-700, ...)
+ * - mark:  highlighter yellow, ONLY for "this is the answer / this is free" (bg-mark text-mark-ink)
+ * Change these values to re-color the whole site.
+ */
 @theme {
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
+  --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-brand-50: #efeafd;
+  --color-brand-100: #e2d9fb;
+  --color-brand-600: #6d4bd8;
+  --color-brand-700: #5a3bc0;
+  --color-brand-800: #482f9c;
+
+  --color-slate-50: #f7f5fd;
+  --color-slate-100: #efecf8;
+  --color-slate-200: #e4def6;
+  --color-slate-300: #d2cbe8;
+
+  --color-mark: #ffd84d;
+  --color-mark-ink: #3b2f00;
+}
+
+/*
+ * Dark mode (IPP-1401): <html data-theme="dark">.
+ * Instead of adding dark: classes to every page, the colors the site uses are swapped here:
+ * the slate scale is turned around (slate-50 = page background, slate-900 = text),
+ * "white" becomes the card color, and colored tints become dark tints with light text.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-white: #1d1934;
+  --color-slate-50: #141127;
+  --color-slate-100: #241f40;
+  --color-slate-200: #2e2950;
+  --color-slate-300: #3d3765;
+  --color-slate-400: #6f6894;
+  --color-slate-500: #8e88b0;
+  --color-slate-600: #a49dc6;
+  --color-slate-700: #c2bde0;
+  --color-slate-800: #ddd9f2;
+  --color-slate-900: #ece9fb;
+
+  --color-brand-50: #2a2350;
+  --color-brand-100: #362d66;
+  --color-brand-600: #a68bff;
+  --color-brand-700: #bba6ff;
+  --color-brand-800: #d2c5ff;
+  --color-blue-600: #a68bff;
+  --color-blue-700: #bba6ff;
+
+  --color-mark: #e8c547;
+  --color-mark-ink: #2a2200;
+
+  --color-green-50: #0e2a22;
+  --color-green-100: #12382c;
+  --color-green-200: #1b4b3a;
+  --color-green-300: #236a50;
+  --color-green-400: #2f9a70;
+  --color-green-500: #3fb488;
+  --color-green-600: #4cc9a0;
+  --color-green-700: #6fd8b4;
+  --color-green-800: #93e4c9;
+  --color-green-900: #b8efdc;
+
+  --color-amber-50: #2b2410;
+  --color-amber-100: #3a3014;
+  --color-amber-200: #4d3f18;
+  --color-amber-500: #d4a72f;
+  --color-amber-600: #e8c547;
+  --color-amber-700: #f0d36a;
+  --color-amber-800: #f5df8e;
+  --color-amber-900: #faebb5;
+
+  --color-red-50: #2f1418;
+  --color-red-100: #3d1a1f;
+  --color-red-200: #552328;
+  --color-red-300: #7a3036;
+  --color-red-400: #c24a52;
+  --color-red-500: #e05e66;
+  --color-red-600: #ff7b7b;
+  --color-red-700: #ff9a9a;
+  --color-red-800: #ffb8b8;
+
+  --color-violet-50: #241d47;
+  --color-violet-700: #c4b5fd;
+  --color-violet-800: #ddd6fe;
+  --color-purple-50: #2a1d45;
+  --color-purple-700: #d8b4fe;
 }
 
 body {
   @apply bg-slate-50 text-slate-900 antialiased;
+}
+
+/* Code: "==" and "===" must look different, so no ligatures */
+code,
+pre,
+kbd,
+.font-mono {
+  font-variant-ligatures: none;
+}
+
+/* Code blocks keep their own dark colors in both themes (in a layer, so p-3 / text-sm on the element still win) */
+@layer components {
+  .code-block {
+    @apply overflow-x-auto rounded-lg border p-4 font-mono text-[13px] leading-relaxed;
+    background: #16122b;
+    border-color: #2e2950;
+    color: #e3e8f2;
+  }
+}
+
+/* Keyboard focus is always visible */
+:focus-visible {
+  outline: 2px solid var(--color-brand-600);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

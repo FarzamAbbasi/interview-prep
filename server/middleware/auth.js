@@ -19,6 +19,15 @@ async function findTokenUser(decoded) {
   return user;
 }
 
+// IPP-1703: "last seen" for the admin user panel. Saved at most once an hour, never blocks the request.
+const SEEN_EVERY_MS = 60 * 60 * 1000;
+function touchLastSeen(user) {
+  if (user.lastSeenAt && Date.now() - user.lastSeenAt.getTime() < SEEN_EVERY_MS) return;
+  User.updateOne({ _id: user._id }, { $set: { lastSeenAt: new Date() } })
+    .exec()
+    .catch(() => {});
+}
+
 /**
  * protect: route needs a logged-in user.
  * Adds the user to req.user. Blocked users are refused.
@@ -39,6 +48,7 @@ async function protect(req, res, next) {
   }
 
   req.user = user;
+  touchLastSeen(user);
   next();
 }
 
@@ -54,7 +64,10 @@ async function optionalAuth(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await findTokenUser(decoded);
-    if (user && user !== 'expired' && !user.isBlocked) req.user = user;
+    if (user && user !== 'expired' && !user.isBlocked) {
+      req.user = user;
+      touchLastSeen(user);
+    }
   } catch {
     // treat as guest
   }

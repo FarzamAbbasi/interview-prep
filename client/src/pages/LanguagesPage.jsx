@@ -23,11 +23,11 @@ export default function LanguagesPage() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-8 flex flex-col gap-4 pt-2 sm:flex-row sm:items-end sm:justify-between sm:pt-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Languages</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Pick a language to see its interview questions. Free questions are open to everyone.
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">Languages</h1>
+          <p className="mt-3 max-w-xl text-slate-600">
+            Pick a language and work through it topic by topic.
           </p>
         </div>
 
@@ -40,7 +40,7 @@ export default function LanguagesPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search languages"
-              className="w-full rounded-md border border-slate-300 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
             />
           </label>
         )}
@@ -51,7 +51,7 @@ export default function LanguagesPage() {
           No language matches &ldquo;{search}&rdquo;.
         </p>
       ) : (
-        <LanguageGrid languages={shown} loading={loading} error={error} onRetry={reload} />
+        <LanguageGrid languages={shown} loading={loading} error={error} onRetry={reload} showMore={!search} />
       )}
     </div>
   );

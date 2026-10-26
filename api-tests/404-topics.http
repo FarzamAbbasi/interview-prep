@@ -10,7 +10,7 @@
 @adminEmail = askedin143@gmail.com
 @adminPassword = CHANGE_ME
 @userEmail = arsalmustafa62+ipp2@gmail.com
-@userPassword = secret456
+@userPassword = CHANGE_ME
 
 @phpId = 6ad894999dcf1f882fd249b2
 @adminToken = {{adminLogin.response.body.data.token}}

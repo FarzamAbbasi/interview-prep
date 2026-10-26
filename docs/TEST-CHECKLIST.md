@@ -1,4 +1,4 @@
-# Interview Prep Portal — Test checklist (IPP-1101)
+# AskedIn — Test checklist (IPP-1101)
 
 Run on your computer with the real database (`server`: `npm run dev`, `client`: `npm run dev`).
 Tick each line. If something fails, note the page, the account and what you saw.
@@ -56,6 +56,16 @@ Tip: use a normal window for one account and an Incognito window for another.
 - [ ] Questions: filters, add a test MCQ and a test Q&A, edit, make free/paid, deactivate, delete
 - [ ] An MCQ used in a quiz cannot be deleted ("Deactivate it instead")
 - [ ] Backup: download; import the same file → preview "0 to add, 40 to update"; import works
+- [ ] Full backup (IPP-1007): file has users + quiz results; import the same file → "0 new users · N already there"; *Content only* file has no users
+- [ ] Restore on an empty database (`npm run seed -- --file=...`): old user logs in with the same password, sees bookmarks + quiz history; questions keep their old dates
+- [ ] AskedIn look (IPP-1401/1402): logo + tab title "AskedIn"; moon/sun button switches dark mode on every page (public, quiz, dashboard, admin) and stays after reload; code blocks readable in both
+- [ ] Home: answer the PHP question in the hero (right answer turns yellow, explanation shows); timer runs out → "Time's up"; languages list + "What you get" table; phone width looks fine
+- [ ] Free limit (IPP-1501): guest + unpaid see ONLY the 5 free questions per language; scrolling to the end opens the "Get full access" popup; sample quiz result shows the popup once
+- [ ] Delete history (IPP-1502): dashboard trash icon removes one quiz; "Clear history" removes all (paid and unpaid users)
+- [ ] Language pages (IPP-1601/1602): language cards with difficulty bar and % done; topic cards; tick a question as done -> ring + card update; finished topic -> "Quiz this topic"; whole site violet
+- [ ] One by one (IPP-1603): language page -> "One by one" -> Space shows the answer, ← → move, "I knew this" marks done + next, "Review again" un-marks + next; works on phone
+- [ ] First topic free (IPP-1607): guest/unpaid open only the first topic of each language, others show "Full access"; sample quiz uses the first topic; topic cards are whole (none cut at the edges)
+- [ ] Backup reminder (IPP-1008): dashboard box "No full backup yet" → download full → green "today" → give full access to a user → amber "1 new paid user" → download → green
 - [ ] Clean up: delete the test language/questions
 
 ## 6. Phone / small window

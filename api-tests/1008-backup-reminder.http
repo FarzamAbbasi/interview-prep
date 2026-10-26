@@ -1,0 +1,49 @@
+### IPP-1008 Backup reminder ("Last full backup: X days ago") tests
+### Put the admin password while testing, then put CHANGE_ME back.
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = CHANGE_ME
+@adminToken = {{adminLogin.response.body.data.token}}
+
+
+### 1. Admin login -> expect 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Last backup -> expect 200, data.lastBackup = null (never) or { at, by, users, questions, quizAttempts, changesSince }
+GET {{baseUrl}}/admin/backup/last
+Authorization: Bearer {{adminToken}}
+
+
+### 3. Content-only export -> expect data.lastBackup missing (content only does NOT count as a backup)
+GET {{baseUrl}}/admin/backup/export?scope=content
+Authorization: Bearer {{adminToken}}
+
+
+### 4. Full export -> expect data.lastBackup { at: now, by: admin email, users: N, ... }
+GET {{baseUrl}}/admin/backup/export
+Authorization: Bearer {{adminToken}}
+
+
+### 5. Last backup again -> expect at = time of request 4, changesSince all 0
+GET {{baseUrl}}/admin/backup/last
+Authorization: Bearer {{adminToken}}
+
+
+### 6. Stats -> expect data.lastBackup (same as 5); the admin dashboard shows a green box "Last full backup: today"
+GET {{baseUrl}}/admin/stats
+Authorization: Bearer {{adminToken}}
+
+
+### 7. By hand: Admin -> Users -> give a test user full access -> dashboard box turns amber:
+###    "Not in that backup yet: 1 new paid user, 1 user new or changed" + "Download backup now".
+###    Download a full backup -> green again. Older than 7 days -> amber.
+
+
+### 8. Not logged in -> expect 401
+GET {{baseUrl}}/admin/backup/last

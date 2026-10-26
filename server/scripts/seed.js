@@ -4,6 +4,7 @@
  *   npm run seed                          -> add/update data from data/languages.json + data/questions.json
  *   npm run seed:fresh                    -> delete languages, questions and quiz attempts first, then seed
  *   npm run seed -- --file=data/backups/backup-2026-10-21-1530.json   -> restore from a backup file
+ *                                                                        (a full backup also adds missing users + quiz results, IPP-1007)
  *   npm run seed -- --file=data/uploads/react.json                    -> an upload file for one language (IPP-1006)
  *   npm run seed -- --env=.env.live                                   -> use another settings file (live database, IPP-1202)
  *
@@ -43,7 +44,7 @@ function loadData() {
     const backupPath = path.resolve(path.join(__dirname, '..'), fileArg.split('=')[1]);
     const backup = normalizeUpload(readJson(backupPath));
     console.log(`Restoring from backup: ${backupPath}`);
-    return { languages: backup.languages || [], questions: backup.questions || [] };
+    return { languages: backup.languages || [], questions: backup.questions || [], users: backup.users, quizAttempts: backup.quizAttempts };
   }
   const dataDir = path.join(__dirname, '..', 'data');
   return {
@@ -111,14 +112,22 @@ async function run() {
       console.log('Fresh mode: languages, questions and quiz attempts deleted');
     }
 
-    const { languages, questions } = loadData();
+    const { languages, questions, users, quizAttempts } = loadData();
 
     await fixIndexes(); // must run before inserting questions
 
     // Same rules as the admin import page (adds or updates, never deletes)
-    const result = await importContent({ languages, questions });
+    const result = await importContent({ languages, questions, users, quizAttempts });
     console.log(`Languages: ${result.languages.added} added, ${result.languages.updated} updated`);
     console.log(`Questions: ${result.questions.added} added, ${result.questions.updated} updated, ${result.questions.skipped} skipped`);
+    if (result.users) {
+      const u = result.users;
+      console.log(`Users: ${u.added} added, ${u.existing} already there (not changed), ${u.skipped} skipped`);
+    }
+    if (result.quizAttempts) {
+      const a = result.quizAttempts;
+      console.log(`Quiz results: ${a.added} added, ${a.existing} already there, ${a.skipped} skipped`);
+    }
     if (result.errors.length) {
       console.log('\nSkipped items:');
       result.errors.forEach((e) => console.log('  - ' + e));

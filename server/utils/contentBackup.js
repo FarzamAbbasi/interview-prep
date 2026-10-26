@@ -15,29 +15,40 @@
  * Import only ADDS or UPDATES, it never deletes:
  *   - languages are matched by slug; topics are merged (topics missing from the file are kept)
  *   - questions are matched by language + question text (no duplicates when importing twice)
+ *
+ * IPP-1007: a full backup also has "users" and "quizAttempts" (see utils/userBackup.js).
+ * Languages and questions keep their original createdAt when they are restored (an existing one keeps its own date).
+ * Those are only ADDED when missing; existing users and attempts are never changed.
  */
 const mongoose = require('mongoose');
 const Language = require('../models/Language');
 const Question = require('../models/Question');
 const slugify = require('./slugify');
+const { buildUserBackup, importUsers, questionKey } = require('./userBackup');
 
 const MAX_ERRORS = 50;
 const MAX_ITEMS = 2000; // rows shown in the upload preview
 const short = (text) => `"${String(text || '').slice(0, 50)}${String(text || '').length > 50 ? '…' : ''}"`;
 
-async function buildBackup() {
+/**
+ * @param {{ includeUsers?: boolean }} options  includeUsers=false -> content only (no emails / passwords, safe to share)
+ */
+async function buildBackup({ includeUsers = true } = {}) {
   const languages = await Language.find().sort('name').lean();
   const questions = await Question.find().populate('language', 'slug').sort('createdAt').lean();
 
-  return {
+  const backup = {
+    version: 2,
+    scope: includeUsers ? 'full' : 'content',
     exportedAt: new Date().toISOString(),
-    languages: languages.map(({ name, slug, icon, description, isActive, topics = [] }) => ({
+    languages: languages.map(({ name, slug, icon, description, isActive, topics = [], createdAt }) => ({
       name,
       slug,
       icon,
       description,
       isActive,
       topics: topics.map((t) => ({ name: t.name, slug: t.slug })),
+      createdAt,
     })),
     questions: questions
       .filter((q) => q.language) // skip questions whose language was deleted
@@ -53,6 +64,7 @@ async function buildBackup() {
           tags: q.tags,
           isFree: q.isFree,
           isActive: q.isActive,
+          createdAt: q.createdAt,
         };
         if (q.type === 'mcq') {
           item.options = q.options;
@@ -61,6 +73,8 @@ async function buildBackup() {
         return item;
       }),
   };
+  if (includeUsers) Object.assign(backup, await buildUserBackup());
+  return backup;
 }
 
 // Same MCQ rules as the admin API (exactly 4 different, non-empty options + correct option 0-3)
@@ -93,13 +107,21 @@ function normalizeUpload(data) {
   return { languages: [language], questions };
 }
 
+// createdAt from a backup file (only used when the item is created, never changes an existing one)
+function fileDate(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 const LANGUAGE_FIELDS_WITH_DEFAULTS = { icon: '', description: '', isActive: true };
 
 /**
- * @param {{ languages?: object[], questions?: object[] }} data
+ * @param {{ languages?: object[], questions?: object[], users?: object[], quizAttempts?: object[] }} data
  * @param {{ dryRun?: boolean }} options  dryRun: check everything and count, but write nothing
  * @returns {{ languages: {added, updated}, questions: {added, updated, skipped}, errors: string[], dryRun,
- *             languageItems: object[], items: object[] }}   (items = one row per question, for the preview)
+ *             languageItems: object[], items: object[],    (items = one row per question, for the preview)
+ *             users?, quizAttempts?, bookmarksMissing? }}  (only when the file has users / quizAttempts)
  */
 async function importContent(data, { dryRun = false } = {}) {
   const fileLanguages = Array.isArray(data?.languages) ? data.languages : [];
@@ -169,6 +191,10 @@ async function importContent(data, { dryRun = false } = {}) {
       if (raw[key] !== undefined) set[key] = doc[key];
       else if (!existing) setOnInsert[key] = fallback;
     });
+    // Dates are set here (timestamps: false below), so a restored language keeps its original createdAt
+    const now = new Date();
+    set.updatedAt = now;
+    setOnInsert.createdAt = fileDate(raw.createdAt) || now;
 
     if (existing) languagesUpdated += 1;
     else languagesAdded += 1;
@@ -180,9 +206,8 @@ async function importContent(data, { dryRun = false } = {}) {
       topicSlugs: new Set(topics.map((t) => t.slug)),
       isNew: !existing,
     });
-    const update = { $set: set };
-    if (Object.keys(setOnInsert).length) update.$setOnInsert = setOnInsert;
-    languageOps.push({ updateOne: { filter: { slug: doc.slug }, update, upsert: true } });
+    const update = { $set: set, $setOnInsert: setOnInsert };
+    languageOps.push({ updateOne: { filter: { slug: doc.slug }, update, upsert: true, timestamps: false } });
   }
 
   if (!dryRun && languageOps.length) {
@@ -200,6 +225,7 @@ async function importContent(data, { dryRun = false } = {}) {
     (await Question.find({ language: { $in: languageIds } }, 'language question').lean()).map((q) => `${q.language}|${q.question}`)
   );
   const seenInFile = new Set();
+  const fileQuestionKeys = []; // "slug|question text" of valid questions in the file (for users' bookmarks in a dry run)
   const questionOps = [];
   let added = 0;
   let updated = 0;
@@ -274,6 +300,7 @@ async function importContent(data, { dryRun = false } = {}) {
       continue;
     }
     seenInFile.add(key);
+    fileQuestionKeys.push(questionKey(row.language, doc.question));
 
     const isUpdate = existingTexts.has(key);
     if (isUpdate) updated += 1;
@@ -284,12 +311,33 @@ async function importContent(data, { dryRun = false } = {}) {
     delete values._id;
     delete values.createdAt;
     delete values.updatedAt;
-    questionOps.push({ updateOne: { filter: { language: lang._id, question: doc.question }, update: { $set: values }, upsert: true } });
+    // Dates are set here (timestamps: false), so a restored question keeps its original createdAt
+    const now = new Date();
+    values.updatedAt = now;
+    const update = { $set: values, $setOnInsert: { createdAt: fileDate(raw.createdAt) || now } };
+    questionOps.push({
+      updateOne: { filter: { language: lang._id, question: doc.question }, update, upsert: true, timestamps: false },
+    });
   }
 
   if (!dryRun && questionOps.length) await Question.bulkWrite(questionOps);
 
+  // ---- Users + quiz history (IPP-1007, full backup only) ----
+  let people = {};
+  if (Array.isArray(data?.users) || Array.isArray(data?.quizAttempts)) {
+    const idToSlug = new Map([...slugToLanguage.entries()].map(([slug, l]) => [String(l._id), slug]));
+    const questionIds = new Map();
+    (await Question.find({ language: { $in: [...slugToLanguage.values()].map((l) => l._id) } }, 'language question').lean()).forEach(
+      (q) => questionIds.set(questionKey(idToSlug.get(String(q.language)), q.question), q._id)
+    );
+    if (dryRun) {
+      fileQuestionKeys.forEach((k) => questionIds.has(k) || questionIds.set(k, new mongoose.Types.ObjectId()));
+    }
+    people = await importUsers(data, { dryRun, questionIds, slugToLanguage, addError });
+  }
+
   return {
+    ...people,
     dryRun,
     languages: { added: languagesAdded, updated: languagesUpdated },
     questions: { added, updated, skipped },

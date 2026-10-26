@@ -2,54 +2,68 @@ const Language = require('../models/Language');
 const Question = require('../models/Question');
 const AppError = require('../utils/AppError');
 const { sendSuccess } = require('../utils/apiResponse');
+const { doneCounts } = require('../utils/progress');
+const { firstTopicSlug } = require('../utils/freeAccess');
+const { hasLanguageAccess } = require('../utils/access');
 
 const isAdmin = (req) => req.user?.role === 'admin';
 
+const qa = { $eq: ['$type', 'qa'] };
+const sumIf = (cond) => ({ $sum: { $cond: [cond, 1, 0] } });
+const COUNT_FIELDS = {
+  qaCount: sumIf(qa),
+  mcqCount: sumIf({ $eq: ['$type', 'mcq'] }),
+  // IPP-1602: difficulty mix of the Q&A (green / yellow / red bar)
+  easy: sumIf({ $and: [qa, { $eq: ['$difficulty', 'easy'] }] }),
+  medium: sumIf({ $and: [qa, { $eq: ['$difficulty', 'medium'] }] }),
+  hard: sumIf({ $and: [qa, { $eq: ['$difficulty', 'hard'] }] }),
+};
+const pickCounts = (c, done) => {
+  const counts = {
+    qaCount: c?.qaCount || 0,
+    mcqCount: c?.mcqCount || 0,
+    freeQaCount: c?.freeQaCount || 0,
+    difficulty: { easy: c?.easy || 0, medium: c?.medium || 0, hard: c?.hard || 0 },
+  };
+  if (done !== undefined) counts.doneCount = done; // IPP-1601: only for logged-in users
+  return counts;
+};
+
 /**
- * Add question counts to each language:
- *   qaCount, mcqCount, freeQaCount (only active questions)
+ * Add question counts to each language and each topic (only active questions):
+ *   qaCount, mcqCount, freeQaCount, difficulty { easy, medium, hard }
+ *   + doneCount when a user is logged in (IPP-1601)
  */
-async function withCounts(languages) {
+async function withCounts(languages, user) {
   const ids = languages.map((l) => l._id);
-  const counts = await Question.aggregate([
-    { $match: { isActive: true, language: { $in: ids } } },
-    {
-      $group: {
-        _id: '$language',
-        qaCount: { $sum: { $cond: [{ $eq: ['$type', 'qa'] }, 1, 0] } },
-        mcqCount: { $sum: { $cond: [{ $eq: ['$type', 'mcq'] }, 1, 0] } },
-        freeQaCount: {
-          $sum: { $cond: [{ $and: [{ $eq: ['$type', 'qa'] }, { $eq: ['$isFree', true] }] }, 1, 0] },
-        },
-      },
-    },
+  const match = { $match: { isActive: true, language: { $in: ids } } };
+  const [counts, topicCounts, done] = await Promise.all([
+    Question.aggregate([match, { $group: { _id: '$language', ...COUNT_FIELDS } }]),
+    Question.aggregate([match, { $group: { _id: { language: '$language', topic: '$topic' }, ...COUNT_FIELDS } }]), // IPP-404
+    doneCounts(user, ids),
   ]);
-
-  // IPP-404: counts per topic
-  const topicCounts = await Question.aggregate([
-    { $match: { isActive: true, language: { $in: ids } } },
-    {
-      $group: {
-        _id: { language: '$language', topic: '$topic' },
-        qaCount: { $sum: { $cond: [{ $eq: ['$type', 'qa'] }, 1, 0] } },
-        mcqCount: { $sum: { $cond: [{ $eq: ['$type', 'mcq'] }, 1, 0] } },
-      },
-    },
-  ]);
-  const topicKey = (languageId, topic) => `${languageId}:${topic}`;
+  const topicKey = (languageId, topic) => `${languageId}:${topic || ''}`;
   const byTopic = new Map(topicCounts.map((c) => [topicKey(c._id.language, c._id.topic), c]));
-
   const byId = new Map(counts.map((c) => [String(c._id), c]));
+
+  // IPP-1607: free = the first topic, so freeQaCount = that topic's Q&A count
   return languages.map((l) => {
-    const c = byId.get(String(l._id));
+    const first = firstTopicSlug(l);
+    const firstCounts = first ? byTopic.get(topicKey(l._id, first)) : null;
     return {
       ...l,
-      qaCount: c?.qaCount || 0,
-      mcqCount: c?.mcqCount || 0,
-      freeQaCount: c?.freeQaCount || 0,
+      hasAccess: hasLanguageAccess(user, l._id), // IPP-1704: every topic open for this user?
+      ...pickCounts(byId.get(String(l._id)), done ? done.byLanguage.get(String(l._id)) || 0 : undefined),
+      freeQaCount: firstCounts?.qaCount || 0,
       topics: (l.topics || []).map((t) => {
-        const tc = byTopic.get(topicKey(l._id, t.slug));
-        return { name: t.name, slug: t.slug, qaCount: tc?.qaCount || 0, mcqCount: tc?.mcqCount || 0 };
+        const key = topicKey(l._id, t.slug);
+        const c = byTopic.get(key);
+        return {
+          name: t.name,
+          slug: t.slug,
+          ...pickCounts(c, done ? done.byTopic.get(key) || 0 : undefined),
+          freeQaCount: t.slug === first ? c?.qaCount || 0 : 0,
+        };
       }),
     };
   });
@@ -65,7 +79,7 @@ async function getLanguages(req, res) {
   const filter = showAll ? {} : { isActive: true };
 
   const languages = await Language.find(filter).sort({ name: 1 }).lean();
-  sendSuccess(res, { languages: await withCounts(languages) });
+  sendSuccess(res, { languages: await withCounts(languages, req.user) });
 }
 
 /**
@@ -79,7 +93,7 @@ async function getLanguageBySlug(req, res) {
     throw new AppError('Language not found', 404);
   }
 
-  const [withCount] = await withCounts([language]);
+  const [withCount] = await withCounts([language], req.user);
   sendSuccess(res, { language: withCount });
 }
 

@@ -1,0 +1,59 @@
+### IPP-1007 Full backup (users + quiz results) tests
+### Put the admin password while testing, then put CHANGE_ME back. Run on LOCAL (server/.env), not live.
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = CHANGE_ME
+@adminToken = {{adminLogin.response.body.data.token}}
+
+
+### 1. Admin login -> expect 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Full export (default) -> expect 200, data.backup.scope "full", version 2,
+###    with "users" (password starts with "$2", bookmarks as { language, question }) and "quizAttempts" (only completed);
+###    every language and question has "createdAt"
+GET {{baseUrl}}/admin/backup/export
+Authorization: Bearer {{adminToken}}
+
+
+### 3. Content only -> expect scope "content" and NO "users" / "quizAttempts"
+GET {{baseUrl}}/admin/backup/export?scope=content
+Authorization: Bearer {{adminToken}}
+
+
+### 4. Dry run with users -> expect users { added: 0, existing: 1, skipped: 2 }, quizAttempts { added: 0, existing: 0, skipped: 2 }
+###    errors: "plain passwords are not accepted", "Please enter a valid email", "unknown user", "only completed quizzes"
+###    (admin = existing, nothing is changed)
+POST {{baseUrl}}/admin/backup/import?dryRun=true
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "users": [
+    { "name": "Admin copy", "email": "{{adminEmail}}", "password": "$2b$10$abcdefghijklmnopqrstuuJ6Vf1Y0nG2kQ8Wm5a1xYk7rB3d9zXcK" },
+    { "name": "Plain", "email": "plain-test@example.com", "password": "plain123" },
+    { "name": "Bad email", "email": "not-an-email", "password": "$2b$10$abcdefghijklmnopqrstuuJ6Vf1Y0nG2kQ8Wm5a1xYk7rB3d9zXcK" }
+  ],
+  "quizAttempts": [
+    { "user": "nobody-test@example.com", "language": "php", "status": "completed", "createdAt": "2026-10-01T10:00:00Z" },
+    { "user": "{{adminEmail}}", "language": "php", "status": "in-progress", "createdAt": "2026-10-01T10:00:00Z" }
+  ]
+}
+
+
+### 5. Not logged in -> expect 401
+GET {{baseUrl}}/admin/backup/export
+
+
+### 6. Restore test (by hand, LOCAL only):
+###    Admin -> Backup -> Full backup -> Download. Then in server: change MONGO_URI in .env to a new empty database
+###    (e.g. .../interview-prep-restore), run:  npm run seed -- --file=data/backups/<downloaded file>.json
+###    -> users added, quiz results added; log in with an old user's same password; its bookmarks + dashboard history are there.
+###    Admin -> Questions: questions show their OLD dates (not today).
+###    Run the same command again -> "0 added, N already there". Put MONGO_URI back.

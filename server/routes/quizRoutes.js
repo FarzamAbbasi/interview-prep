@@ -2,7 +2,7 @@ const express = require('express');
 const { body, param, query } = require('express-validator');
 const validate = require('../middleware/validate');
 const { protect } = require('../middleware/auth');
-const { startQuiz, submitQuiz, getHistory, getAttempt } = require('../controllers/quizController');
+const { startQuiz, submitQuiz, getHistory, getAttempt, deleteAttempt, clearHistory } = require('../controllers/quizController');
 
 const router = express.Router();
 
@@ -45,5 +45,9 @@ router.get(
   getHistory
 );
 router.get('/:attemptId', validate([param('attemptId').isMongoId().withMessage('Invalid quiz id')]), getAttempt);
+
+// ---- IPP-1502: delete quiz history (any logged-in user). '/history' must stay above '/:attemptId' ----
+router.delete('/history', clearHistory);
+router.delete('/:attemptId', validate([param('attemptId').isMongoId().withMessage('Invalid quiz id')]), deleteAttempt);
 
 module.exports = router;

@@ -1,7 +1,7 @@
 const express = require('express');
 const { protect } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/admin');
-const { exportBackup, importBackup } = require('../controllers/backupController');
+const { exportBackup, importBackup, getLastBackup } = require('../controllers/backupController');
 
 const router = express.Router();
 
@@ -9,5 +9,6 @@ const router = express.Router();
 router.use(protect, adminOnly);
 router.get('/export', exportBackup);
 router.post('/import', importBackup);
+router.get('/last', getLastBackup); // IPP-1008: dashboard reminder
 
 module.exports = router;

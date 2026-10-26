@@ -217,7 +217,7 @@ export default function QuizPlayPage() {
           {question.question}
         </h1>
         {question.codeSnippet && (
-          <pre className="mt-4 overflow-x-auto rounded-lg bg-slate-900 p-4 text-sm leading-relaxed text-slate-100">
+          <pre className="code-block mt-4 text-sm">
             <code>{question.codeSnippet}</code>
           </pre>
         )}

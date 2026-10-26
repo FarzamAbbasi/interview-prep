@@ -20,6 +20,7 @@ const listRules = [
 router.get('/', optionalAuth, validate(listRules), getQuestions);
 router.get(
   '/tags',
+  optionalAuth, // IPP-1501: unpaid users only get tags of free questions
   validate([query('language').optional().isString().isLength({ max: 50 }), query('topic').optional().isString().isLength({ max: 60 })]),
   getTags
 );

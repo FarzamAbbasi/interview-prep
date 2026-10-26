@@ -7,7 +7,7 @@
 @adminEmail = askedin143@gmail.com
 @adminPassword = CHANGE_ME
 @userEmail = arsalmustafa62+ipp2@gmail.com
-@userPassword = secret456
+@userPassword = CHANGE_ME
 
 ### Picked up automatically
 @userToken = {{userLogin.response.body.data.token}}

@@ -16,23 +16,20 @@ const difficultyStyle = {
  */
 export default function QuestionCard({ question, number, topicName, showBookmark, bookmarked, onBookmark, bookmarkBusy }) {
   const [open, setOpen] = useState(false);
-  const { question: text, answer, codeSnippet, difficulty, tags = [], isFree, isLocked } = question;
+  const { question: text, answer, codeSnippet, difficulty, tags = [], isLocked } = question;
   const answerId = `answer-${question._id}`;
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
-          {number}
-        </span>
+    <article className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <span className="w-7 shrink-0 pt-0.5 text-right font-mono text-sm text-slate-400 tabular-nums">{number}.</span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-semibold text-slate-900">{text}</h2>
+          <h2 className="text-[17px] font-semibold leading-snug text-slate-900">{text}</h2>
           <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
             <span className={`rounded-full px-2 py-0.5 font-medium capitalize ${difficultyStyle[difficulty] || ''}`}>
               {difficulty}
             </span>
             {topicName && <span className="rounded-full bg-brand-50 px-2 py-0.5 font-medium text-brand-700">{topicName}</span>}
-            {isFree && <span className="rounded-full bg-green-600 px-2 py-0.5 font-medium text-white">Free</span>}
             {tags.slice(0, 4).map((tag) => (
               <span key={tag} className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
                 #{tag}
@@ -54,7 +51,7 @@ export default function QuestionCard({ question, number, topicName, showBookmark
         )}
       </div>
 
-      <div className="mt-4 pl-10">
+      <div className="mt-4 pl-10 sm:pl-11">
         {isLocked ? (
           <div className="relative overflow-hidden rounded-lg border border-slate-200">
             {/* Fake blurred text: the real answer is never sent to the browser */}
@@ -82,16 +79,16 @@ export default function QuestionCard({ question, number, topicName, showBookmark
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
               aria-controls={answerId}
-              className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline"
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-brand-600 transition-colors hover:border-brand-600 hover:bg-brand-50"
             >
               {open ? 'Hide answer' : 'Show answer'}
               <HiChevronDown className={`transition ${open ? 'rotate-180' : ''}`} />
             </button>
             {open && (
               <div id={answerId} className="mt-3 space-y-3">
-                <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{answer}</p>
+                <p className="max-w-prose whitespace-pre-line text-[15px] leading-relaxed text-slate-700">{answer}</p>
                 {codeSnippet && (
-                  <pre className="overflow-x-auto rounded-lg bg-slate-900 p-4 text-xs leading-relaxed text-slate-100">
+                  <pre className="code-block">
                     <code>{codeSnippet}</code>
                   </pre>
                 )}
@@ -106,9 +103,9 @@ export default function QuestionCard({ question, number, topicName, showBookmark
 
 export function QuestionCardSkeleton() {
   return (
-    <div className="animate-pulse rounded-xl border border-slate-200 bg-white p-5">
-      <div className="flex gap-3">
-        <div className="h-7 w-7 rounded-full bg-slate-200" />
+    <div className="animate-pulse rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
+      <div className="flex gap-3 sm:gap-4">
+        <div className="h-4 w-7 rounded bg-slate-200" />
         <div className="flex-1 space-y-2">
           <div className="h-4 w-3/4 rounded bg-slate-200" />
           <div className="h-3 w-1/3 rounded bg-slate-100" />

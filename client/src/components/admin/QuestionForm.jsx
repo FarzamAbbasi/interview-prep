@@ -237,10 +237,7 @@ export default function QuestionForm({ initial, languages, defaultLanguageId, on
       </Field>
 
       <div className="flex flex-wrap gap-x-6 gap-y-2">
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" checked={form.isFree} onChange={(e) => set({ isFree: e.target.checked })} className="h-4 w-4 accent-brand-600" />
-          Free {form.type === 'mcq' ? '(part of the sample quiz)' : '(open to everyone)'}
-        </label>
+        {/* IPP-1607: no Free checkbox; guests and unpaid users get the first topic of every language */}
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" checked={form.isActive} onChange={(e) => set({ isActive: e.target.checked })} className="h-4 w-4 accent-brand-600" />
           Active (shown on the site)

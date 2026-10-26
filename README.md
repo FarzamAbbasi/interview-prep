@@ -1,4 +1,4 @@
-# Interview Prep Portal
+# AskedIn (Interview Prep Portal)
 
 A website for preparing programming interviews: questions with answers, timed quizzes, progress tracking and an admin panel to manage everything.
 
@@ -19,7 +19,7 @@ A website for preparing programming interviews: questions with answers, timed qu
 - Questions: topic tabs, difficulty, tags, search, pages; paid answers locked for others
 - Quiz: 6 random MCQs (sample: 5 free MCQs), 30 seconds each, timer kept by the server, auto-submit, review with explanations
 - Dashboard: scores per language and quiz history
-- Admin backup: download all content as JSON, import with a preview (never deletes)
+- Admin backup: full backup (content + users + quiz results) or content only, import with a preview (never deletes; existing users are not changed)
 - Admin bulk upload: one JSON file per language (language + topics + questions), row-by-row preview, sample file
 
 ---
@@ -100,7 +100,8 @@ If the API says **"Could not connect to any servers"**, your internet IP changed
 | Name | Purpose |
 |---|---|
 | `VITE_API_URL` | API address ending in `/api` |
-| `VITE_PRICE_TEXT` | Price shown on the pricing page |
+| `VITE_PRICE_TEXT` | Price of the "All languages" plan on the pricing page |
+| `VITE_PRICE_ONE_TEXT` | Price of the "One language" plan (IPP-1704) |
 | `VITE_CONTACT_EMAIL` | Where "Request full access" emails go |
 
 ---
@@ -112,10 +113,10 @@ If the API says **"Could not connect to any servers"**, your internet IP changed
 | `npm run dev` | Start the API with auto-restart |
 | `npm start` | Start the API (production) |
 | `npm run seed` | Add / update languages and questions from `data/*.json`, create the first admin. Safe to run again (no duplicates, never deletes) |
-| `npm run seed -- --file=data/backups/<file>.json` | Restore from a backup file (a bulk upload file also works) |
+| `npm run seed -- --file=data/backups/<file>.json` | Restore from a backup file (a full backup also adds missing users + quiz results; a bulk upload file also works) |
 | `npm run seed -- --env=.env.live` | Seed the live database using `server/.env.live` (see `docs/DEPLOY.md` step 7) |
 | `npm run seed:fresh` | **Deletes** all languages, questions and quiz results, then seeds (refused on the live database without `--confirm-delete`) |
-| `npm run backup` | Save all content to `data/backups/backup-<date>.json` |
+| `npm run backup` | Full backup (content + users + quiz results) to `data/backups/backup-full-<date>.json` (`-- --content-only`, `-- --env=.env.live`) |
 | `npm run test:email -- you@email.com` | Check the email settings (Brevo or Gmail) and send test emails |
 | `npm run dev:token -- user@email.com` | Print a login token for testing |
 | `npm run set:password -- [--env=.env.live] user@email.com "NewPass"` | Set a new password for any account (e.g. admin) without email |
@@ -130,7 +131,7 @@ If the API says **"Could not connect to any servers"**, your internet IP changed
 - **Add questions:** Admin → Questions → *Add question*. Choose Q&A or MCQ; an MCQ needs 4 different options and the correct one. Mark *Free* to show it to everyone (free MCQs form the sample quiz).
 - **Bulk upload (many questions at once):** Admin → Bulk upload → *Download sample file* → fill in one language, its topics and questions → upload → check the preview (every row shows New / Update / Problem) → *Import now*. To edit an existing language offline, choose it and click *Download as upload file*. Same question text = updated, never duplicated; nothing is deleted.
 - **Hide instead of delete:** a language with questions, or an MCQ used in a quiz, cannot be deleted. Use *Deactivate*.
-- **Backup:** Admin → Backup → *Download backup* regularly. Import shows a preview first and never deletes.
+- **Backup:** Admin → Backup → *Full backup* regularly (keep it private: it has user emails + hashed passwords). The dashboard reminds you when the last full backup is old or missing new paid users. Import shows a preview first and never deletes.
 
 ---
 
@@ -145,7 +146,8 @@ All responses: `{ success, message?, data }`. Errors: `{ success: false, message
 | Questions | `GET /api/questions`, `GET /api/questions/tags`, `GET /api/questions/:id` |
 | Quiz | `POST /api/quiz/start`, `POST /api/quiz/:id/submit`, `GET /api/quiz/history`, `GET /api/quiz/:id` |
 | Bookmarks (full access) | `GET /api/bookmarks`, `POST /api/bookmarks/:questionId` (toggle) |
-| Admin | `/api/admin/stats`, `/api/admin/users` (+ `/:id/access`, `/:id/block`), `/api/admin/questions`, `/api/admin/backup/export`, `/api/admin/backup/import` |
+| Progress (logged in) | `PUT /api/progress/:questionId` with `{ "done": true \| false }` |
+| Admin | `/api/admin/stats`, `/api/admin/users` (+ `/:id/access`, `/:id/block`), `/api/admin/questions`, `/api/admin/backup/export`, `/api/admin/backup/import`, `/api/admin/backup/last` |
 
 Example requests for every ticket are in `api-tests/` (open in VS Code with the REST Client extension).
 

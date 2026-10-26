@@ -16,12 +16,11 @@
 
 ### ---- Guest (no login) ----
 
-### 1. PHP questions page 1 -> expect 200, 10 questions, total 20, totalPages 2
-###    The 5 free ones come first WITH answers; the other 5 have "isLocked": true and no answer
+### 1. PHP questions page 1 -> expect 200, ONLY the first topic (PHP: Basics & Syntax, 4 questions, with answers), total 4, "hiddenCount": 16 (IPP-1607)
 GET {{baseUrl}}/questions?language=php
 
 
-### 2. Page 2 -> expect 10 questions, all "isLocked": true
+### 2. Page 2 -> expect 0 questions (guests only get the first topic)
 GET {{baseUrl}}/questions?language=php&page=2
 
 
@@ -49,8 +48,8 @@ GET {{baseUrl}}/questions?language=cobol
 GET {{baseUrl}}/questions?limit=500
 
 
-### 9. One locked question -> copy any locked "_id" from request 2 in place of QUESTION_ID
-###    expect 200 with "isLocked": true and no answer
+### 9. One paid question -> put the _id of a NOT free question (Admin -> Questions) in place of QUESTION_ID
+###    expect 403, code NEEDS_FULL_ACCESS (IPP-1501)
 GET {{baseUrl}}/questions/6ad895509dcf1f882fd24a20
 
 
@@ -67,7 +66,7 @@ Content-Type: application/json
 }
 
 
-### 11. All PHP questions -> still 15 locked (unpaid), "hasFullAccess": false
+### 11. All PHP questions -> still only the first topic, "hiddenCount": 16, "hasFullAccess": false
 GET {{baseUrl}}/questions?language=php&limit=20
 Authorization: Bearer {{userToken}}
 

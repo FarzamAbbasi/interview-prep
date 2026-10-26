@@ -3,7 +3,7 @@ const { body, param, query } = require('express-validator');
 const validate = require('../middleware/validate');
 const { protect } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/admin');
-const { listUsers, setPaidAccess, setBlocked } = require('../controllers/userAdminController');
+const { listUsers, getUserDetails, setPaidAccess, setBlocked } = require('../controllers/userAdminController');
 
 const router = express.Router();
 
@@ -26,10 +26,25 @@ router.get(
   listUsers
 );
 
-// ---- IPP-502: manual paid access ----
+// ---- IPP-1703: one user's study progress + quiz performance ----
+router.get('/:id/details', validate([idRule]), getUserDetails);
+
+// ---- IPP-502 / IPP-1704: manual paid access (all languages, some languages or none) ----
 router.put(
   '/:id/access',
-  validate([idRule, body('isPaid').isBoolean({ strict: true }).withMessage('isPaid must be true or false')]),
+  validate([
+    idRule,
+    body('access').optional().isIn(['all', 'some', 'none']).withMessage('access must be all, some or none'),
+    body('isPaid')
+      .if(body('access').not().exists())
+      .isBoolean({ strict: true })
+      .withMessage('Send access (all, some or none)'),
+    body('languages')
+      .if(body('access').equals('some'))
+      .isArray({ min: 1, max: 100 })
+      .withMessage('Pick at least one language'),
+    body('languages.*').optional().isMongoId().withMessage('Invalid language id'),
+  ]),
   setPaidAccess
 );
 

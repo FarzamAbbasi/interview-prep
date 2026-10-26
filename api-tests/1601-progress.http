@@ -1,0 +1,81 @@
+### IPP-1601 Progress ("done" questions) + IPP-1602 counts for the new language pages
+### Use a normal UNPAID user. Put the password while testing, then put CHANGE_ME back.
+
+@baseUrl = http://localhost:5000/api
+@userEmail = arsalmustafa62+ipp2@gmail.com
+@userPassword = CHANGE_ME
+@userToken = {{userLogin.response.body.data.token}}
+@freeId = {{freeList.response.body.data.questions.0._id}}
+
+
+### 1. Login -> 200
+# @name userLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{userEmail}}", "password": "{{userPassword}}" }
+
+
+### 2. Free PHP questions -> 200, every question has "isDone": false/true (only when logged in)
+# @name freeList
+GET {{baseUrl}}/questions?language=php&limit=50
+Authorization: Bearer {{userToken}}
+
+
+### 3. Mark the first one as done -> 200 "Marked as done", data.done true
+PUT {{baseUrl}}/progress/{{freeId}}
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "done": true }
+
+
+### 4. Language with counts -> doneCount 1 on the language and on that question's topic;
+###    every language + topic has "difficulty": { easy, medium, hard }
+GET {{baseUrl}}/languages/php
+Authorization: Bearer {{userToken}}
+
+
+### 5. Same as guest -> NO doneCount (difficulty is still there)
+GET {{baseUrl}}/languages/php
+
+
+### 6. Undo -> 200 "Marked as not done", data.done false (request 4 then shows doneCount 0)
+PUT {{baseUrl}}/progress/{{freeId}}
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "done": false }
+
+
+### 7. Wrong body -> 400 "done must be true or false"
+PUT {{baseUrl}}/progress/{{freeId}}
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "done": "yes" }
+
+
+### 8. A PAID question as unpaid user -> 403 NEEDS_FULL_ACCESS
+###    (put the _id of a not-free question, e.g. from 1501-free-limit-history.http request 3b)
+PUT {{baseUrl}}/progress/PUT_PAID_QUESTION_ID
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "done": true }
+
+
+### 9. Not logged in -> 401
+PUT {{baseUrl}}/progress/{{freeId}}
+Content-Type: application/json
+
+{ "done": true }
+
+
+### ---- In the browser (by hand) ----
+### /languages: cards with green/yellow/red difficulty bar; logged in: "x% done" + Start / Continue / Review.
+### /languages/php: topic cards (difficulty bar + violet progress bar), ring "x of y done".
+###   Tick the circle of a question -> ring and topic card update. "Next question" opens the next one.
+###   Full access: finish a topic -> "🎉 ... done" + "Quiz this topic" opens the quiz with that topic chosen.
+###   Guest: "Track your progress" banner, "2 free of 3", locked topic shows "Full access".
+###   Dark mode and phone width look right. The whole site is violet now.

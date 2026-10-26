@@ -33,6 +33,7 @@ app.use('/api/bookmarks', require('./routes/bookmarkRoutes')); // IPP-502
 app.use('/api/admin/users', require('./routes/userAdminRoutes')); // IPP-502 / 1004
 app.use('/api/admin/stats', require('./routes/adminStatsRoutes')); // IPP-1001
 app.use('/api/admin/backup', require('./routes/backupRoutes')); // IPP-1005
+app.use('/api/progress', require('./routes/progressRoutes')); // IPP-1601
 
 if (process.env.NODE_ENV === 'development') {
   app.use('/api/dev', require('./routes/devRoutes')); // IPP-302 test routes

@@ -50,7 +50,7 @@ The live database is empty until IPP-1202 (seed).
 ## 2. Brevo (emails)
 
 1. Sign up free at brevo.com (300 emails/day). Fill in the profile if it asks (account activation).
-2. **Senders, Domains & Dedicated IPs → Senders → Add a sender**: name `Interview Prep Portal`, email = the Gmail you want emails to come from → verify with the code Brevo sends.
+2. **Senders, Domains & Dedicated IPs → Senders → Add a sender**: name `AskedIn`, email = the Gmail you want emails to come from → verify with the code Brevo sends.
 3. **SMTP & API → API Keys → Generate a new API key** → copy it (starts with `xkeysib-`).
 4. **Security → Authorized IPs**: turn the IP blocking **off** (Render's IP changes; otherwise Brevo answers 401 "unrecognised IP").
 5. Optional local check: put `BREVO_API_KEY` and `EMAIL_FROM` in `server/.env`, run `npm run test:email -- you@gmail.com`, then remove `BREVO_API_KEY` again if you want local to keep using Gmail SMTP.
@@ -86,7 +86,7 @@ Note: with a Gmail sender (no own domain) some emails may land in **Spam**. An o
    | `CLIENT_URL` | `https://<vercel-project>.vercel.app` (no `/` at the end; fix in step 5 if the real URL differs) |
    | `BREVO_API_KEY` | from step 2 |
    | `EMAIL_FROM` | the verified Brevo sender |
-   | `EMAIL_FROM_NAME` | `Interview Prep Portal` |
+   | `EMAIL_FROM_NAME` | `AskedIn` |
    | `TRUST_PROXY` | `3` (Render sits behind Cloudflare + its own proxy; check `/api/health` shows your IP) |
 
    New JWT secret:
@@ -118,7 +118,8 @@ Free plan: the server sleeps after 15 idle minutes; the next visit waits ~1 minu
    | Key | Value |
    |---|---|
    | `VITE_API_URL` | `https://<render-app>.onrender.com/api` |
-   | `VITE_PRICE_TEXT` | `Price coming soon` (or the real price) |
+   | `VITE_PRICE_TEXT` | `Price coming soon` (or the real price, all languages) |
+   | `VITE_PRICE_ONE_TEXT` | `Ask for price` (or the real one-language price) |
    | `VITE_CONTACT_EMAIL` | `arsalmustafa62@gmail.com` |
 
 4. **Deploy**. `client/vercel.json` sends every page to `index.html`, so refreshing `/languages` or opening an email link works.
@@ -179,7 +180,7 @@ The first line of the output must say `database "interview-prep-prod"`. Running 
 - `api-tests/1202-live-roles.http` (guest, free user, admin, paid user, blocked)
 - `docs/TEST-CHECKLIST.md` in the browser on the live site, also on a phone
 - Review React questions in Admin → Questions, then Admin → Languages → React → *Activate*
-- Admin → Backup → *Download backup* (first live backup)
+- Admin → Backup → *Full backup* → *Download* (first live backup)
 
 ### 7.5 Hand over
 Fill in and send `docs/HANDOVER.md` to the client (send the admin password separately, not in the same message).

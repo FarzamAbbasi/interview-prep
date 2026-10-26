@@ -4,8 +4,18 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Interview Prep Portal</title>
-    <meta name="description" content="Prepare for programming interviews with questions, answers and quizzes." />
+    <title>AskedIn · Interview questions and quizzes</title>
+    <meta name="description" content="AskedIn: real programming interview questions with clear answers, code examples and timed quizzes." />
+    <meta name="theme-color" content="#6d4bd8" />
+    <script>
+      // IPP-1401: apply the saved (or device) theme before the page paints
+      (function () {
+        var t = null;
+        try { t = localStorage.getItem('askedin_theme'); } catch (e) {}
+        if (t !== 'light' && t !== 'dark') t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

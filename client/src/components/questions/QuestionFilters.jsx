@@ -1,17 +1,18 @@
 import { HiOutlineSearch, HiX } from 'react-icons/hi';
 
 const selectClass =
-  'w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100';
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100';
 
 /**
  * Topic tabs + difficulty / tag / search.
  * values: { topic, difficulty, tag, search } (search = what is typed right now)
  */
-export default function QuestionFilters({ topics, totalQa, tags, values, onChange, onClear }) {
+// countKey: 'qaCount' (full access) or 'freeQaCount' (only free questions are shown, IPP-1501)
+export default function QuestionFilters({ topics, totalQa, countKey = 'qaCount', tags, values, onChange, onClear }) {
   const hasFilters = values.topic || values.difficulty || values.tag || values.search;
   const tab = (active) =>
     `shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
-      active ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-brand-600'
+      active ? 'border-slate-900 bg-slate-900 text-slate-50' : 'border-slate-300 bg-white text-slate-700 hover:border-slate-500'
     }`;
 
   return (
@@ -31,7 +32,7 @@ export default function QuestionFilters({ topics, totalQa, tags, values, onChang
                 className={tab(values.topic === t.slug)}
                 onClick={() => onChange({ topic: t.slug, tag: '' })}
               >
-                {t.name} <span className="opacity-75">({t.qaCount})</span>
+                {t.name} <span className="opacity-75">({t[countKey] ?? t.qaCount})</span>
               </button>
             ))}
           </div>

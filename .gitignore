@@ -7,6 +7,10 @@ dist/
 .env.*
 !.env.example
 
+# New backup files (a full backup has user emails + hashed passwords, IPP-1007)
+server/data/backups/backup-full-*
+server/data/backups/backup-content-*
+
 # Editors / OS
 .vscode/*
 !.vscode/extensions.json

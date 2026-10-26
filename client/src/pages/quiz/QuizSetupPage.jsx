@@ -33,16 +33,17 @@ function Field({ label, children }) {
 /**
  * /quiz — choose and start a quiz.
  * Unpaid users: sample quiz (5 free MCQs) per language. Paid users: language + topic + difficulty.
- * ?language=php preselects a language (used by links from other pages).
+ * ?language=php&topic=oop preselects a language and topic (used by links from other pages).
  */
 export default function QuizSetupPage() {
   usePageTitle('Quiz');
-  const { user, hasFullAccess } = useAuth();
+  const { user, hasFullAccess: hasAllAccess, canAccess } = useAuth();
   const { languages, loading, error, reload } = useLanguages();
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
-  const [choice, setChoice] = useState({ language: params.get('language') || '', topic: '', difficulty: 'mixed' });
+  // ?language=php&topic=oop preselects (IPP-1602: "Quiz this topic" on the language page)
+  const [choice, setChoice] = useState({ language: params.get('language') || '', topic: params.get('topic') || '', difficulty: 'mixed' });
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState('');
 
@@ -51,6 +52,8 @@ export default function QuizSetupPage() {
   const language = quizLanguages.find((l) => l.slug === choice.language) || quizLanguages[0];
   const topics = language?.topics || [];
   const topic = topics.find((t) => t.slug === choice.topic);
+  // IPP-1704: full quiz only for an unlocked language
+  const hasFullAccess = language ? Boolean(canAccess(language._id)) : hasAllAccess;
 
   const update = (changes) => {
     setStartError('');
@@ -179,7 +182,7 @@ export default function QuizSetupPage() {
         <div className="mt-6 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="flex items-start gap-2 text-sm text-amber-800">
             <HiOutlineLockClosed className="mt-0.5 shrink-0" />
-            Want full quizzes by topic and difficulty? They are part of full access.
+            Want full {language ? `${language.name} ` : ''}quizzes by topic and difficulty? They are part of full access.
           </p>
           <Link to="/pricing" className="shrink-0 rounded-md bg-brand-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-brand-700">
             Get full access

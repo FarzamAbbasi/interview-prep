@@ -1,7 +1,7 @@
 // HTML + plain-text email templates.
 // Inline styles only: most email apps (Gmail, Outlook) ignore <style> blocks.
 
-const APP_NAME = () => process.env.EMAIL_FROM_NAME || 'Interview Prep Portal';
+const APP_NAME = () => process.env.EMAIL_FROM_NAME || 'AskedIn';
 
 const escapeHtml = (value = '') =>
   String(value)
@@ -21,7 +21,7 @@ function layout({ heading, intro, buttonText, link, note }) {
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;">
             <tr>
-              <td style="padding:24px 32px;border-bottom:1px solid #E2E8F0;font-size:18px;font-weight:bold;color:#2563EB;">
+              <td style="padding:24px 32px;border-bottom:1px solid #E2E8F0;font-size:18px;font-weight:bold;color:#6D4BD8;">
                 ${appName}
               </td>
             </tr>
@@ -31,7 +31,7 @@ function layout({ heading, intro, buttonText, link, note }) {
                 <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#334155;">${intro}</p>
                 <table role="presentation" cellpadding="0" cellspacing="0">
                   <tr>
-                    <td style="border-radius:8px;background:#2563EB;">
+                    <td style="border-radius:8px;background:#6D4BD8;">
                       <a href="${link}" target="_blank"
                          style="display:inline-block;padding:12px 28px;font-size:15px;font-weight:bold;color:#FFFFFF;text-decoration:none;border-radius:8px;">
                         ${buttonText}
@@ -40,7 +40,7 @@ function layout({ heading, intro, buttonText, link, note }) {
                   </tr>
                 </table>
                 <p style="margin:24px 0 8px;font-size:13px;color:#64748B;">If the button does not work, copy this link into your browser:</p>
-                <p style="margin:0 0 24px;font-size:13px;word-break:break-all;"><a href="${link}" style="color:#2563EB;">${link}</a></p>
+                <p style="margin:0 0 24px;font-size:13px;word-break:break-all;"><a href="${link}" style="color:#6D4BD8;">${link}</a></p>
                 <p style="margin:0;font-size:13px;line-height:1.6;color:#64748B;">${note}</p>
               </td>
             </tr>

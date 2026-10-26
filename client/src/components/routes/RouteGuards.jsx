@@ -46,9 +46,9 @@ export function AdminRoute() {
   return <Outlet />;
 }
 
-// Paid users (and admins) only. Others see the upgrade prompt.
+// Paid users (all or some languages, IPP-1704) and admins only. Others see the upgrade prompt.
 export function PaidRoute() {
-  const { hasFullAccess, loading } = useAuth();
+  const { hasAnyAccess, loading } = useAuth();
   if (loading) return <PageLoader />;
-  return hasFullAccess ? <Outlet /> : <UpgradePrompt />;
+  return hasAnyAccess ? <Outlet /> : <UpgradePrompt />;
 }

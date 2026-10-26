@@ -31,6 +31,12 @@ const userSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false }, // email verified?
     isPaid: { type: Boolean, default: false }, // full access unlocked?
     paidAt: { type: Date },
+    // IPP-1704: 'all' = every language (also ones added later), 'some' = only paidLanguages
+    accessScope: { type: String, enum: ['all', 'some'], default: 'all' },
+    paidLanguages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Language' }],
+    paidBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // IPP-1703: admin who turned full access on
+    lastLoginAt: { type: Date }, // IPP-1703
+    lastSeenAt: { type: Date }, // IPP-1703: any logged-in request, saved at most once an hour
     isBlocked: { type: Boolean, default: false },
     bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],
 

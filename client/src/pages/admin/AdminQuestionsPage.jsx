@@ -204,11 +204,6 @@ export default function AdminQuestionsPage() {
             <option value="true">Active</option>
             <option value="false">Inactive</option>
           </select>
-          <select aria-label="Access" value={filters.isFree} onChange={(e) => setFilter({ isFree: e.target.value })} className={selectClass}>
-            <option value="">Free + paid</option>
-            <option value="true">Free</option>
-            <option value="false">Paid</option>
-          </select>
         </div>
         {(JSON.stringify({ ...filters, page: 1 }) !== JSON.stringify(emptyFilters) || searchInput) && (
           <button
@@ -251,21 +246,12 @@ export default function AdminQuestionsPage() {
                       {q.language?.name}
                       {q.topic ? ` · ${topicName(q)}` : ''}
                     </span>
-                    {q.isFree && <span className="rounded-full bg-green-600 px-2 py-0.5 font-medium text-white">Free</span>}
                     {!q.isActive && <span className="rounded-full bg-slate-200 px-2 py-0.5 font-medium text-slate-600">Inactive</span>}
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <Button variant="secondary" className="px-3 py-1.5 text-xs" disabled={Boolean(busy)} onClick={() => setEditing(q)}>
                     Edit
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className="px-3 py-1.5 text-xs"
-                    disabled={Boolean(busy)}
-                    onClick={() => quickUpdate(q, { isFree: !q.isFree }, q.isFree ? 'Now a paid question' : 'Now a free question')}
-                  >
-                    {q.isFree ? 'Make paid' : 'Make free'}
                   </Button>
                   <Button
                     variant="secondary"

@@ -25,7 +25,7 @@ GET {{api}}/health
 ### 2. Languages -> 200, PHP active (React only after you activate it)
 GET {{api}}/languages
 
-### 3. PHP Q&A as guest -> 200, hasFullAccess false; exactly 5 questions with isLocked false, the rest isLocked true (no answer)
+### 3. PHP Q&A as guest -> 200, hasFullAccess false; ONLY the first topic (Basics & Syntax) with answers, rest hidden (IPP-1607)
 GET {{api}}/questions?language=php&type=qa&limit=50
 
 ### 4. Quiz without login -> 401

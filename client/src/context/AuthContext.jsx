@@ -6,7 +6,11 @@ import { clearActiveQuiz } from '../utils/activeQuiz';
 
 /**
  * Global login state for the whole app.
- *   user    -> null (guest) or { _id, name, email, role, isPaid, isVerified, ... }
+ *   user    -> null (guest) or { _id, name, email, role, isPaid, accessScope, paidLanguages, isVerified, ... }
+ *   hasFullAccess -> every language unlocked (paid "all languages" or admin)
+ *   hasAnyAccess  -> at least one language unlocked (IPP-1704)
+ *   canAccess(languageId) -> this language unlocked?
+ *   paidLanguages -> [{ _id, name, slug }] when only some languages are unlocked
  *   loading -> true while checking a saved token on page load
  *   login(email, password), logout(), refreshUser()
  */
@@ -68,17 +72,31 @@ export function AuthProvider({ children }) {
     return data.data.user;
   }, []);
 
+  // IPP-1704: access can be for all languages or only some
+  const access = useMemo(() => {
+    const all = Boolean(user && (user.role === 'admin' || (user.isPaid && user.accessScope !== 'some')));
+    const paidLanguages = user?.isPaid && !all ? (user.paidLanguages || []).filter((l) => l && l._id) : [];
+    const ids = new Set(paidLanguages.map((l) => String(l._id)));
+    return {
+      hasFullAccess: all,
+      hasAnyAccess: all || ids.size > 0,
+      paidLanguages,
+      canAccess: (languageId) => all || ids.has(String(languageId?._id || languageId)),
+      accessKey: all ? 'all' : [...ids].sort().join(','), // changes when access changes (refetch keys)
+    };
+  }, [user]);
+
   const value = useMemo(
     () => ({
       user,
       loading,
       isAdmin: user?.role === 'admin',
-      hasFullAccess: Boolean(user && (user.isPaid || user.role === 'admin')),
+      ...access,
       login,
       logout,
       refreshUser,
     }),
-    [user, loading, login, logout, refreshUser]
+    [user, loading, access, login, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

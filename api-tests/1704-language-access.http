@@ -1,0 +1,139 @@
+### IPP-1704 Full access per language (all / some / none)
+### Put ADMIN_PASSWORD from server/.env while testing, then put CHANGE_ME back.
+### Needs 2+ active languages with topics (e.g. php + react). Change the slugs below if yours differ.
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = Askedin-Admin-2026!x
+@userEmail = arsalmustafa62+ipp2@gmail.com
+@userPassword = Student-Test-123
+@userSearch = arsalmustafa62%2Bipp2@gmail.com
+@langA = react
+@langB = php
+@adminToken = {{adminLogin.response.body.data.token}}
+@userToken = {{userLogin.response.body.data.token}}
+@userId = {{userList.response.body.data.users.0._id}}
+@langAId = {{langs.response.body.data.languages.0._id}}
+
+
+### 1. Admin login -> 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Find the user -> 200, users[0] = that user ("+" sent as %2B, else the search finds nobody)
+# @name userList
+GET {{baseUrl}}/admin/users?search={{userSearch}}
+Authorization: Bearer {{adminToken}}
+
+
+### 3. Language list (A-Z) -> 200. @langAId = FIRST language in this list; set @langA to its slug.
+# @name langs
+GET {{baseUrl}}/languages
+
+
+### 4. Give ONLY language A -> 200 "... now has full access to <A>", user.accessScope = "some", paidLanguages = [A]
+PUT {{baseUrl}}/admin/users/{{userId}}/access
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "access": "some", "languages": ["{{langAId}}"] }
+
+
+### 5. 'some' with no languages -> 400 "Pick at least one language"
+PUT {{baseUrl}}/admin/users/{{userId}}/access
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "access": "some", "languages": [] }
+
+
+### 6. User login -> 200, user.paidLanguages = [{ _id, name, slug }]
+# @name userLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{userEmail}}", "password": "{{userPassword}}" }
+
+
+### 7. Languages as user -> A: hasAccess true, B: hasAccess false
+GET {{baseUrl}}/languages
+Authorization: Bearer {{userToken}}
+
+
+### 8. Questions of A -> hasFullAccess true, hiddenCount 0, every topic, no isLocked
+GET {{baseUrl}}/questions?language={{langA}}&limit=50
+Authorization: Bearer {{userToken}}
+
+
+### 9. Questions of B -> hasFullAccess false, only first topic, hiddenCount > 0
+# @name langBQuestions
+GET {{baseUrl}}/questions?language={{langB}}&limit=50
+Authorization: Bearer {{userToken}}
+
+### 10. Quiz A -> 201, isSample false (6 MCQs)
+POST {{baseUrl}}/quiz/start
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "language": "{{langA}}", "difficulty": "mixed" }
+
+
+### 11. Quiz B -> 201, isSample true (sample quiz)
+POST {{baseUrl}}/quiz/start
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "language": "{{langB}}" }
+
+
+### 12. Bookmarks list -> 200 (allowed now: user has one language). Only language A questions.
+GET {{baseUrl}}/bookmarks
+Authorization: Bearer {{userToken}}
+
+
+### 13. Bookmark a question of B (run step 9 first) -> 403 NEEDS_FULL_ACCESS
+POST {{baseUrl}}/bookmarks/{{langBQuestions.response.body.data.questions.0._id}}
+Authorization: Bearer {{userToken}}
+
+
+### 14. All languages -> 200 "... full access to all languages", accessScope "all", paidLanguages []
+PUT {{baseUrl}}/admin/users/{{userId}}/access
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "access": "all" }
+
+
+### 15. No access -> 200 "Full access turned off", isPaid false. Then step 12 -> 403
+PUT {{baseUrl}}/admin/users/{{userId}}/access
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "access": "none" }
+
+
+### 16. Old body still works -> 200 (= all languages)
+PUT {{baseUrl}}/admin/users/{{userId}}/access
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "isPaid": true }
+
+
+### 17. Wrong access value -> 400 "access must be all, some or none"
+PUT {{baseUrl}}/admin/users/{{userId}}/access
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "access": "gold" }
+
+
+### Browser:
+### - Admin -> Users -> Edit access -> "Only these languages" -> tick 1 -> Save -> badge shows the name
+### - As that user: Languages page card of A shows all questions, B only the first topic; quiz B = sample
+### - Dashboard plan badge = language names + "Add languages"; Pricing: "<A> unlocked", dropdown without A
+### - Existing paid users still have every language (nothing to change)

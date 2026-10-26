@@ -3,13 +3,13 @@ const QuizAttempt = require('../models/QuizAttempt');
 const AppError = require('../utils/AppError');
 const { sendSuccess } = require('../utils/apiResponse');
 const { findLanguage, getPaging, pagination } = require('../utils/questionFilters');
+const { firstTopicSlug } = require('../utils/freeAccess');
+const { hasLanguageAccess } = require('../utils/access');
 
 const FULL_QUIZ_SIZE = 6; // questions in a paid quiz
 const SAMPLE_QUIZ_SIZE = 5; // free MCQs in the sample quiz
 const SECONDS_PER_QUESTION = 30;
 const GRACE_SECONDS = 15; // allowance for slow internet when the quiz auto-submits
-
-const hasFullAccess = (user) => Boolean(user && (user.isPaid || user.role === 'admin'));
 
 // Fisher-Yates shuffle (returns a new array)
 function shuffle(list) {
@@ -24,6 +24,7 @@ function shuffle(list) {
 /**
  * POST /api/quiz/start   (IPP-501, logged in)
  * Body: { language: "php", difficulty?: "easy" | "medium" | "hard" | "mixed" }
+ * IPP-1704: "paid" = has access to THIS language (all languages, or this one picked by the admin).
  * - Unpaid users: the sample quiz (the 5 free MCQs, shuffled). difficulty is ignored.
  * - Paid users / admins: 6 random active MCQs (filtered by difficulty unless "mixed").
  * Correct answers are NOT sent. 30 seconds per question, timed by the server.
@@ -32,10 +33,10 @@ async function startQuiz(req, res) {
   const language = await findLanguage(req.body.language, { onlyActive: true });
   if (!language) throw new AppError('Choose a language', 400, [{ field: 'language', message: 'Choose a language' }]);
 
-  const isSample = !hasFullAccess(req.user);
+  const isSample = !hasLanguageAccess(req.user, language._id);
   const difficulty = isSample ? 'mixed' : req.body.difficulty || 'mixed';
 
-  // IPP-404: paid users can pick one topic; the sample quiz always uses the free MCQs
+  // IPP-404: paid users can pick one topic; the sample quiz always uses the first topic (IPP-1607)
   let topic = null;
   if (!isSample && req.body.topic) {
     topic = (language.topics || []).find((t) => t.slug === String(req.body.topic).toLowerCase());
@@ -43,7 +44,7 @@ async function startQuiz(req, res) {
   }
 
   const match = { language: language._id, type: 'mcq', isActive: true };
-  if (isSample) match.isFree = true;
+  if (isSample) match.topic = firstTopicSlug(language) || '__none__'; // IPP-1607: sample quiz = first topic's MCQs
   if (difficulty !== 'mixed') match.difficulty = difficulty;
   if (topic) match.topic = topic.slug;
 
@@ -262,4 +263,27 @@ async function getAttempt(req, res) {
   sendSuccess(res, buildResult(attempt, await loadQuestions(attempt)));
 }
 
-module.exports = { startQuiz, submitQuiz, getHistory, getAttempt };
+/**
+ * DELETE /api/quiz/:attemptId   (IPP-1502, logged in, own attempt only)
+ * Removes one submitted quiz from the user's history (every user, paid or not).
+ */
+async function deleteAttempt(req, res) {
+  const { deletedCount } = await QuizAttempt.deleteOne({ _id: req.params.attemptId, user: req.user._id, status: 'completed' });
+  if (!deletedCount) throw new AppError('Quiz not found', 404);
+  sendSuccess(res, null, 'Quiz deleted from your history');
+}
+
+/**
+ * DELETE /api/quiz/history   (IPP-1502, logged in)
+ * Removes all of the user's submitted quizzes (a quiz in progress is kept).
+ */
+async function clearHistory(req, res) {
+  const { deletedCount } = await QuizAttempt.deleteMany({ user: req.user._id, status: 'completed' });
+  sendSuccess(
+    res,
+    { deleted: deletedCount },
+    deletedCount ? `Quiz history cleared (${deletedCount} ${deletedCount === 1 ? 'quiz' : 'quizzes'})` : 'Your quiz history is already empty'
+  );
+}
+
+module.exports = { startQuiz, submitQuiz, getHistory, getAttempt, deleteAttempt, clearHistory };

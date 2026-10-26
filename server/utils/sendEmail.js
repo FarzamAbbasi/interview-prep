@@ -15,7 +15,7 @@ const isEmailConfigured = () => useBrevo() || smtpConfigured();
 const emailProvider = () => (useBrevo() ? 'Brevo API' : smtpConfigured() ? 'Gmail SMTP' : 'none');
 
 // Sender address: EMAIL_FROM (must be a verified sender in Brevo), else the Gmail login
-const fromName = () => process.env.EMAIL_FROM_NAME || 'Interview Prep Portal';
+const fromName = () => process.env.EMAIL_FROM_NAME || 'AskedIn';
 const fromEmail = () => process.env.EMAIL_FROM || process.env.SMTP_USER;
 
 // ---------- Gmail SMTP ----------

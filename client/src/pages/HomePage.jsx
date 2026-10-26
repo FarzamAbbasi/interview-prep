@@ -1,123 +1,165 @@
 import { Link } from 'react-router-dom';
-import { HiOutlineBookOpen, HiOutlineClock, HiOutlineChartBar, HiOutlineCheckCircle } from 'react-icons/hi';
 import useAuth from '../hooks/useAuth';
 import useLanguages from '../hooks/useLanguages';
 import LanguageGrid from '../components/languages/LanguageGrid';
+import HeroQuestion from '../components/home/HeroQuestion';
 import usePageTitle from '../hooks/usePageTitle';
 
-const features = [
-  {
-    icon: HiOutlineBookOpen,
-    title: 'Real interview questions',
-    text: 'Clear answers with code examples, grouped by topic and difficulty.',
-  },
-  {
-    icon: HiOutlineClock,
-    title: 'Timed quizzes',
-    text: 'Test yourself with multiple-choice questions, 30 seconds each, and see explanations after.',
-  },
-  {
-    icon: HiOutlineChartBar,
-    title: 'Track your progress',
-    text: 'Your quiz history and scores per language, so you know what to practise next.',
-  },
+// How practice works: a real sequence, so the steps are numbered
+const steps = [
+  { title: 'Read the answer', text: 'Each question has a short answer and a code example, grouped by topic and difficulty.' },
+  { title: 'Take a timed quiz', text: 'Multiple-choice questions with 30 seconds each, like the pressure of a real interview.' },
+  { title: 'See what to revise', text: 'Every answer is explained after the quiz, and your scores stay on your dashboard.' },
+];
+
+// Same rules as the server: guest / free account / full access
+const plans = [
+  { key: 'guest', name: 'Guest', note: 'no account' },
+  { key: 'free', name: 'Free account', note: 'sign up free' },
+  { key: 'full', name: 'Full access', note: 'one-time payment' },
+];
+const access = [
+  { label: 'Questions with answers', guest: 'First topic', free: 'First topic', full: 'All topics' },
+  { label: 'Timed quiz', guest: null, free: '5-question sample', full: 'Full quizzes' },
+  { label: 'Quiz history', guest: null, free: 'Yes', full: 'Yes' },
+  { label: 'Bookmarks', guest: null, free: null, full: 'Yes' },
 ];
 
 const primaryBtn =
-  'inline-flex items-center justify-center rounded-md bg-brand-600 px-5 py-3 text-sm font-semibold text-white hover:bg-brand-700';
+  'inline-flex h-12 items-center justify-center rounded-lg bg-brand-600 px-5 text-[15px] font-semibold text-white hover:bg-brand-700';
 const secondaryBtn =
-  'inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50';
+  'inline-flex h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-5 text-[15px] font-semibold text-slate-900 hover:bg-slate-100';
+
+// ['PHP', 'React', 'Python'] -> "PHP, React and Python"
+function joinNames(names) {
+  if (names.length <= 1) return names[0] || '';
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+function SectionHead({ id, title, text }) {
+  return (
+    <div className="mb-8">
+      <h2 id={id} className="text-3xl font-bold tracking-tight text-slate-900">
+        {title}
+      </h2>
+      {text && <p className="mt-2 max-w-xl text-slate-600">{text}</p>}
+    </div>
+  );
+}
 
 export default function HomePage() {
   usePageTitle('');
-  const { user, hasFullAccess } = useAuth();
+  const { user, hasFullAccess, hasAnyAccess } = useAuth();
   const { languages, loading, error, reload } = useLanguages();
 
   // Quiz needs an account: guests go to register first
   const quizLink = user ? '/quiz' : '/register';
+  const quizText = hasAnyAccess ? 'Start a quiz' : user ? 'Take the free sample quiz' : 'Try the free sample quiz';
   const totalQuestions = languages.reduce((n, l) => n + (l.qaCount || 0) + (l.mcqCount || 0), 0);
+  const names = joinNames(languages.map((l) => l.name));
+  const currentPlan = hasFullAccess ? 'full' : hasAnyAccess ? 'some' : user ? 'free' : 'guest'; // IPP-1704
 
   return (
-    <div className="space-y-16 sm:space-y-20">
-      {/* Hero */}
-      <section className="pt-4 text-center sm:pt-10">
-        <p className="inline-block rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
-          Free questions for every language
-        </p>
-        <h1 className="mx-auto mt-4 max-w-3xl text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-          Prepare for your next programming interview
-        </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600 sm:text-lg">
-          Learn the questions interviewers really ask, then check yourself with quick quizzes.
-        </p>
-        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link to={quizLink} className={primaryBtn}>
-            {hasFullAccess ? 'Start a quiz' : 'Start sample quiz'}
-          </Link>
-          <Link to="/languages" className={secondaryBtn}>
-            Browse questions
-          </Link>
-        </div>
-        {!loading && !error && totalQuestions > 0 && (
-          <p className="mt-6 text-sm text-slate-500">
-            {totalQuestions} questions in {languages.length} {languages.length === 1 ? 'language' : 'languages'}
+    <div className="-mt-8">
+      {/* Hero: a real question you can answer right away */}
+      <section className="grid items-center gap-10 py-10 sm:py-16 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:py-20">
+        <div>
+          <h1 className="max-w-[11ch] text-[2.75rem] font-extrabold leading-[1.02] tracking-[-0.035em] text-slate-900 sm:text-6xl lg:text-[4rem]">
+            Know the answer before they ask.
+          </h1>
+          <p className="mt-6 max-w-[34ch] text-lg text-slate-600 sm:text-xl">
+            Real interview questions{names ? ` for ${names}` : ''}, answered in plain words with code. Try one right here.
           </p>
-        )}
-      </section>
-
-      {/* Features */}
-      <section aria-labelledby="features-heading">
-        <h2 id="features-heading" className="sr-only">
-          Features
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {features.map(({ icon: Icon, title, text }) => (
-            <div key={title} className="rounded-xl border border-slate-200 bg-white p-5">
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
-                <Icon size={22} />
-              </span>
-              <h3 className="mt-3 font-semibold text-slate-900">{title}</h3>
-              <p className="mt-1 text-sm text-slate-600">{text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Languages */}
-      <section aria-labelledby="languages-heading">
-        <div className="mb-5 flex items-end justify-between gap-4">
-          <div>
-            <h2 id="languages-heading" className="text-2xl font-bold text-slate-900">
-              Choose a language
-            </h2>
-            <p className="mt-1 text-sm text-slate-600">Start with the free questions, no account needed.</p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link to={quizLink} className={primaryBtn}>
+              {quizText}
+            </Link>
+            <Link to="/languages" className={secondaryBtn}>
+              Browse free questions
+            </Link>
           </div>
-          <Link to="/languages" className="shrink-0 text-sm font-semibold text-brand-600 hover:underline">
-            View all
-          </Link>
+          {!loading && !error && totalQuestions > 0 && (
+            <p className="mt-6 text-sm text-slate-500">
+              {totalQuestions} questions in {languages.length} {languages.length === 1 ? 'language' : 'languages'}. The first topic of each is open,
+              no account needed.
+            </p>
+          )}
         </div>
-        <LanguageGrid languages={languages.slice(0, 6)} loading={loading} error={error} onRetry={reload} />
+
+        <HeroQuestion
+          nextLink={quizLink}
+          nextText={hasFullAccess ? 'Take a full quiz' : user ? 'Try 5 more in the sample quiz' : 'Create a free account and try 5 more'}
+        />
       </section>
 
-      {/* Call to action (guests only) */}
-      {!user && (
-        <section className="rounded-2xl bg-brand-600 px-6 py-10 text-center text-white sm:px-10">
-          <h2 className="text-2xl font-bold">Ready to practise?</h2>
-          <ul className="mx-auto mt-4 flex max-w-xl flex-col gap-2 text-sm text-brand-50 sm:flex-row sm:justify-center sm:gap-6">
-            {['Free sample quiz', 'Free questions', 'No card needed'].map((item) => (
-              <li key={item} className="flex items-center justify-center gap-1.5">
-                <HiOutlineCheckCircle size={18} /> {item}
-              </li>
-            ))}
-          </ul>
-          <Link
-            to="/register"
-            className="mt-6 inline-flex rounded-md bg-white px-5 py-3 text-sm font-semibold text-brand-700 hover:bg-brand-50"
-          >
-            Create free account
-          </Link>
-        </section>
-      )}
+      <section aria-labelledby="how-heading" className="border-t border-slate-200 py-14 sm:py-16">
+        <SectionHead id="how-heading" title="How practice works" text="Read, test yourself, then go back to what you got wrong." />
+        <ol className="grid gap-8 sm:grid-cols-3 sm:gap-10">
+          {steps.map((step, i) => (
+            <li key={step.title}>
+              <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-900 font-extrabold text-slate-900">
+                {i + 1}
+              </span>
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">{step.title}</h3>
+              <p className="mt-1 text-[15px] text-slate-600">{step.text}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section aria-labelledby="languages-heading" className="border-t border-slate-200 py-14 sm:py-16">
+        <div className="flex items-end justify-between gap-4">
+          <SectionHead id="languages-heading" title="Languages" text="Start with the free questions in any language." />
+          {languages.length > 6 && (
+            <Link to="/languages" className="mb-8 shrink-0 text-sm font-semibold text-brand-600 hover:underline">
+              See all {languages.length}
+            </Link>
+          )}
+        </div>
+        <LanguageGrid languages={languages.slice(0, 6)} loading={loading} error={error} onRetry={reload} showMore />
+      </section>
+
+      <section aria-labelledby="access-heading" className="border-t border-slate-200 py-14 sm:py-16">
+        <SectionHead id="access-heading" title="What you get" text="Free to start. Full access is a one-time payment, no subscription." />
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <table className="w-full min-w-[34rem] text-left text-[15px]">
+            <thead>
+              <tr>
+                <td className="p-4" />
+                {plans.map((p) => (
+                  <th
+                    key={p.key}
+                    scope="col"
+                    className={`p-4 align-bottom font-semibold ${p.key === 'full' ? 'bg-brand-50 text-brand-700' : 'text-slate-900'}`}
+                  >
+                    {p.name}
+                    <span className="block text-[13px] font-normal text-slate-500">
+                      {currentPlan === p.key ? 'Your plan' : p.note}
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {access.map((row) => (
+                <tr key={row.label} className="border-t border-slate-200">
+                  <th scope="row" className="p-4 font-normal text-slate-700">
+                    {row.label}
+                  </th>
+                  {plans.map((p) => (
+                    <td key={p.key} className={`p-4 ${row[p.key] ? 'font-semibold text-green-700' : 'text-slate-400'}`}>
+                      {row[p.key] || 'No'}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Link to="/pricing" className={`${secondaryBtn} mt-6`}>
+          {hasFullAccess ? 'See pricing' : 'See pricing and get full access'}
+        </Link>
+      </section>
     </div>
   );
 }

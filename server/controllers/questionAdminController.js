@@ -1,6 +1,7 @@
 const Question = require('../models/Question');
 const Language = require('../models/Language');
 const QuizAttempt = require('../models/QuizAttempt');
+const Progress = require('../models/Progress');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const { sendSuccess } = require('../utils/apiResponse');
@@ -159,6 +160,7 @@ async function deleteQuestion(req, res) {
 
   await question.deleteOne();
   await User.updateMany({ bookmarks: question._id }, { $pull: { bookmarks: question._id } });
+  await Progress.deleteMany({ question: question._id }); // IPP-1601
 
   sendSuccess(res, null, 'Question deleted');
 }

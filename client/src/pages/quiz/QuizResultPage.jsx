@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { HiCheckCircle, HiXCircle, HiMinusCircle, HiOutlineClock, HiOutlineLockClosed } from 'react-icons/hi';
 import api, { getErrorMessage } from '../../api/axios';
 import PageLoader from '../../components/ui/PageLoader';
+import UpgradeModal from '../../components/ui/UpgradeModal';
 import usePageTitle from '../../hooks/usePageTitle';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -63,7 +64,7 @@ function ReviewItem({ item, number }) {
           </p>
           <h3 className="mt-1 font-semibold text-slate-900">{item.question}</h3>
           {item.codeSnippet && (
-            <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-900 p-3 text-xs leading-relaxed text-slate-100">
+            <pre className="code-block mt-3 p-3 text-xs">
               <code>{item.codeSnippet}</code>
             </pre>
           )}
@@ -110,6 +111,25 @@ export default function QuizResultPage() {
 
   const [state, setState] = useState({ id: passed ? attemptId : null, result: passed, error: '' });
   const [onlyMistakes, setOnlyMistakes] = useState(false);
+  // IPP-1501: right after finishing the free sample quiz, offer full access once
+  // (not again after a reload or when the result is opened from the dashboard)
+  const popupKey = `askedin_sample_popup_${attemptId}`;
+  const [upgradeOpen, setUpgradeOpen] = useState(() => {
+    if (!passed?.isSample) return false;
+    try {
+      return !sessionStorage.getItem(popupKey);
+    } catch {
+      return true;
+    }
+  });
+  useEffect(() => {
+    if (!upgradeOpen) return;
+    try {
+      sessionStorage.setItem(popupKey, '1');
+    } catch {
+      // storage blocked: the popup may show again after a reload, nothing else breaks
+    }
+  }, [upgradeOpen, popupKey]);
 
   useEffect(() => {
     if (passed) return undefined;
@@ -180,6 +200,13 @@ export default function QuizResultPage() {
           </Link>
         </section>
       )}
+
+      <UpgradeModal
+        open={upgradeOpen && r.isSample}
+        onClose={() => setUpgradeOpen(false)}
+        title="That was the free sample quiz"
+        text={`You answered ${r.score} of ${r.total} correctly. Full access gives you full timed quizzes in every language, by topic and difficulty, plus every answer and bookmarks. One-time payment, no subscription.`}
+      />
 
       {/* Review */}
       <section className="mt-8" aria-labelledby="review-heading">

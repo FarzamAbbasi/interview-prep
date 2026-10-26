@@ -79,7 +79,17 @@ export default function App() {
         </Routes>
       </Suspense>
 
-      <Toaster position="top-center" />
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          // theme colors, so toasts follow light / dark mode (IPP-1401)
+          style: {
+            background: 'var(--color-white)',
+            color: 'var(--color-slate-900)',
+            border: '1px solid var(--color-slate-200)',
+          },
+        }}
+      />
     </>
   );
 }

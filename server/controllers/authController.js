@@ -143,6 +143,13 @@ async function login(req, res) {
     );
   }
 
+  // IPP-1703: last login / last seen for the admin user panel
+  const now = new Date();
+  await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: now, lastSeenAt: now } });
+  user.lastLoginAt = now;
+  user.lastSeenAt = now;
+
+  await user.populate('paidLanguages', 'name slug'); // IPP-1704: names for "React, Node.js unlocked"
   const token = generateToken(user._id);
   sendSuccess(res, { token, user }, 'Logged in successfully');
 }
@@ -153,6 +160,7 @@ async function login(req, res) {
  * The frontend calls this on page load to restore the session.
  */
 async function getMe(req, res) {
+  await req.user.populate('paidLanguages', 'name slug'); // IPP-1704
   sendSuccess(res, { user: req.user });
 }
 

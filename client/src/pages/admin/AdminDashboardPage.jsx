@@ -9,6 +9,7 @@ import {
 } from 'react-icons/hi';
 import api, { getErrorMessage } from '../../api/axios';
 import Button from '../../components/ui/Button';
+import BackupReminder from '../../components/admin/BackupReminder';
 import PageLoader from '../../components/ui/PageLoader';
 import usePageTitle from '../../hooks/usePageTitle';
 
@@ -65,7 +66,7 @@ export default function AdminDashboardPage() {
     );
   }
 
-  const { users, languages, questions, quizzes, recentUsers } = state.data;
+  const { users, languages, questions, quizzes, recentUsers, lastBackup } = state.data;
   const paidShare = users.total ? Math.round((users.paid / users.total) * 100) : 0;
 
   return (
@@ -74,6 +75,8 @@ export default function AdminDashboardPage() {
         <h1 className="text-2xl font-bold text-slate-900">Admin dashboard</h1>
         <p className="mt-1 text-sm text-slate-600">Everything at a glance. Click a box to manage it.</p>
       </div>
+
+      <BackupReminder lastBackup={lastBackup} />
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Numbers">
         <Tile icon={HiOutlineUsers} label="Users" value={users.total} note={`${users.newThisWeek} new this week · ${users.unverified} not verified`} to="/admin/users" />
@@ -103,7 +106,7 @@ export default function AdminDashboardPage() {
                 <div className="flex items-center gap-2 text-xs">
                   {!u.isVerified && <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-700">Not verified</span>}
                   <span className={`rounded-full px-2 py-0.5 font-medium ${u.isPaid ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
-                    {u.isPaid ? 'Full access' : 'Free'}
+                    {u.isPaid ? (u.accessScope === 'some' ? 'Some languages' : 'Full access') : 'Free'}
                   </span>
                   <span className="text-slate-400">{formatDate(u.createdAt)}</span>
                 </div>
