@@ -5,6 +5,7 @@ import api, { getErrorMessage } from '../../api/axios';
 import PageLoader from '../../components/ui/PageLoader';
 import UpgradeModal from '../../components/ui/UpgradeModal';
 import usePageTitle from '../../hooks/usePageTitle';
+import AnswerText from '../../components/questions/AnswerText';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
 
@@ -89,8 +90,15 @@ function ReviewItem({ item, number }) {
 
           {item.explanation && (
             <div className="mt-3 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
-              <span className="font-semibold text-slate-900">Why: </span>
-              {item.explanation}
+              {/* IPP-1710: structured explanations bring their own labels ("Why B", "Why not A") */}
+              {/^why( not)? [a-d]\b/im.test(item.explanation) ? (
+                <AnswerText text={item.explanation} className="text-sm" />
+              ) : (
+                <>
+                  <span className="font-semibold text-slate-900">Why: </span>
+                  {item.explanation}
+                </>
+              )}
             </div>
           )}
         </div>

@@ -6,7 +6,8 @@
  *                    passwordChangedAt, createdAt, paidBy (admin email), lastLoginAt, lastSeenAt (IPP-1703),
  *                    accessScope 'all' | 'some', paidLanguages: ["react", ...] (IPP-1704),
  *                    bookmarks: [{ language: "php", question: "..." }],
- *                    done: [{ language: "php", question: "..." }] }]   (IPP-1601: questions marked as done)
+ *                    done: [{ language: "php", question: "...", at: date }] }]   (IPP-1601: questions marked as done;
+ *                                                                              IPP-1707: at = when it was marked)
  *   quizAttempts: [{ user: "email", language: "php", difficulty, isSample, topic, score, total, timeTaken,
  *                    timeLimit, status, expiresAt, completedAt, createdAt,
  *                    answers: [{ question: "...", selectedOption, isCorrect }] }]
@@ -50,7 +51,7 @@ async function buildUserBackup() {
     .forEach((r) => {
       const key = String(r.user);
       if (!doneByUser.has(key)) doneByUser.set(key, []);
-      doneByUser.get(key).push({ language: r.question.language.slug, question: r.question.question });
+      doneByUser.get(key).push({ language: r.question.language.slug, question: r.question.question, at: r.createdAt });
     });
 
   // In-progress attempts are not saved (they expire after a few minutes anyway)
@@ -188,7 +189,9 @@ async function importUsers(data, { dryRun, questionIds, slugToLanguage, addError
       const slug = String(d?.language || '').toLowerCase();
       const id = questionIds.get(questionKey(slug, d?.question));
       const lang = slugToLanguage.get(slug);
-      if (id && lang && !done.some((x) => String(x.question) === String(id))) done.push({ question: id, language: lang._id });
+      if (id && lang && !done.some((x) => String(x.question) === String(id))) {
+        done.push({ question: id, language: lang._id, at: validDate(d?.at) }); // IPP-1707: keep the date (older files: none)
+      }
     });
     if (done.length) newUserDone.set(doc.email, done);
     if (raw.paidBy) newUserPaidBy.set(doc.email, String(raw.paidBy).trim().toLowerCase()); // IPP-1703
@@ -205,9 +208,17 @@ async function importUsers(data, { dryRun, questionIds, slugToLanguage, addError
     (await User.find({ email: { $in: newEmails } }, 'email').lean()).forEach((u) => emailToId.set(u.email, u._id));
     const progressOps = [];
     newUserDone.forEach((list, email) =>
-      list.forEach(({ question, language }) => {
+      list.forEach(({ question, language, at }) => {
         const key = { user: emailToId.get(email), question };
-        progressOps.push({ updateOne: { filter: key, update: { $setOnInsert: { ...key, language } }, upsert: true } });
+        const when = at || new Date(); // IPP-1707: original "done" date when the file has it
+        progressOps.push({
+          updateOne: {
+            filter: key,
+            update: { $setOnInsert: { ...key, language, createdAt: when, updatedAt: when } },
+            upsert: true,
+            timestamps: false,
+          },
+        });
       })
     );
     if (progressOps.length) await Progress.bulkWrite(progressOps);

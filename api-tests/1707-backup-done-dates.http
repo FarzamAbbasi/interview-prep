@@ -1,0 +1,27 @@
+### IPP-1707 Backup keeps the date of "done" questions
+### Put ADMIN_PASSWORD from server/.env while testing, then put CHANGE_ME back.
+### Use the LOCAL database only (step 4 restores into it).
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = changeme
+@adminToken = {{adminLogin.response.body.data.token}}
+
+
+### 1. Admin login -> 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Browser: Admin -> Backup -> Download full backup.
+###    Open the file -> users[].done[] items now have "at": "<date>" (when the question was marked done).
+###    Older backup files without "at" still restore (date = restore time, same as before).
+
+### 3. MongoDB Compass (local "interview-prep" DB): delete a TEST user who has done questions (users collection),
+###    then Admin -> Backup -> restore the file from step 2 -> "users added: 1".
+
+### 4. Admin -> Users -> that user -> Details -> Study progress:
+###    "Last studied", "This week" and "Recently done" dates are the OLD dates, not today.

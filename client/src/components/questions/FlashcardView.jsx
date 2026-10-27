@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import AnswerText from './AnswerText';
 
 const difficultyText = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
 
@@ -93,7 +94,7 @@ export default function FlashcardView({ questions, isDone, onSetDone, loggedIn, 
         <div className="mt-6 border-t-2 border-dashed border-slate-200 pt-6" aria-live="polite">
           {revealed ? (
             <div className="space-y-4">
-              <p className="max-w-[75ch] whitespace-pre-line text-base leading-relaxed text-slate-700">{q.answer}</p>
+              <AnswerText text={q.answer} className="max-w-[75ch] text-base" />
               {q.codeSnippet && (
                 <pre className="code-block text-sm">
                   <code>{q.codeSnippet}</code>

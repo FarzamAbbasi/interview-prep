@@ -4,9 +4,9 @@
 
 @baseUrl = http://localhost:5000/api
 @adminEmail = askedin143@gmail.com
-@adminPassword = Askedin-Admin-2026!x
+@adminPassword = changeme
 @userEmail = arsalmustafa62+ipp2@gmail.com
-@userPassword = Student-Test-123
+@userPassword = changeme
 @userSearch = arsalmustafa62%2Bipp2@gmail.com
 @langA = react
 @langB = php

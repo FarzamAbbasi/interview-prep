@@ -39,10 +39,14 @@ const FORMAT_ROWS = [
   ['type', 'qa or mcq'],
   ['topic', 'One of the topics (name or slug)'],
   ['question / answer', 'Required. For an MCQ the answer is the explanation shown after the quiz'],
+  [
+    'answer parts (optional)',
+    'Separate parts with an empty line and start each with a label: "Short answer:", "How it works:", "Example:", "Common mistake:", "Interview tip:" (MCQ: "Why B:", "Why not A:"). Lines like "200 OK: meaning" become a list',
+  ],
   ['options', 'MCQ only: exactly 4 different options'],
   ['correctAnswer / correctOption', 'MCQ only: the correct option text, or its number 0-3'],
   ['difficulty', 'easy, medium or hard (default easy)'],
-  ['isFree', 'true = guests see it; free MCQs form the sample quiz'],
+  ['isFree', 'Not used any more: the first topic of every language is free'],
   ['codeSnippet, tags', 'Optional'],
 ];
 

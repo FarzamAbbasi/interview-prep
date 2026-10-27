@@ -1,4 +1,5 @@
 import { HiCheck, HiChevronDown, HiOutlineStar, HiStar, HiOutlineLockClosed } from 'react-icons/hi';
+import AnswerText from './AnswerText';
 
 const difficultyStyle = {
   easy: 'bg-green-50 text-green-700',
@@ -76,7 +77,7 @@ export default function QuestionRow({ question, open, onToggle, done, onDone, do
             </p>
           ) : (
             <>
-              <p className="max-w-prose whitespace-pre-line text-[15px] leading-relaxed text-slate-700">{answer}</p>
+              <AnswerText text={answer} />
               {codeSnippet && (
                 <pre className="code-block">
                   <code>{codeSnippet}</code>

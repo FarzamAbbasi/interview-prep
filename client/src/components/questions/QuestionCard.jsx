@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HiOutlineLockClosed, HiOutlineBookmark, HiBookmark, HiChevronDown } from 'react-icons/hi';
+import AnswerText from './AnswerText';
 
 const difficultyStyle = {
   easy: 'bg-green-50 text-green-700',
@@ -86,7 +87,7 @@ export default function QuestionCard({ question, number, topicName, showBookmark
             </button>
             {open && (
               <div id={answerId} className="mt-3 space-y-3">
-                <p className="max-w-prose whitespace-pre-line text-[15px] leading-relaxed text-slate-700">{answer}</p>
+                <AnswerText text={answer} />
                 {codeSnippet && (
                   <pre className="code-block">
                     <code>{codeSnippet}</code>
