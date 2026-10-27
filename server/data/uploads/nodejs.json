@@ -1,0 +1,2301 @@
+{
+  "_readme": [
+    "Node.js content for Admin -> Bulk upload (IPP-1709). 10 topics x (10 Q&A + 6 MCQs).",
+    "Answers use parts (Short answer / How it works / Example / Common mistake / Interview tip), shown with labels by IPP-1710.",
+    "isActive false: check the questions in Admin, then activate Node.js in Admin -> Languages. Free = the first topic."
+  ],
+  "language": {
+    "name": "Node.js",
+    "slug": "nodejs",
+    "icon": "nodejs",
+    "description": "JavaScript on the server. Covers the runtime and event loop, modules and npm, streams, Express and REST APIs, authentication and security, testing, scaling and deployment.",
+    "isActive": false,
+    "topics": [
+      "Node Basics & Architecture",
+      "Event Loop & Async",
+      "Modules & npm",
+      "EventEmitter, Buffers & Streams",
+      "Express & Middleware",
+      "REST API Design",
+      "Authentication & Security",
+      "Error Handling & Testing",
+      "Child Processes, Worker Threads & Cluster",
+      "Performance, Caching & Deployment"
+    ]
+  },
+  "questions": [
+    {
+      "type": "qa",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "easy",
+      "question": "What is Node.js, and what does \"non-blocking I/O\" mean?",
+      "answer": "Short answer: Node.js is a runtime that runs JavaScript outside the browser, built on Google's V8 engine. Non-blocking I/O means slow work such as reading files or querying a database does not stop the program; Node starts it and keeps serving other requests until the result arrives.\n\nHow it works: Node gives JavaScript access to files, the network and processes through built-in modules (fs, http, net). When you call one of these async APIs, the work is handed to the operating system or a background thread, and a callback is queued when it finishes. The single JavaScript thread is never left waiting.\n\nExample: A server that reads a 50 ms database query for each user can still accept new users during those 50 ms, because the thread is free while the query runs.\n\nCommon mistake: Calling Node a framework or a language. It is a runtime; Express and NestJS are frameworks that run on it.\n\nInterview tip: Define it in one line (runtime + V8 + non-blocking I/O), then say what it is good at: I/O-heavy APIs and real-time apps.",
+      "codeSnippet": "const http = require('node:http');\nhttp.createServer((req, res) => {\n  res.end('Hello from Node');\n}).listen(3000);",
+      "tags": [
+        "basics",
+        "non-blocking"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "easy",
+      "question": "How is JavaScript in Node.js different from JavaScript in the browser?",
+      "answer": "Short answer: It is the same language in a different environment. Node has no DOM or window, but it has file, network and process APIs and full access to the operating system.\n\nHow it works: Browser globals: window, document, localStorage, fetch. Node globals: process, Buffer, require (CommonJS), __dirname; fetch is built in since Node 18. In Node you choose the version, so you can use modern syntax freely. The security model is also different: browser code is sandboxed, Node code can read and delete files.\n\nExample: A script that uses document.querySelector works in the browser but throws ReferenceError in Node. A script that uses fs.readFile works in Node but not in the browser.\n\nCommon mistake: Copying frontend code that touches window or localStorage into a Node script, or putting secrets in frontend code thinking it runs on a server.\n\nInterview tip: Mention that both share the event-loop model, so async concepts (promises, callbacks) carry over.",
+      "codeSnippet": "// browser only\n// document.querySelector('h1');\n// Node only\nconst fs = require('node:fs');\nconsole.log(process.platform, process.version);",
+      "tags": [
+        "basics",
+        "runtime"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "medium",
+      "question": "What are V8 and libuv, and what does each one do in Node.js?",
+      "answer": "Short answer: V8 runs your JavaScript. libuv is the C library that gives Node its event loop, asynchronous I/O and thread pool.\n\nHow it works: V8 parses and compiles JavaScript to machine code, runs it and manages memory with garbage collection. libuv talks to the operating system: it watches sockets with epoll (Linux), kqueue (macOS) or IOCP (Windows), runs timers, and uses a small thread pool for work the OS cannot do asynchronously, such as most file operations. Node's C++ bindings connect the two.\n\nExample: fs.readFile('data.txt', cb): V8 runs your call, the binding asks libuv to read the file on a pool thread, and when it finishes libuv queues cb, which V8 then runs on the main thread.\n\nCommon mistake: Saying \"Node is multi-threaded\" or \"Node is single-threaded\" without nuance. Your JavaScript is single-threaded; libuv uses extra threads behind the scenes.\n\nInterview tip: Draw the chain: JavaScript (V8) -> Node bindings (C++) -> libuv -> operating system.",
+      "codeSnippet": "const fs = require('node:fs');\nfs.readFile('data.txt', 'utf8', (err, text) => {\n  // libuv read the file on a pool thread; this callback runs on the main thread\n});",
+      "tags": [
+        "v8",
+        "libuv",
+        "architecture"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "medium",
+      "question": "If Node.js is single-threaded, how can it handle 10,000 requests at the same time?",
+      "answer": "Short answer: Your JavaScript runs on one thread, but Node does not wait for slow work. Database, network and file operations are handed to the operating system, and the thread serves other requests in the meantime.\n\nHow it works: Most of a request's time is waiting, not computing. Node asks the OS (epoll, kqueue, IOCP) to watch thousands of sockets without one thread per connection. When a result is ready, its callback is queued and the event loop runs it. A thread-per-request server would need 10,000 threads and several GB of memory for the same work.\n\nExample: A route awaits a MongoDB query for 50 ms. During those 50 ms the same thread starts hundreds of other requests, each costing only a little memory.\n\nCommon mistake: Thinking Node is good at everything in parallel. If one request does heavy CPU work (resizing images, bcrypt.hashSync, a huge loop), the single thread is busy and every other request waits.\n\nInterview tip: Finish with the limit and the fix: \"Great for I/O-heavy work; for CPU-heavy work I would use worker threads, or cluster to use all cores.\"",
+      "codeSnippet": "app.get('/user/:id', async (req, res) => {\n  // the thread is free while MongoDB works\n  const user = await User.findById(req.params.id);\n  res.json(user);\n});",
+      "tags": [
+        "concurrency",
+        "event-loop"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "medium",
+      "question": "When should you not choose Node.js for a project?",
+      "answer": "Short answer: Avoid Node for long, CPU-heavy work done on the main thread, such as video encoding, large image processing or heavy number crunching.\n\nHow it works: CPU work blocks the single JavaScript thread, so every other user waits. Node can still run such work through worker threads, child processes or a job queue, but languages like Go, Rust or Java, or Python with native libraries, are often a better fit for CPU-bound services. Node shines for APIs, real-time apps (chat, live dashboards), streaming, proxies and developer tooling.\n\nExample: A photo-sharing app can use Node for its API and uploads, but send image resizing to a worker pool or a separate service so the API stays fast.\n\nCommon mistake: Rejecting Node for anything \"big\". Large companies run Node at scale; the question is the type of work, not the size of the app.\n\nInterview tip: Show judgement: name a good fit, a bad fit and how you would split the work.",
+      "codeSnippet": "",
+      "tags": [
+        "architecture",
+        "use-cases"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "medium",
+      "question": "What is the process object, and what do you use it for?",
+      "answer": "Short answer: process is a global object that describes and controls the running Node process: its environment, arguments, memory and lifecycle.\n\nHow it works: Common uses:\nprocess.env: configuration such as PORT and secrets\nprocess.argv: command-line arguments\nprocess.cwd(): the folder Node was started from\nprocess.memoryUsage(): heap and RSS memory\nprocess.on('SIGTERM'): graceful shutdown\nprocess.exitCode: set the exit code without stopping at once\n\nExample: A server reads its port with Number(process.env.PORT) || 3000, and on SIGTERM closes the server and the database before exiting.\n\nCommon mistake: Calling process.exit() right after logging or writing a response. It stops immediately, so the log line or the response may never be written. Set process.exitCode and let Node finish instead.\n\nInterview tip: Mention that process is also an EventEmitter (signals, uncaughtException, unhandledRejection).",
+      "codeSnippet": "const port = Number(process.env.PORT) || 3000;\nconsole.log(process.argv.slice(2)); // node app.js --dev -> ['--dev']\nprocess.on('SIGTERM', () => server.close());\nprocess.exitCode = 1;",
+      "tags": [
+        "process",
+        "env"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "hard",
+      "question": "What is the libuv thread pool, and which operations use it?",
+      "answer": "Short answer: It is a pool of 4 threads (by default) that libuv uses for work the operating system cannot do asynchronously.\n\nHow it works: Users of the pool: most fs functions, dns.lookup, async crypto (pbkdf2, scrypt, randomBytes, randomFill) and zlib compression. Network sockets do not use it, because the OS can watch them asynchronously. The size can be changed with the UV_THREADPOOL_SIZE environment variable (up to 1024), but it must be set before the pool is first used.\n\nExample: During a login spike, 50 users log in at once and each login runs async bcrypt or pbkdf2. Only 4 run at a time; the rest queue, so logins take seconds even though CPU looks fine. Raising the pool to the number of cores, or limiting concurrency, fixes it.\n\nCommon mistake: Setting process.env.UV_THREADPOOL_SIZE in the middle of the app after a file or crypto call has already started the pool; it has no effect then.\n\nInterview tip: Interviewers like the follow-up \"which operations?\" Naming fs, dns.lookup, crypto and zlib (and saying sockets do not use it) shows real understanding.",
+      "codeSnippet": "// package.json\n\"start\": \"UV_THREADPOOL_SIZE=8 node server.js\"\n\n// 4 threads busy -> the 5th hash waits\nfor (let i = 0; i < 5; i++) {\n  crypto.pbkdf2('pw', 'salt', 100000, 64, 'sha512', () => console.log('done', i));\n}",
+      "tags": [
+        "libuv",
+        "thread-pool"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "hard",
+      "question": "What happens step by step when a Node.js server receives an HTTP request?",
+      "answer": "Short answer: The OS accepts the connection, libuv notices data on the socket, Node parses the HTTP headers and emits a 'request' event that runs your handler on the main thread.\n\nHow it works: 1) The OS completes the TCP handshake. 2) In the poll phase, libuv sees the socket is readable. 3) Node's HTTP parser (llhttp) reads the request line and headers. 4) The server emits 'request' with req (a readable stream for the body) and res (a writable stream). 5) Your handler runs; every await hands the thread back while waiting. 6) res.end() writes the response into the socket, and keep-alive keeps the connection open for the next request.\n\nExample: In Express, app.get('/users') is just a function called in step 5. Body parsers such as express.json() read the req stream before your handler sees req.body.\n\nCommon mistake: Thinking the whole body has arrived when the handler starts. For large uploads, req is still streaming; reading it is your job (or a middleware's).\n\nInterview tip: Mentioning that req and res are streams is a strong signal that you understand Node beyond Express.",
+      "codeSnippet": "server.on('request', async (req, res) => {\n  const body = await readBody(req); // req is a readable stream\n  res.writeHead(200, { 'Content-Type': 'application/json' });\n  res.end(JSON.stringify({ ok: true }));\n});",
+      "tags": [
+        "http",
+        "architecture"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "hard",
+      "question": "What does \"blocking the event loop\" mean? Give real examples from APIs.",
+      "answer": "Short answer: It means synchronous work runs long enough that no other callback can run, so every request waits behind it.\n\nHow it works: Real causes:\nHuge JSON: JSON.parse or JSON.stringify on many MB\nSync APIs in routes: fs.readFileSync, bcrypt.hashSync, crypto.pbkdf2Sync\nHeavy loops: sorting or filtering a million items\nRegex on user input: a badly written pattern (ReDoS) can take seconds\nThe symptom is that all endpoints slow down together and health checks time out.\n\nExample: An export route builds a 200 MB JSON string for a CSV download. While it runs, login and every other route freeze for several seconds.\n\nCommon mistake: Moving the work into an async function and expecting it to stop blocking. async does not create a thread; the CPU work still runs on the main thread.\n\nInterview tip: Name how you would detect it: event loop delay with perf_hooks.monitorEventLoopDelay, then a CPU profile to find the function.",
+      "codeSnippet": "const { monitorEventLoopDelay } = require('node:perf_hooks');\nconst h = monitorEventLoopDelay();\nh.enable();\nsetInterval(() => {\n  console.log('p99 lag ms', (h.percentile(99) / 1e6).toFixed(1));\n  h.reset();\n}, 10000);",
+      "tags": [
+        "blocking",
+        "performance"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "hard",
+      "question": "Why do __dirname and __filename not work in ES modules, and what do you use instead?",
+      "answer": "Short answer: They exist only in CommonJS. In ES modules, use import.meta.dirname and import.meta.filename (Node 20.11+), or build them from import.meta.url.\n\nHow it works: CommonJS wraps every file in a function that receives exports, require, module, __filename and __dirname, which is why they look like globals. ES modules have no such wrapper, so those names are undefined and throw ReferenceError. import.meta is the ESM way to get information about the current module.\n\nExample: A route that serves files from a public folder next to the code builds the path with path.join(import.meta.dirname, 'public').\n\nCommon mistake: Using process.cwd() instead. It is the folder Node was started from, which changes if you run the app from another folder, so file paths break in production.\n\nInterview tip: Explaining the CommonJS module wrapper is the part that impresses; it also explains why exports, require and module are available.",
+      "codeSnippet": "import path from 'node:path';\nconst dataFile = path.join(import.meta.dirname, 'data.json');\n\n// older Node\nimport { fileURLToPath } from 'node:url';\nconst __dirname = path.dirname(fileURLToPath(import.meta.url));",
+      "tags": [
+        "esm",
+        "modules"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "easy",
+      "question": "Which JavaScript engine does Node.js use?",
+      "options": [
+        "SpiderMonkey",
+        "V8",
+        "JavaScriptCore",
+        "Chakra"
+      ],
+      "correctAnswer": "V8",
+      "answer": "Why B: Node is built on Google's V8, the same engine as Chrome.\n\nWhy not A: SpiderMonkey is Firefox's engine.\n\nWhy not C: JavaScriptCore is Safari's engine (Bun uses it).\n\nWhy not D: Chakra was the engine of old Microsoft Edge; a Node fork used it once, but standard Node never did.",
+      "codeSnippet": "",
+      "tags": [
+        "v8"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "medium",
+      "question": "Which of these is NOT available in Node.js by default?",
+      "options": [
+        "process",
+        "Buffer",
+        "document",
+        "setImmediate"
+      ],
+      "correctAnswer": "document",
+      "answer": "Why C: document is part of the browser DOM. There is no page in Node, so it does not exist.\n\nWhy not A: process is a Node global for env, argv, signals and more.\n\nWhy not B: Buffer is a Node global for binary data.\n\nWhy not D: setImmediate is a Node timer that runs in the check phase.",
+      "codeSnippet": "",
+      "tags": [
+        "runtime"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "medium",
+      "question": "Your login route calls bcrypt.hashSync() on every request. What happens under heavy traffic?",
+      "options": [
+        "Node moves the hashing to another thread automatically",
+        "Only the login requests slow down",
+        "Every request slows down because the main thread is busy hashing",
+        "Nothing, hashing is always fast"
+      ],
+      "correctAnswer": "Every request slows down because the main thread is busy hashing",
+      "answer": "Why C: hashSync runs on the main thread. While it hashes (100 ms or more at cost 12), no other callback can run, so every route waits, not only login.\n\nWhy not A: Only the async bcrypt.hash() uses the thread pool. The Sync version stays on the main thread.\n\nWhy not B: All routes share the one main thread, so they all wait behind the hashing.\n\nWhy not D: bcrypt is slow on purpose, to make password guessing expensive.\n\nFix: Use await bcrypt.hash(password, 12).",
+      "codeSnippet": "",
+      "tags": [
+        "blocking",
+        "bcrypt"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "medium",
+      "question": "What is the default size of the libuv thread pool?",
+      "options": [
+        "1",
+        "4",
+        "8",
+        "The number of CPU cores"
+      ],
+      "correctAnswer": "4",
+      "answer": "Why B: libuv starts 4 threads unless UV_THREADPOOL_SIZE is set before the pool is first used.\n\nWhy not A: One thread would make every file and crypto call wait in line.\n\nWhy not C and D: Not the default. You can choose 8 or the core count yourself with UV_THREADPOOL_SIZE.",
+      "codeSnippet": "",
+      "tags": [
+        "thread-pool"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "hard",
+      "question": "Which of these operations does NOT use the libuv thread pool?",
+      "options": [
+        "fs.readFile",
+        "crypto.pbkdf2",
+        "zlib.gzip",
+        "Reading data from a TCP socket"
+      ],
+      "correctAnswer": "Reading data from a TCP socket",
+      "answer": "Why D: Network sockets use the operating system's own async mechanisms (epoll, kqueue, IOCP), so no pool thread is needed.\n\nWhy not A: Most fs functions run on pool threads because file I/O is not async on every OS.\n\nWhy not B: Async crypto like pbkdf2 is CPU work done on a pool thread.\n\nWhy not C: Async zlib compression also runs on the pool.",
+      "codeSnippet": "",
+      "tags": [
+        "thread-pool",
+        "libuv"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "hard",
+      "question": "In an ES module on modern Node, how do you get the folder of the current file?",
+      "options": [
+        "__dirname",
+        "import.meta.dirname",
+        "process.cwd()",
+        "require.main.path"
+      ],
+      "correctAnswer": "import.meta.dirname",
+      "answer": "Why B: import.meta.dirname (Node 20.11+) gives the folder of the current module file.\n\nWhy not A: __dirname only exists in CommonJS; in ESM it throws ReferenceError.\n\nWhy not C: process.cwd() is where Node was started, which is often a different folder.\n\nWhy not D: require does not exist in ES modules.",
+      "codeSnippet": "",
+      "tags": [
+        "esm"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Event Loop & Async",
+      "difficulty": "easy",
+      "question": "What is the event loop in Node.js?",
+      "answer": "Short answer: It is the loop that keeps a Node process running and decides which callback runs next.\n\nHow it works: When an async operation finishes (a timer fires, a file is read, a request arrives), its callback is queued. Whenever the call stack is empty, the event loop takes the next callback and runs it. When nothing is left to wait for (no timers, sockets or pending work), the loop ends and the process exits.\n\nExample: A script with setTimeout(fn, 100) stays alive for 100 ms, runs fn, then exits. A server stays alive forever because its listening socket is always pending.\n\nCommon mistake: Thinking callbacks run in parallel. They run one at a time on the main thread; only the waiting happens in parallel.\n\nInterview tip: Explain it in three steps: start async work, queue the callback, run it when the stack is empty.",
+      "codeSnippet": "setTimeout(() => console.log('timer'), 100);\nconsole.log('sync');\n// 'sync', then 'timer'; then nothing is pending, so Node exits",
+      "tags": [
+        "event-loop"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Event Loop & Async",
+      "difficulty": "medium",
+      "question": "What are the phases of the Node.js event loop, in order?",
+      "answer": "Short answer: timers, pending callbacks, idle/prepare, poll, check, close callbacks; then the loop repeats.\n\nHow it works:\ntimers: setTimeout and setInterval callbacks that are due\npending callbacks: some deferred system errors\nidle/prepare: internal use\npoll: wait for and run I/O callbacks (most of your code)\ncheck: setImmediate callbacks\nclose callbacks: such as socket.on('close')\nAfter every single callback, Node empties the process.nextTick queue and then the promise microtask queue.\n\nExample: A file read finishes: its callback runs in poll; a setImmediate scheduled inside it runs in check right after; a setTimeout scheduled inside it waits for the next timers phase.\n\nCommon mistake: Saying promises run in a phase. Microtasks are not a phase; they run between callbacks.\n\nInterview tip: If you remember only one thing, remember: poll -> check -> timers, with nextTick and promises in between every callback.",
+      "codeSnippet": "// one turn of the loop\n// timers -> pending -> idle/prepare -> poll -> check -> close\n// between callbacks: nextTick queue, then promise microtasks",
+      "tags": [
+        "event-loop",
+        "phases"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Event Loop & Async",
+      "difficulty": "medium",
+      "question": "What is the difference between process.nextTick and setImmediate?",
+      "answer": "Short answer: process.nextTick runs right after the current operation, before promises and before the event loop moves on. setImmediate runs on the next turn of the loop, in the check phase.\n\nHow it works: After every callback, Node first empties the nextTick queue, then the promise queue, and only then continues to the next phase. setImmediate callbacks wait in the check phase, which comes right after I/O (poll). So nextTick is 'as soon as possible', setImmediate is 'after pending I/O'.\n\nExample: A library wants to emit an event right after its constructor returns, so listeners added on the next line still receive it; that is a nextTick use. To split a long job into chunks so requests can be served in between, use setImmediate.\n\nCommon mistake: Calling nextTick recursively. The queue never empties, I/O never runs and the server freezes.\n\nInterview tip: Say \"the names are backwards\", then give the order: sync code, nextTick, promises, next phase.",
+      "codeSnippet": "setImmediate(() => console.log('setImmediate'));\nprocess.nextTick(() => console.log('nextTick'));\nconsole.log('sync');\n// sync, nextTick, setImmediate",
+      "tags": [
+        "nexttick",
+        "setimmediate"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Event Loop & Async",
+      "difficulty": "medium",
+      "question": "In which order do setTimeout(fn, 0) and setImmediate(fn) run?",
+      "answer": "Short answer: In the main module the order is not guaranteed. Inside an I/O callback, setImmediate always runs first.\n\nHow it works: setTimeout(fn, 0) really means at least 1 ms. When the main module finishes, the loop starts at the timers phase; whether 1 ms has passed depends on how busy the machine is, so either can come first. Inside an I/O callback you are already in the poll phase, and check (setImmediate) comes before the loop wraps around to timers.\n\nExample: Code that schedules work after reading a file with fs.readFile will always see setImmediate before setTimeout 0.\n\nCommon mistake: Writing code (or tests) that depends on the main-module order. It can pass on your laptop and fail on a slower server.\n\nInterview tip: Interviewers ask this to see if you answer \"it depends\" and can explain why.",
+      "codeSnippet": "const fs = require('node:fs');\nfs.readFile(__filename, () => {\n  setTimeout(() => console.log('timeout'), 0);\n  setImmediate(() => console.log('immediate'));\n});\n// always: immediate, timeout",
+      "tags": [
+        "setimmediate",
+        "settimeout"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Event Loop & Async",
+      "difficulty": "medium",
+      "question": "How do you use callback-style Node APIs with async/await?",
+      "answer": "Short answer: Use Node's built-in promise versions where they exist, util.promisify for other error-first callbacks, and events.once to wait for a single event.\n\nHow it works: Promise versions: node:fs/promises, node:timers/promises (setTimeout, setImmediate), node:stream/promises (pipeline, finished), node:dns/promises. util.promisify(fn) turns any (err, result) callback function into one that returns a promise. events.once(emitter, 'name') returns a promise for the next event.\n\nExample: A startup script waits for the server to listen with await once(server, 'listening') and sleeps between retries with await setTimeout(1000) from timers/promises.\n\nCommon mistake: Wrapping promise-based APIs in new Promise again, or forgetting that promisify only works with the (err, result) pattern.\n\nInterview tip: Mentioning node:timers/promises and events.once shows you know modern Node, not only util.promisify.",
+      "codeSnippet": "const fs = require('node:fs/promises');\nconst { setTimeout: sleep } = require('node:timers/promises');\nconst { promisify } = require('node:util');\nconst { once } = require('node:events');\n\nconst text = await fs.readFile('a.txt', 'utf8');\nawait sleep(500);\nconst execAsync = promisify(require('node:child_process').exec);\nawait once(server, 'listening');",
+      "tags": [
+        "promisify",
+        "async-await"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Event Loop & Async",
+      "difficulty": "medium",
+      "question": "What is the error-first callback pattern in Node.js?",
+      "answer": "Short answer: Older Node APIs call the callback with the error as the first argument (null if there was none) and the result after it.\n\nHow it works: Because an async error cannot be caught with try/catch around the call (the callback runs later), Node passes it as an argument instead. Every callback must check err first and stop if it is set.\n\nExample: fs.readFile('config.json', (err, text) => ...) gets an ENOENT error object as err if the file is missing, and text is undefined.\n\nCommon mistake: Forgetting to return after handling the error, so the code continues and crashes on the undefined result. Another one: throwing inside the callback, which nothing can catch.\n\nInterview tip: Mention that util.promisify depends on exactly this pattern.",
+      "codeSnippet": "fs.readFile('config.json', 'utf8', (err, text) => {\n  if (err) return console.error('Could not read config', err.message);\n  const config = JSON.parse(text);\n});",
+      "tags": [
+        "callbacks",
+        "errors"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Event Loop & Async",
+      "difficulty": "hard",
+      "question": "How can process.nextTick starve the event loop?",
+      "answer": "Short answer: The nextTick queue is fully emptied before Node continues the loop, so code that keeps adding nextTick callbacks stops I/O, timers and requests from ever running.\n\nHow it works: After each callback, Node runs every queued nextTick callback, including ones added while it is emptying the queue. A recursive nextTick therefore never lets the loop reach the poll phase. The same is true for endless promise microtasks. setImmediate does not have this problem because callbacks added during the check phase wait for the next turn.\n\nExample: A queue processor that calls process.nextTick(processNext) for each item looks async, but with a long queue the server stops answering until the queue is empty.\n\nCommon mistake: Using nextTick to \"yield\" in long jobs. It does the opposite of yielding.\n\nInterview tip: Say clearly: nextTick and microtasks never yield to I/O; setImmediate does.",
+      "codeSnippet": "// freezes the server\nfunction spin() { process.nextTick(spin); }\n\n// lets I/O run between steps\nfunction step() { doSomeWork(); setImmediate(step); }",
+      "tags": [
+        "nexttick",
+        "starvation"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Event Loop & Async",
+      "difficulty": "hard",
+      "question": "You must process 1 million records without freezing the API. How?",
+      "answer": "Short answer: Do not run it as one synchronous loop. Process it in chunks that yield to the event loop, stream it, move it to a worker thread, or push it to a background job queue.\n\nHow it works:\nChunks: handle 1,000 records, then await setImmediate so requests can run in between.\nStreams: read records piece by piece, so memory and CPU stay steady.\nWorker thread: run the CPU work in parallel without touching the main thread.\nJob queue: for anything longer than a few seconds, add a job (BullMQ with Redis), return 202 Accepted with a job id, and let a worker process it.\n\nExample: An admin clicks \"recalculate all scores\". The API creates a job and returns at once; a worker processes the records in batches and the UI polls /jobs/:id for progress.\n\nCommon mistake: Wrapping the loop in an async function or Promise and thinking it no longer blocks. It still runs on the main thread.\n\nInterview tip: Pick the solution by duration: chunks for seconds, a worker for CPU work, a queue for minutes. That shows judgement.",
+      "codeSnippet": "const { setImmediate: yieldLoop } = require('node:timers/promises');\nasync function processAll(records) {\n  for (let i = 0; i < records.length; i += 1000) {\n    records.slice(i, i + 1000).forEach(handle);\n    await yieldLoop(); // let requests and I/O run\n  }\n}",
+      "tags": [
+        "blocking",
+        "scenario"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Event Loop & Async",
+      "difficulty": "hard",
+      "question": "How do you call an API for 1,000 users but only 5 at a time?",
+      "answer": "Short answer: Use a small pool of workers that each take the next item until the list is empty, or a library such as p-limit.\n\nHow it works: Promise.all(users.map(callApi)) starts all 1,000 requests at once. That can trip the other service's rate limit, run out of sockets or memory, and make every request slow. A pool keeps exactly 5 promises in flight: as soon as one finishes, the next starts, and results keep their original order.\n\nExample: Sending a newsletter through an email API that allows 5 concurrent requests: mapLimit(users, 5, sendEmail).\n\nCommon mistake: Splitting into batches of 5 with Promise.all per batch. It works, but each batch waits for its slowest call, so it is slower than a real pool.\n\nInterview tip: Mention backpressure on the other service and rate limits; it shows you think about the systems around your code.",
+      "codeSnippet": "async function mapLimit(items, limit, fn) {\n  const results = [];\n  let next = 0;\n  async function worker() {\n    while (next < items.length) {\n      const i = next++;\n      results[i] = await fn(items[i]);\n    }\n  }\n  await Promise.all(Array.from({ length: limit }, worker));\n  return results;\n}\nawait mapLimit(users, 5, (u) => sendEmail(u));",
+      "tags": [
+        "concurrency",
+        "promises"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Event Loop & Async",
+      "difficulty": "hard",
+      "question": "How do you measure event loop health in production?",
+      "answer": "Short answer: Track event loop delay (how late callbacks run) and event loop utilization (how busy the thread is), and alert when they stay high.\n\nHow it works: perf_hooks.monitorEventLoopDelay() gives a histogram of delays; watch p99, not the average. performance.eventLoopUtilization() gives the share of time the loop was busy. Send both to your monitoring (Prometheus, Datadog). To find the cause, take a CPU profile (--cpu-prof) or use Clinic.js Doctor and Flame.\n\nExample: After a release, p99 loop delay jumps from 5 ms to 400 ms; a CPU profile shows a new JSON.stringify of a large object in a logging call.\n\nCommon mistake: Only watching CPU percentage. A process can show 25% CPU on a 4-core machine while its single JavaScript thread is 100% busy.\n\nInterview tip: Saying \"event loop lag\" and \"p99\" in the same sentence signals production experience.",
+      "codeSnippet": "const { performance } = require('node:perf_hooks');\nlet last = performance.eventLoopUtilization();\nsetInterval(() => {\n  const now = performance.eventLoopUtilization();\n  const elu = performance.eventLoopUtilization(now, last).utilization;\n  last = now;\n  console.log('loop busy', (elu * 100).toFixed(0) + '%');\n}, 5000);",
+      "tags": [
+        "monitoring",
+        "performance"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Event Loop & Async",
+      "difficulty": "easy",
+      "question": "In which event loop phase do setImmediate callbacks run?",
+      "options": [
+        "timers",
+        "poll",
+        "check",
+        "close callbacks"
+      ],
+      "correctAnswer": "check",
+      "answer": "Why C: The check phase exists for setImmediate and comes right after poll.\n\nWhy not A: timers is for setTimeout and setInterval.\n\nWhy not B: poll runs I/O callbacks such as file reads and incoming data.\n\nWhy not D: close callbacks handles events like socket.on('close').",
+      "codeSnippet": "",
+      "tags": [
+        "phases"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Event Loop & Async",
+      "difficulty": "medium",
+      "question": "Which of these lets I/O and other requests run between chunks of a long job?",
+      "options": [
+        "process.nextTick",
+        "Promise.resolve().then",
+        "queueMicrotask",
+        "setImmediate"
+      ],
+      "correctAnswer": "setImmediate",
+      "answer": "Why D: setImmediate waits for the next turn of the loop, so pending I/O and requests get a chance first.\n\nWhy not A, B and C: nextTick and microtasks run before the loop continues, so they never let I/O in between chunks.",
+      "codeSnippet": "",
+      "tags": [
+        "setimmediate",
+        "blocking"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Event Loop & Async",
+      "difficulty": "medium",
+      "question": "What is the first argument of a Node.js error-first callback?",
+      "options": [
+        "The result",
+        "The error, or null if there was none",
+        "The request object",
+        "A done() function"
+      ],
+      "correctAnswer": "The error, or null if there was none",
+      "answer": "Why B: Node passes the error first so you must check it before using the result.\n\nWhy not A: The result comes second, after the error.\n\nWhy not C: Callbacks for fs, dns and similar APIs have nothing to do with HTTP requests.\n\nWhy not D: done() belongs to some libraries (like test frameworks), not to the Node convention.\n\nFix: if (err) return handle(err);",
+      "codeSnippet": "",
+      "tags": [
+        "callbacks"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Event Loop & Async",
+      "difficulty": "medium",
+      "question": "A route runs for (let i = 0; i < 1e9; i++) {}. Why does /health also become slow?",
+      "options": [
+        "/health uses the same database",
+        "The loop blocks the single main thread, so /health waits",
+        "Express runs routes one at a time by design",
+        "The OS limits Node to one request"
+      ],
+      "correctAnswer": "The loop blocks the single main thread, so /health waits",
+      "answer": "Why B: All JavaScript callbacks share one thread. Until the loop finishes, no other handler, including /health, can start.\n\nWhy not A: The loop does not touch the database at all.\n\nWhy not C: Express runs many requests at once as long as none of them blocks the thread.\n\nWhy not D: The OS happily accepts many connections; Node just cannot run their handlers.",
+      "codeSnippet": "",
+      "tags": [
+        "blocking"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Event Loop & Async",
+      "difficulty": "hard",
+      "question": "In what order are the logs printed inside this fs.readFile callback?",
+      "options": [
+        "timeout immediate nextTick",
+        "nextTick immediate timeout",
+        "nextTick timeout immediate",
+        "immediate nextTick timeout"
+      ],
+      "correctAnswer": "nextTick immediate timeout",
+      "answer": "Why B: nextTick runs right after the current callback. The callback ran in poll, and check (setImmediate) comes next; timers wait for the next turn.\n\nWhy not A and D: nextTick always runs before any timer or immediate callback.\n\nWhy not C: That order can happen in the main module, but inside an I/O callback setImmediate always comes before setTimeout.",
+      "codeSnippet": "const fs = require('node:fs');\nfs.readFile(__filename, () => {\n  setTimeout(() => console.log('timeout'));\n  setImmediate(() => console.log('immediate'));\n  process.nextTick(() => console.log('nextTick'));\n});",
+      "tags": [
+        "event-loop",
+        "phases"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Event Loop & Async",
+      "difficulty": "hard",
+      "question": "Inside an I/O callback, which runs first: process.nextTick or a resolved promise's then?",
+      "options": [
+        "Promise then",
+        "process.nextTick",
+        "setImmediate",
+        "It is random"
+      ],
+      "correctAnswer": "process.nextTick",
+      "answer": "Why B: Node empties the nextTick queue before the promise microtask queue.\n\nWhy not A: Promise callbacks run right after the nextTick queue is empty.\n\nWhy not C: setImmediate waits for the check phase, after both queues.\n\nWhy not D: The order between the two queues is fixed and documented.",
+      "codeSnippet": "fs.readFile(__filename, () => {\n  Promise.resolve().then(() => console.log('promise'));\n  process.nextTick(() => console.log('nextTick'));\n});",
+      "tags": [
+        "nexttick",
+        "microtasks"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Modules & npm",
+      "difficulty": "easy",
+      "question": "How do you export and import code in CommonJS and in ES modules?",
+      "answer": "Short answer: CommonJS uses require() and module.exports. ES modules use import and export, the JavaScript standard.\n\nHow it works: Node decides the module type per file: .mjs is always ESM, .cjs is always CommonJS, and .js follows \"type\" in the nearest package.json (\"module\" means ESM, otherwise CommonJS). CommonJS loads synchronously at run time; ESM imports are static and resolved before the code runs.\n\nExample: An older Express API uses require everywhere. A new project sets \"type\": \"module\" and writes import express from 'express'.\n\nCommon mistake: Mixing both in one file (require and import together), or forgetting the file extension in ESM relative imports ('./utils.js', not './utils').\n\nInterview tip: Mention that new projects should prefer ESM, but you must be able to read CommonJS because so much existing code uses it.",
+      "codeSnippet": "// CommonJS\nconst express = require('express');\nmodule.exports = { add };\n\n// ES module\nimport express from 'express';\nexport function add(a, b) { return a + b; }",
+      "tags": [
+        "commonjs",
+        "esm"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Modules & npm",
+      "difficulty": "easy",
+      "question": "What is the difference between dependencies, devDependencies and peerDependencies?",
+      "answer": "Short answer: dependencies are needed to run the app, devDependencies only to build and test it, and peerDependencies are packages a library expects the host app to install.\n\nHow it works:\ndependencies: express, mongoose, bcryptjs\ndevDependencies: jest, nodemon, eslint, TypeScript\npeerDependencies: react for a React component library\nProduction installs can skip dev packages with npm install --omit=dev (or npm ci --omit=dev), which makes images smaller and faster to build.\n\nExample: npm install -D nodemon puts nodemon in devDependencies; the server on Render does not need it to run.\n\nCommon mistake: Putting a runtime package such as dotenv or mongoose in devDependencies; it works locally and crashes in production with \"Cannot find module\".\n\nInterview tip: Explain peerDependencies with a concrete case; it is the part most candidates cannot explain.",
+      "codeSnippet": "npm install express          # dependencies\nnpm install -D jest nodemon  # devDependencies",
+      "tags": [
+        "npm",
+        "package-json"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Modules & npm",
+      "difficulty": "medium",
+      "question": "What do the ^ and ~ symbols mean in package.json versions?",
+      "answer": "Short answer: Versions follow semver (MAJOR.MINOR.PATCH). ^ allows minor and patch updates, ~ allows only patch updates.\n\nHow it works:\n^1.4.2: any 1.x.x from 1.4.2 up, never 2.0.0\n~1.4.2: any 1.4.x from 1.4.2 up\n1.4.2: exactly that version\nA major version change means breaking changes, so ^ never crosses it. For 0.x packages, ^0.4.2 only allows 0.4.x, because in 0.x every minor change may break things.\n\nExample: \"express\": \"^5.1.0\" can install 5.2.0 on a fresh install, but your package-lock.json keeps everyone on the exact version you tested.\n\nCommon mistake: Thinking ^ protects you from all breaking changes. Packages sometimes break things in a minor release; the lock file and tests are the real protection.\n\nInterview tip: Mention the 0.x rule; it is a small detail that shows you have read semver properly.",
+      "codeSnippet": "\"express\": \"^5.1.0\"   // 5.1.0 ... 5.x.x\n\"lodash\": \"~4.17.20\"  // 4.17.20 ... 4.17.x\n\"bcryptjs\": \"3.0.2\"   // exactly this",
+      "tags": [
+        "semver",
+        "npm"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Modules & npm",
+      "difficulty": "medium",
+      "question": "Why should you commit package-lock.json, and what is npm ci?",
+      "answer": "Short answer: The lock file records the exact version of every package in the tree, so everyone installs identical code. npm ci installs exactly what the lock file says.\n\nHow it works: package.json has ranges (^5.1.0); without a lock file two installs a week apart can get different versions. npm ci deletes node_modules, installs exactly from the lock file, fails if package.json and the lock file disagree, never changes the lock file, and is faster. Use npm install while developing and npm ci in CI and deployment.\n\nExample: A deploy breaks on Friday even though no code changed: a sub-dependency released a buggy patch and the server ran npm install without a lock file.\n\nCommon mistake: Adding package-lock.json to .gitignore, or deleting it to \"fix\" install errors.\n\nInterview tip: Saying \"reproducible builds\" is the key phrase.",
+      "codeSnippet": "# CI / deployment\nnpm ci --omit=dev",
+      "tags": [
+        "package-lock",
+        "npm"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Modules & npm",
+      "difficulty": "medium",
+      "question": "How does require() find a module?",
+      "answer": "Short answer: Core modules first, then relative or absolute file paths, then node_modules folders walking up the directory tree.\n\nHow it works: 1) Core modules such as fs or node:http are returned directly.\n2) Paths starting with ./, ../ or / load that file, trying .js, .json and .node, or a folder with index.js.\n3) Bare names (express) are searched in ./node_modules, then ../node_modules, and so on up to the root.\n4) Inside a package, Node uses the \"exports\" field of its package.json, falling back to \"main\".\n\nExample: require('./utils/math') loads utils/math.js; require('express') finds node_modules/express and loads the file named in its package.json.\n\nCommon mistake: Requiring a file inside a package that its \"exports\" field does not allow (express/lib/router), which throws ERR_PACKAGE_PATH_NOT_EXPORTED.\n\nInterview tip: Mention require.resolve('name') to see which file Node would load; it is the quickest way to debug a wrong module.",
+      "codeSnippet": "require('node:fs');      // core\nrequire('./utils/math'); // ./utils/math.js\nrequire('express');      // node_modules/express via package.json\nrequire.resolve('express'); // the path Node will load",
+      "tags": [
+        "require",
+        "resolution"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Modules & npm",
+      "difficulty": "medium",
+      "question": "What is module caching in Node.js, and how is it useful?",
+      "answer": "Short answer: The first require() of a file runs it and caches its module.exports; every later require() returns the same object without running the code again.\n\nHow it works: The cache is keyed by the resolved file path. This makes modules natural singletons: a db.js that connects to MongoDB connects once, and a config.js is read once. ES modules are cached the same way.\n\nExample: A logger module creates one pino instance; every file that requires it shares the same logger and settings.\n\nCommon mistake: Expecting a module's top-level code to run again for each require, or changing a shared exported object in one file and being surprised that another file sees the change.\n\nInterview tip: Connect this to the singleton pattern; interviewers often ask how you share one DB connection across files.",
+      "codeSnippet": "// db.js\nconst mongoose = require('mongoose');\nmongoose.connect(process.env.MONGO_URI); // runs once\nmodule.exports = mongoose;\n\n// any other file\nconst db = require('./db'); // same object, no new connection",
+      "tags": [
+        "require",
+        "caching"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Modules & npm",
+      "difficulty": "hard",
+      "question": "What is the difference between module.exports and exports?",
+      "answer": "Short answer: exports is only a shortcut variable that points to module.exports at the start. require() always returns module.exports.\n\nHow it works: Adding properties through exports (exports.add = ...) changes the same object, so it works. Assigning a new value to exports (exports = {...}) only changes the local variable; module.exports still points to the original empty object, and the new value is lost.\n\nExample: A file ends with exports = { sub }; another file requires it and gets {}. Calling sub() then throws \"sub is not a function\".\n\nCommon mistake: Mixing both styles in one file, or assigning to exports when exporting a single function or class.\n\nInterview tip: Explain the module wrapper: function (exports, require, module, __filename, __dirname). Then the behaviour is obvious.",
+      "codeSnippet": "exports.add = (a, b) => a + b;     // works\nexports = { sub: (a, b) => a - b }; // lost: require() never sees it\nmodule.exports = { sub };          // works",
+      "tags": [
+        "module-exports",
+        "commonjs"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Modules & npm",
+      "difficulty": "hard",
+      "question": "What happens with circular dependencies in CommonJS, and how do you fix them?",
+      "answer": "Short answer: When two modules require each other, the second require returns the first module's exports as they are at that moment: unfinished, often empty.\n\nHow it works: a.js starts, requires b.js; b.js requires a.js, but a is still loading, so b gets a's partial module.exports. If b calls a function from a during loading, it is undefined. If it only calls it later, it may work, which makes the bug confusing.\n\nExample: user.model.js requires order.model.js to validate orders, and order.model.js requires user.model.js: one of them sees {} and crashes with \"x is not a function\" on startup.\n\nCommon mistake: \"Fixing\" it by moving require calls around until it happens to work, instead of removing the cycle.\n\nInterview tip: Fixes to name: move shared code into a third module, require inside the function that needs it, or redesign so dependencies point one way. Tools like madge can find cycles.",
+      "codeSnippet": "// a.js\nconst b = require('./b');\nmodule.exports.hello = () => 'hello';\n// b.js\nconst a = require('./a'); // a is {} here, a.hello not set yet\nmodule.exports.run = () => a.hello(); // fine later, crashes if called at load",
+      "tags": [
+        "circular",
+        "commonjs"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Modules & npm",
+      "difficulty": "hard",
+      "question": "How do you use ES modules in Node and mix them with CommonJS?",
+      "answer": "Short answer: Set \"type\": \"module\" in package.json or use .mjs files. ESM can import CommonJS easily; CommonJS loads ESM with await import(), or with require() in newer Node versions.\n\nHow it works:\nImporting CommonJS from ESM: module.exports becomes the default export, and Node tries to detect named exports.\nLoading ESM from CommonJS: await import('./x.mjs') always works; Node 22.12+ (and 20.19+) can also require() ES modules that do not use top-level await.\nIn ESM, relative imports need the file extension, and __dirname, require and module are not available.\n\nExample: An ESM app imports an old CommonJS helper library with import pkg from 'old-lib' and then reads pkg.someFunction.\n\nCommon mistake: Writing import './utils' without .js in ESM, which fails with ERR_MODULE_NOT_FOUND.\n\nInterview tip: Mention top-level await as a reason ESM cannot always be required synchronously.",
+      "codeSnippet": "// ESM file\nimport pkg from 'some-cjs-package';\nimport { add } from './math.js'; // extension required\n\n// CommonJS file\nconst { add } = await import('./math.mjs'); // inside an async function",
+      "tags": [
+        "esm",
+        "commonjs"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Modules & npm",
+      "difficulty": "hard",
+      "question": "How do you keep npm dependencies secure?",
+      "answer": "Short answer: Lock versions, install with npm ci, scan with npm audit, keep dependencies few and updated, and be careful with install scripts.\n\nHow it works:\nLock file + npm ci: everyone runs the same, reviewed versions\nnpm audit: lists known vulnerabilities; fix critical ones first\nDependabot or Renovate: small, regular update pull requests\nBefore adding a package: check downloads, maintainers, last release and size\nInstall scripts: npm ci --ignore-scripts in CI where possible, since malicious packages often run code on install\nTokens: never commit .npmrc with an auth token\n\nExample: A popular package's maintainer account is hacked and a new version steals environment variables during install. Teams that pinned versions and reviewed updates were not affected.\n\nCommon mistake: Running npm audit fix --force blindly; it can jump major versions and break the app.\n\nInterview tip: Mention supply-chain attacks by name; it shows you know the real risk, not only CVEs.",
+      "codeSnippet": "npm audit --omit=dev\nnpm audit fix\nnpm ci --ignore-scripts",
+      "tags": [
+        "security",
+        "npm"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Modules & npm",
+      "difficulty": "easy",
+      "question": "Which command installs exactly the versions in package-lock.json, which suits CI?",
+      "options": [
+        "npm install",
+        "npm update",
+        "npm ci",
+        "npm audit"
+      ],
+      "correctAnswer": "npm ci",
+      "answer": "Why C: npm ci installs exactly from the lock file and fails if it does not match package.json.\n\nWhy not A: npm install may update the lock file when ranges allow newer versions.\n\nWhy not B: npm update deliberately moves packages to newer versions.\n\nWhy not D: npm audit only reports vulnerabilities; it installs nothing.",
+      "codeSnippet": "",
+      "tags": [
+        "npm"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Modules & npm",
+      "difficulty": "medium",
+      "question": "Which version can \"^1.4.2\" install?",
+      "options": [
+        "2.0.0",
+        "1.9.0",
+        "1.3.9",
+        "0.9.0"
+      ],
+      "correctAnswer": "1.9.0",
+      "answer": "Why B: ^ allows newer minor and patch versions within the same major: 1.4.2 up to, but not including, 2.0.0.\n\nWhy not A: 2.0.0 is a new major version, which may contain breaking changes.\n\nWhy not C and D: Versions below 1.4.2 are never chosen.",
+      "codeSnippet": "",
+      "tags": [
+        "semver"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Modules & npm",
+      "difficulty": "medium",
+      "question": "Where should jest and nodemon be listed in package.json?",
+      "options": [
+        "dependencies",
+        "devDependencies",
+        "peerDependencies",
+        "scripts"
+      ],
+      "correctAnswer": "devDependencies",
+      "answer": "Why B: They are only needed while developing and testing, so production installs can skip them.\n\nWhy not A: dependencies are installed in production too, making the deploy bigger for nothing.\n\nWhy not C: peerDependencies are for libraries asking the host app to provide a package.\n\nWhy not D: scripts holds commands such as \"test\": \"jest\", not packages.",
+      "codeSnippet": "",
+      "tags": [
+        "package-json"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Modules & npm",
+      "difficulty": "medium",
+      "question": "What does main.js print?",
+      "options": [
+        "1",
+        "0",
+        "undefined",
+        "TypeError"
+      ],
+      "correctAnswer": "0",
+      "answer": "Why B: count was copied into the exported object when counter.js loaded. inc() changes the module's local variable, not that copy.\n\nWhy not A: That would need a live binding (ES modules) or a getter.\n\nWhy not C: count was set to 0 in the exported object, so it is defined.\n\nWhy not D: Nothing here calls an undefined function.",
+      "codeSnippet": "// counter.js\nlet count = 0;\nmodule.exports = { count, inc: () => count++ };\n\n// main.js\nconst c = require('./counter');\nc.inc();\nconsole.log(c.count);",
+      "tags": [
+        "commonjs",
+        "require"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Modules & npm",
+      "difficulty": "hard",
+      "question": "What does require() return for a module that only contains exports = { a: 1 }?",
+      "options": [
+        "{ a: 1 }",
+        "{}",
+        "undefined",
+        "A SyntaxError"
+      ],
+      "correctAnswer": "{}",
+      "answer": "Why B: Assigning to exports only changes the local variable. require() returns module.exports, which is still the original empty object.\n\nWhy not A: That would need module.exports = { a: 1 }.\n\nWhy not C: module.exports always starts as an empty object, never undefined.\n\nWhy not D: The code is valid JavaScript; it just does not export anything.",
+      "codeSnippet": "",
+      "tags": [
+        "module-exports"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Modules & npm",
+      "difficulty": "hard",
+      "question": "Three files require the same module. How many times does its top-level code run?",
+      "options": [
+        "3 times",
+        "Once",
+        "Never, until a function is called",
+        "Once per request"
+      ],
+      "correctAnswer": "Once",
+      "answer": "Why B: The first require runs the module and caches its exports; the other two get the cached object.\n\nWhy not A: That would happen only if the cache were cleared between requires.\n\nWhy not C: Top-level code runs as soon as the module is first required.\n\nWhy not D: Modules are loaded at require time, not per HTTP request.",
+      "codeSnippet": "",
+      "tags": [
+        "caching"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "easy",
+      "question": "What is EventEmitter in Node.js?",
+      "answer": "Short answer: EventEmitter is the class behind Node's event system: on() adds a listener, emit() calls the listeners of an event, once() listens one time and off() removes a listener.\n\nHow it works: Many core objects extend it: HTTP servers ('request'), streams ('data', 'end'), sockets and process ('SIGTERM'). Listeners run synchronously, in the order they were added, when emit() is called. You can extend it in your own classes to let other parts of the app react to what happens.\n\nExample: After a user registers, the auth service emits 'userRegistered'; separate listeners send a welcome email and record analytics, so the register code does not need to know about them.\n\nCommon mistake: Assuming emit() is async. Listeners run immediately inside emit(), so a slow listener slows down the code that emitted.\n\nInterview tip: Mention that this is the observer pattern; then give the decoupling example.",
+      "codeSnippet": "const { EventEmitter } = require('node:events');\nconst bus = new EventEmitter();\nbus.on('userRegistered', (user) => sendWelcomeEmail(user));\nbus.emit('userRegistered', { email: 'ali@x.com' });",
+      "tags": [
+        "eventemitter"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "medium",
+      "question": "What happens when an EventEmitter emits 'error' and nobody is listening?",
+      "answer": "Short answer: 'error' is special: with no listener, Node throws the error, and if nothing catches it the process crashes.\n\nHow it works: Other events with no listeners are simply ignored. For 'error', Node assumes an unhandled error is dangerous and throws it. Streams, sockets and servers all emit 'error', so each one you create should have an 'error' listener (or be used with stream.pipeline, which handles it).\n\nExample: A route streams a file with fs.createReadStream(path).pipe(res). A user requests a file that does not exist, the stream emits ENOENT, and the whole server crashes for every user.\n\nCommon mistake: Wrapping createReadStream in try/catch. The error happens later, asynchronously, so the try/catch never sees it.\n\nInterview tip: Mention events.once and events.on helpers; they turn 'error' into a rejected promise, which is easier to handle with await.",
+      "codeSnippet": "const stream = fs.createReadStream('missing.txt');\nstream.on('error', (err) => {\n  console.error('Read failed:', err.code); // ENOENT, server keeps running\n});",
+      "tags": [
+        "eventemitter",
+        "errors"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "medium",
+      "question": "What is a Buffer, and why does Node need it?",
+      "answer": "Short answer: A Buffer is a fixed-size block of raw bytes. Node needs it because files, network data and images are bytes, not JavaScript strings.\n\nHow it works: Buffers live outside the normal V8 heap and are a subclass of Uint8Array. You convert between bytes and text with an encoding: Buffer.from('hi', 'utf8'), buf.toString('base64'). length is in bytes, not characters, so non-English text takes more bytes than letters.\n\nExample: Sending an image as base64 in JSON: Buffer.from(fileBytes).toString('base64'). Comparing a webhook signature with crypto.timingSafeEqual takes two Buffers.\n\nCommon mistake: Using string length to check a size limit, or creating a buffer with the old new Buffer(size) API, which is deprecated and could expose old memory.\n\nInterview tip: Mention that Buffer.alloc(size) is zero-filled (safe) and Buffer.allocUnsafe(size) is faster but may contain old data.",
+      "codeSnippet": "const buf = Buffer.from('Salam');\nbuf.length;                 // 5 bytes\nbuf.toString('base64');     // 'U2FsYW0='\nBuffer.from('é').length;    // 2 (UTF-8 uses 2 bytes)",
+      "tags": [
+        "buffer"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "medium",
+      "question": "What are the four types of streams? Give a real example of each.",
+      "answer": "Short answer: Readable, Writable, Duplex and Transform.\n\nHow it works:\nReadable: data comes out; fs.createReadStream, an incoming HTTP request (req)\nWritable: data goes in; fs.createWriteStream, an HTTP response (res)\nDuplex: reads and writes independently; a TCP socket\nTransform: a Duplex that changes data on the way through; zlib.createGzip, a CSV parser\n\nExample: Download log: fs.createReadStream (Readable) -> zlib.createGzip (Transform) -> res (Writable), so a 1 GB log is compressed and sent without loading it into memory.\n\nCommon mistake: Mixing up Duplex and Transform. In a Duplex the two sides are unrelated (a socket); in a Transform the output is calculated from the input.\n\nInterview tip: Always give one real example per type; definitions alone sound memorised.",
+      "codeSnippet": "fs.createReadStream('big.log')   // Readable\n  .pipe(zlib.createGzip())        // Transform\n  .pipe(fs.createWriteStream('big.log.gz')); // Writable",
+      "tags": [
+        "streams"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "medium",
+      "question": "Why should you use streams instead of fs.readFile for large files?",
+      "answer": "Short answer: fs.readFile loads the whole file into memory before you can use it; a stream handles it in small chunks, so memory stays low and data starts flowing at once.\n\nHow it works: A Readable file stream reads 64 KB at a time by default and passes each chunk on. Memory use stays about the same whether the file is 1 MB or 10 GB, and the user starts receiving data immediately instead of after the whole file is read.\n\nExample: Ten users download a 500 MB video. With readFile the server needs about 5 GB of RAM and crashes; with streams it needs a few MB.\n\nCommon mistake: Reading a stream into one big string with data events (body += chunk), which brings back the same memory problem.\n\nInterview tip: Quote the numbers (chunk size, memory per user); it makes the answer concrete.",
+      "codeSnippet": "// bad for big files\napp.get('/video', async (req, res) => res.send(await fs.promises.readFile('movie.mp4')));\n// good\napp.get('/video', (req, res) => fs.createReadStream('movie.mp4').pipe(res));",
+      "tags": [
+        "streams",
+        "memory"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "medium",
+      "question": "What does the warning \"MaxListenersExceededWarning\" usually mean?",
+      "answer": "Short answer: Node warns when more than 10 listeners are added to one event on one emitter. It usually points to a memory leak.\n\nHow it works: The limit exists to catch code that adds a listener again and again without removing it, for example inside a request handler. Each listener keeps its closure (and everything it references) alive. setMaxListeners can raise the limit when many listeners are truly expected, but it should not be used to hide the warning.\n\nExample: A middleware adds process.on('SIGTERM', ...) on every request. After 11 requests the warning appears; after a day, memory has grown by thousands of closures.\n\nCommon mistake: Raising the limit to 100 to make the warning go away.\n\nInterview tip: Say how you would find it: run with --trace-warnings to see the stack that added the listener.",
+      "codeSnippet": "// leak: a new listener on every request\napp.get('/', (req, res) => {\n  process.on('SIGTERM', () => {/* ... */});\n  res.send('ok');\n});",
+      "tags": [
+        "eventemitter",
+        "memory-leak"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "hard",
+      "question": "What is backpressure, and how does Node deal with it?",
+      "answer": "Short answer: Backpressure is when data comes in faster than it can be written out. Node signals it with write() returning false, and you must pause until the 'drain' event.\n\nHow it works: Every writable stream has an internal buffer (highWaterMark, 16 KB by default for byte streams). write() adds data and returns false once the buffer is full. If you keep writing anyway, data piles up in memory. pipe(), stream.pipeline() and for await...of handle this for you by pausing the source and resuming on 'drain'.\n\nExample: A server reads a 1 GB video from a fast SSD and sends it to a user on slow mobile data. Without backpressure the whole file sits in RAM; with 100 such users the server crashes.\n\nCommon mistake: Writing in a 'data' handler and ignoring the return value of write().\n\nInterview tip: Mention that pipeline and async iteration handle backpressure automatically, which is why they are the recommended way.",
+      "codeSnippet": "readable.on('data', (chunk) => {\n  if (!writable.write(chunk)) {\n    readable.pause();                                // buffer full\n    writable.once('drain', () => readable.resume()); // continue when emptied\n  }\n});\n// simpler and safer:\nawait pipeline(fs.createReadStream('video.mp4'), res);",
+      "tags": [
+        "streams",
+        "backpressure"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "hard",
+      "question": "Why is stream.pipeline better than .pipe()?",
+      "answer": "Short answer: pipeline forwards errors from any stream, destroys every stream in the chain on failure and tells you when everything is finished. .pipe() does none of that.\n\nHow it works: With .pipe(), an error in a middle stream does not reach the others: the source may keep a file handle open and the response may hang forever. You would need an 'error' listener on every stream. pipeline() from node:stream/promises returns a promise that rejects on the first error and resolves when the last stream finishes.\n\nExample: A gzip download route uses .pipe(). The client disconnects halfway; with .pipe() the file stream stays open and leaks a file descriptor each time. With pipeline everything is cleaned up.\n\nCommon mistake: Using .pipe() and adding an 'error' handler only on the last stream.\n\nInterview tip: Say \"pipeline is .pipe() plus error handling and cleanup\"; it is a clear one-liner.",
+      "codeSnippet": "const { pipeline } = require('node:stream/promises');\nawait pipeline(\n  fs.createReadStream('access.log'),\n  zlib.createGzip(),\n  fs.createWriteStream('access.log.gz'),\n); // throws if any step fails, all streams cleaned up",
+      "tags": [
+        "streams",
+        "pipeline"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "hard",
+      "question": "A user uploads a 2 GB CSV file. How would you process it in Node?",
+      "answer": "Short answer: Never load it into memory: stream the upload to storage, then stream the file through a CSV parser and insert rows in batches, ideally as a background job.\n\nHow it works:\nUpload: stream to disk or S3 (busboy, multer disk storage, or a pre-signed S3 URL so the file never touches the API)\nParse: read the stored file as a stream with csv-parse\nInsert: collect about 1,000 rows and insertMany; awaiting each batch pauses reading (backpressure)\nRespond: return 202 Accepted with a job id; a worker processes it and the UI polls for progress\nValidate: count and report bad rows instead of failing the whole file\n\nExample: An admin imports a product catalogue of 3 million rows; memory stays around 100 MB and the API stays responsive.\n\nCommon mistake: Using multer's default memory storage, which puts the whole 2 GB file in RAM.\n\nInterview tip: Interviewers want to hear four words: stream, batch, backpressure, background job.",
+      "codeSnippet": "const { parse } = require('csv-parse');\nconst rows = fs.createReadStream(filePath).pipe(parse({ columns: true }));\nlet batch = [];\nfor await (const row of rows) {        // async iteration respects backpressure\n  batch.push(row);\n  if (batch.length === 1000) { await Product.insertMany(batch); batch = []; }\n}\nif (batch.length) await Product.insertMany(batch);",
+      "tags": [
+        "streams",
+        "scenario"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "hard",
+      "question": "How do you write your own Transform stream?",
+      "answer": "Short answer: Create a Transform and implement transform(chunk, encoding, callback): change the chunk and pass the result to the callback.\n\nHow it works: callback(null, result) sends one output chunk; you can also call this.push() several times and then callback(). Passing an error to the callback fails the stream (and the pipeline). An optional flush(callback) runs at the end to output any leftover data. objectMode: true lets the stream pass JavaScript objects instead of bytes.\n\nExample: A log-export route uses a Transform that masks email addresses before the data reaches the user, without loading the logs into memory.\n\nCommon mistake: Forgetting that a chunk can end in the middle of a line or a multi-byte character; real parsers keep the leftover part and handle it in the next chunk or in flush().\n\nInterview tip: Mention objectMode and flush; they show you have built one, not only read about it.",
+      "codeSnippet": "const { Transform } = require('node:stream');\nconst maskEmails = new Transform({\n  transform(chunk, enc, cb) {\n    cb(null, chunk.toString().replace(/[\\w.]+@[\\w.]+/g, '***@***'));\n  },\n});\nawait pipeline(fs.createReadStream('app.log'), maskEmails, res);",
+      "tags": [
+        "streams",
+        "transform"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "easy",
+      "question": "Which EventEmitter method adds a listener that runs only one time?",
+      "options": [
+        "on",
+        "once",
+        "emit",
+        "addOnce"
+      ],
+      "correctAnswer": "once",
+      "answer": "Why B: once() removes the listener automatically after its first call.\n\nWhy not A: on() keeps the listener until you remove it.\n\nWhy not C: emit() triggers an event; it does not add a listener.\n\nWhy not D: There is no addOnce method in Node's EventEmitter.",
+      "codeSnippet": "",
+      "tags": [
+        "eventemitter"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "medium",
+      "question": "Which stream type reads and writes and changes the data passing through?",
+      "options": [
+        "Readable",
+        "Writable",
+        "Duplex",
+        "Transform"
+      ],
+      "correctAnswer": "Transform",
+      "answer": "Why D: A Transform computes its output from its input, like gzip or a CSV parser.\n\nWhy not A: A Readable only produces data.\n\nWhy not B: A Writable only consumes data.\n\nWhy not C: A Duplex reads and writes, but the two sides are unrelated, like a socket.",
+      "codeSnippet": "",
+      "tags": [
+        "streams"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "medium",
+      "question": "What happens when 'error' is emitted on an emitter with no 'error' listener?",
+      "options": [
+        "It is ignored",
+        "It is logged as a warning",
+        "The error is thrown and can crash the process",
+        "The emitter retries"
+      ],
+      "correctAnswer": "The error is thrown and can crash the process",
+      "answer": "Why C: Node treats 'error' specially: without a listener, it throws, and an uncaught throw crashes the process.\n\nWhy not A: Other events are ignored without listeners, but 'error' is not.\n\nWhy not B: There is no warning; it is a real throw.\n\nWhy not D: Emitters never retry anything by themselves.\n\nFix: Add stream.on('error', handler), or use stream.pipeline.",
+      "codeSnippet": "",
+      "tags": [
+        "errors",
+        "eventemitter"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "medium",
+      "question": "What does Buffer.from('é').length return?",
+      "options": [
+        "1",
+        "2",
+        "4",
+        "undefined"
+      ],
+      "correctAnswer": "2",
+      "answer": "Why B: Buffer length counts bytes, and 'é' takes 2 bytes in UTF-8.\n\nWhy not A: 1 is the string length ('é'.length), not the byte length.\n\nWhy not C: 4 bytes are used only by characters such as many emoji.\n\nWhy not D: Every Buffer has a numeric length.",
+      "codeSnippet": "",
+      "tags": [
+        "buffer"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "hard",
+      "question": "writable.write() returned false. What should your code do?",
+      "options": [
+        "Write the next chunk faster",
+        "Stop writing and wait for the drain event",
+        "Close the stream",
+        "Nothing, false means success"
+      ],
+      "correctAnswer": "Stop writing and wait for the drain event",
+      "answer": "Why B: false means the internal buffer is full. Pause the source and continue when 'drain' fires.\n\nWhy not A: Writing more makes memory grow; that is the problem backpressure prevents.\n\nWhy not C: The stream is fine; it only needs time to flush.\n\nWhy not D: The data was accepted, but false is a request to slow down.\n\nFix: Use stream.pipeline or for await...of, which do this for you.",
+      "codeSnippet": "",
+      "tags": [
+        "backpressure"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "EventEmitter, Buffers & Streams",
+      "difficulty": "hard",
+      "question": "Why prefer stream.pipeline() over .pipe()?",
+      "options": [
+        "It is faster",
+        "It passes errors on and destroys all streams on failure",
+        "It supports only files",
+        "It turns off backpressure"
+      ],
+      "correctAnswer": "It passes errors on and destroys all streams on failure",
+      "answer": "Why B: pipeline adds error forwarding, cleanup of every stream and a completion callback or promise.\n\nWhy not A: Speed is the same; the difference is safety.\n\nWhy not C: It works with any streams: HTTP, sockets, zlib, files.\n\nWhy not D: It keeps backpressure, exactly like .pipe().",
+      "codeSnippet": "",
+      "tags": [
+        "pipeline"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Express & Middleware",
+      "difficulty": "easy",
+      "question": "What is Express, and why use it instead of the plain http module?",
+      "answer": "Short answer: Express is a small web framework on top of Node's http module that adds routing, middleware and helpers for requests and responses.\n\nHow it works: With plain http you parse the URL, method, query string, JSON body and headers yourself, and write one big if/else for routes. Express gives you app.get('/users/:id'), req.params, req.query, res.json(), res.status() and a middleware chain for shared logic such as auth and logging.\n\nExample: A 30-route API in plain http becomes hard to read; in Express each route is one line plus a controller function, grouped with Routers.\n\nCommon mistake: Thinking Express replaces Node. It is a thin layer; req and res are still Node's objects with extra methods.\n\nInterview tip: Mention alternatives (Fastify for speed, NestJS for structure) and why you would still pick Express: simple and huge ecosystem.",
+      "codeSnippet": "const express = require('express');\nconst app = express();\napp.use(express.json());\napp.get('/users/:id', (req, res) => res.json({ id: req.params.id }));\napp.listen(3000);",
+      "tags": [
+        "express"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Express & Middleware",
+      "difficulty": "easy",
+      "question": "What is middleware in Express?",
+      "answer": "Short answer: Middleware is a function (req, res, next) that runs during a request and either sends a response or calls next() to continue.\n\nHow it works: Express keeps a list of middleware and route handlers. Each one can read or change req and res (for example set req.user), end the request (res.json), or call next() to pass control on. next(err) skips to the error handler. Body parsing, CORS, authentication, logging and rate limiting are all middleware.\n\nExample: A request logger records method, path, status and duration for every request without touching any route.\n\nCommon mistake: Forgetting to call next() (the request hangs) or calling it after sending a response (\"headers already sent\").\n\nInterview tip: Describe it as a pipeline: request -> middleware 1 -> middleware 2 -> route -> response.",
+      "codeSnippet": "function logger(req, res, next) {\n  const start = Date.now();\n  res.on('finish', () => console.log(req.method, req.url, res.statusCode, Date.now() - start + 'ms'));\n  next();\n}\napp.use(logger);",
+      "tags": [
+        "middleware"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Express & Middleware",
+      "difficulty": "medium",
+      "question": "Why does the order of middleware matter in Express? Give real bugs it causes.",
+      "answer": "Short answer: Express runs middleware in the exact order you register it, so the wrong order silently breaks features.\n\nHow it works: Real bugs:\nBody parser after routes: req.body is undefined in every handler\nAuth after the route: the route is public by accident\n404 handler before routes: every request returns 404\nError handler not last: errors are never caught by it\nCORS after auth: preflight OPTIONS requests fail with 401\n\nExample: A team adds app.use(protect) at the bottom of app.js \"for all routes\"; nothing is protected because every route above it already responded.\n\nCommon mistake: Assuming app.use order does not matter because \"Express figures it out\".\n\nInterview tip: Recite the safe order: security headers, CORS, body parser, logging, rate limit, routes, 404, error handler.",
+      "codeSnippet": "app.use(express.json());           // 1. parse body\napp.use('/api', authRoutes);       // 2. routes\napp.use((req, res) => res.status(404).json({ message: 'Not found' })); // 3. 404\napp.use(errorHandler);             // 4. errors, always last",
+      "tags": [
+        "middleware",
+        "order"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Express & Middleware",
+      "difficulty": "medium",
+      "question": "What is the difference between req.params, req.query and req.body?",
+      "answer": "Short answer: req.params holds named parts of the path, req.query holds the query string, and req.body holds the parsed request body.\n\nHow it works: /users/:id gives req.params.id\n?page=2&sort=name gives req.query.page and req.query.sort\nA JSON body gives req.body, but only after a body parser such as express.json() runs\nParams and query values are always strings (or arrays), so convert numbers yourself.\n\nExample: PUT /users/42?notify=true with body { \"name\": \"Sara\" }: params.id is '42', query.notify is 'true' (a string, not a boolean), body.name is 'Sara'.\n\nCommon mistake: Comparing req.query.notify === true, which is never true because it is the string 'true'. Another: trusting these values without validation.\n\nInterview tip: Mention that all three come from the user and must be validated; that is the follow-up interviewers want.",
+      "codeSnippet": "// PUT /users/42?notify=true   body: { \"name\": \"Sara\" }\napp.put('/users/:id', (req, res) => {\n  req.params.id;     // '42' (a string)\n  req.query.notify;  // 'true' (a string)\n  req.body.name;     // 'Sara'\n});",
+      "tags": [
+        "request",
+        "express"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Express & Middleware",
+      "difficulty": "medium",
+      "question": "How does error-handling middleware work in Express?",
+      "answer": "Short answer: It is middleware with four arguments (err, req, res, next). Express jumps to it when you call next(err) or when a handler throws.\n\nHow it works: Express recognises it by the four arguments, so keep next in the signature even if unused. Register it after all routes. In Express 5, rejected promises from async handlers also reach it automatically. A good handler sets the status code, logs unexpected errors with the stack, and sends a safe JSON message.\n\nExample: A controller throws new AppError('Email already registered', 409); the error handler returns { message } with 409, while a database crash returns 500 with \"Something went wrong\" and the details go only to the logs.\n\nCommon mistake: Sending err.stack or raw database errors to the client in production; it leaks file paths and internals to attackers.\n\nInterview tip: Mention one central handler instead of try/catch with res.status(500) in every route.",
+      "codeSnippet": "app.use((err, req, res, next) => {\n  const status = err.status || 500;\n  if (status >= 500) console.error(err);\n  res.status(status).json({\n    message: status >= 500 ? 'Something went wrong' : err.message,\n  });\n});",
+      "tags": [
+        "errors",
+        "middleware"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Express & Middleware",
+      "difficulty": "medium",
+      "question": "What is express.Router, and why use it?",
+      "answer": "Short answer: Router is a mini app with its own routes and middleware that you mount under a path prefix.\n\nHow it works: It lets you split a large API into files by feature (auth, users, admin) and apply middleware to a whole group at once with router.use(). Routers can be nested, and a router mounted at /api/admin only sees requests under that prefix.\n\nExample: All admin routes need login and the admin role: router.use(protect, adminOnly) at the top of routes/admin.js protects every route in that file with one line.\n\nCommon mistake: Adding protect to each admin route by hand and forgetting one, which leaves it open.\n\nInterview tip: Mention mergeParams: true when a nested router needs params from its parent (/users/:userId/orders).",
+      "codeSnippet": "// routes/admin.js\nconst router = express.Router();\nrouter.use(protect, adminOnly);      // every admin route\nrouter.get('/users', listUsers);\nmodule.exports = router;\n\n// app.js\napp.use('/api/admin', require('./routes/admin'));",
+      "tags": [
+        "router",
+        "express"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Express & Middleware",
+      "difficulty": "hard",
+      "question": "What causes \"Cannot set headers after they are sent to the client\"?",
+      "answer": "Short answer: The code tried to send a second response for the same request.\n\nHow it works: Once res.json(), res.send() or res.end() runs, the headers are on their way to the client; any later attempt to set a status or send again throws this error. Usual causes: no return after a response inside an if, calling next() after responding, or both a callback and a promise responding.\n\nExample: A route returns 404 when the user is missing but forgets return, so it continues to res.json(user) and crashes the request with this error.\n\nCommon mistake: Silencing it with if (!res.headersSent) everywhere instead of fixing the flow.\n\nInterview tip: Show the fix pattern: return res.status(...).json(...), so every response is also an exit.",
+      "codeSnippet": "app.get('/user/:id', async (req, res) => {\n  const user = await User.findById(req.params.id);\n  if (!user) return res.status(404).json({ message: 'Not found' }); // return!\n  res.json(user);\n});",
+      "tags": [
+        "errors",
+        "response"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Express & Middleware",
+      "difficulty": "hard",
+      "question": "Write an Express middleware that checks a JWT and gives routes the logged-in user.",
+      "answer": "Short answer: Read the Bearer token, verify it, load the user, check they may still log in, attach them to req.user and call next(); respond 401 otherwise.\n\nHow it works: Steps: read Authorization: Bearer <token>; jwt.verify with the secret (throws if changed or expired); load the user from the database so a deleted or blocked account is refused even with a valid token; set req.user; call next(). Any failure returns 401 with a clear message.\n\nExample: This project's protect middleware also rejects tokens issued before the last password reset, so changing the password logs out stolen sessions.\n\nCommon mistake: Only decoding the token with jwt.decode() (no signature check), or trusting the role inside the token without loading the user.\n\nInterview tip: Mention the extra checks (blocked user, password changed); they separate a production answer from a tutorial answer.",
+      "codeSnippet": "async function protect(req, res, next) {\n  const header = req.headers.authorization || '';\n  const token = header.startsWith('Bearer ') ? header.slice(7) : null;\n  if (!token) return res.status(401).json({ message: 'Please log in' });\n  try {\n    const { id } = jwt.verify(token, process.env.JWT_SECRET);\n    req.user = await User.findById(id);\n    if (!req.user || req.user.isBlocked) return res.status(401).json({ message: 'Account not available' });\n    next();\n  } catch {\n    res.status(401).json({ message: 'Invalid or expired token' });\n  }\n}",
+      "tags": [
+        "auth",
+        "middleware"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Express & Middleware",
+      "difficulty": "hard",
+      "question": "How do you make a reusable middleware that takes options, such as a role check?",
+      "answer": "Short answer: Write a function that takes the options and returns the real (req, res, next) middleware; the options stay available through a closure.\n\nHow it works: This is the middleware factory pattern. express.json({ limit }), cors({ origin }) and rateLimit({ windowMs }) all work this way. It keeps one tested implementation and lets each route configure it.\n\nExample: requireRole('admin') on delete routes and requireRole('admin', 'editor') on content routes, both from the same function.\n\nCommon mistake: Writing a separate adminOnly, editorOnly and managerOnly middleware with copied code.\n\nInterview tip: Name the pattern (factory + closure); interviewers often follow up with \"how does it remember the roles?\"",
+      "codeSnippet": "const requireRole = (...roles) => (req, res, next) => {\n  if (!roles.includes(req.user?.role)) {\n    return res.status(403).json({ message: 'Not allowed' });\n  }\n  next();\n};\nrouter.delete('/users/:id', protect, requireRole('admin'), deleteUser);",
+      "tags": [
+        "middleware",
+        "closures"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Express & Middleware",
+      "difficulty": "hard",
+      "question": "What changed in Express 5 that matters for interviews and upgrades?",
+      "answer": "Short answer: Async errors are handled automatically, route path syntax is stricter, and old deprecated APIs were removed.\n\nHow it works:\nAsync errors: a rejected promise or throw in an async handler goes to the error middleware, so asyncHandler wrappers are no longer needed\nPaths: wildcards need a name (/*splat), and ? + ( ) are no longer special pattern characters in strings\nreq.body: undefined (not {}) when no body parser ran\nRemoved: res.send(status), app.del, res.sendfile and similar old APIs\nNode: requires Node 18 or newer\n\nExample: Upgrading an API from Express 4 to 5: remove asyncHandler, rename app.get('*') to app.get('/*splat'), and fix any code that assumed req.body is always an object.\n\nCommon mistake: Upgrading the version number and not testing wildcard routes; they fail at startup with a path-to-regexp error.\n\nInterview tip: Lead with async error handling; it is the change that most affects daily code.",
+      "codeSnippet": "// Express 5: no try/catch needed for the error middleware to run\napp.get('/users', async (req, res) => {\n  res.json(await User.find()); // a DB error goes to errorHandler\n});\napp.get('/files/*splat', serveFile); // named wildcard",
+      "tags": [
+        "express-5"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Express & Middleware",
+      "difficulty": "easy",
+      "question": "Which built-in middleware parses JSON request bodies?",
+      "options": [
+        "express.static()",
+        "express.json()",
+        "express.urlencoded()",
+        "express.Router()"
+      ],
+      "correctAnswer": "express.json()",
+      "answer": "Why B: express.json() reads JSON bodies and puts the result in req.body.\n\nWhy not A: express.static() serves files from a folder.\n\nWhy not C: express.urlencoded() parses HTML form bodies (a=1&b=2), not JSON.\n\nWhy not D: express.Router() creates a group of routes.",
+      "codeSnippet": "",
+      "tags": [
+        "middleware"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Express & Middleware",
+      "difficulty": "medium",
+      "question": "For GET /users/7?tab=posts with the route /users/:id, where is the value \"posts\"?",
+      "options": [
+        "req.params.tab",
+        "req.body.tab",
+        "req.query.tab",
+        "req.headers.tab"
+      ],
+      "correctAnswer": "req.query.tab",
+      "answer": "Why C: Everything after ? is the query string, which Express puts in req.query.\n\nWhy not A: req.params only has the named path parts, here id = '7'.\n\nWhy not B: GET requests normally have no body.\n\nWhy not D: Headers are separate from the URL.",
+      "codeSnippet": "",
+      "tags": [
+        "request"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Express & Middleware",
+      "difficulty": "medium",
+      "question": "How many arguments does an Express error-handling middleware take?",
+      "options": [
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "correctAnswer": "4",
+      "answer": "Why C: (err, req, res, next). Express recognises an error handler by its four arguments.\n\nWhy not A and B: A normal middleware has three (req, res, next); with fewer than four Express treats it as normal middleware and skips it for errors.\n\nWhy not D: There is no five-argument form.\n\nFix: Keep next in the signature even if you never call it.",
+      "codeSnippet": "",
+      "tags": [
+        "errors"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Express & Middleware",
+      "difficulty": "medium",
+      "question": "What happens if a middleware neither sends a response nor calls next()?",
+      "options": [
+        "Express calls next() for you",
+        "The request hangs until it times out",
+        "A 404 is sent",
+        "The server crashes"
+      ],
+      "correctAnswer": "The request hangs until it times out",
+      "answer": "Why B: The chain simply stops. The client waits for a response that never comes, until a timeout.\n\nWhy not A: Express never calls next() on your behalf.\n\nWhy not C: The 404 handler would only run if next() reached it.\n\nWhy not D: Nothing throws, so nothing crashes; it just hangs.",
+      "codeSnippet": "",
+      "tags": [
+        "middleware"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Express & Middleware",
+      "difficulty": "hard",
+      "question": "The error \"Cannot set headers after they are sent to the client\" usually means what?",
+      "options": [
+        "The JSON is invalid",
+        "A response was sent twice for one request",
+        "CORS is missing",
+        "The client closed the connection"
+      ],
+      "correctAnswer": "A response was sent twice for one request",
+      "answer": "Why B: The code reached a second res.json(), res.send() or res.status() after a response was already sent.\n\nWhy not A: Invalid JSON gives a parse error, not this one.\n\nWhy not C: CORS problems show in the browser, not as this server error.\n\nWhy not D: A closed connection gives errors like ECONNRESET or 'aborted'.\n\nFix: Use return res.status(...).json(...) in every branch.",
+      "codeSnippet": "",
+      "tags": [
+        "response"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Express & Middleware",
+      "difficulty": "hard",
+      "question": "In Express 5, an async route handler throws an error. What happens?",
+      "options": [
+        "The request hangs",
+        "The process crashes",
+        "The error goes to the error-handling middleware automatically",
+        "Express sends 200 with an empty body"
+      ],
+      "correctAnswer": "The error goes to the error-handling middleware automatically",
+      "answer": "Why C: Express 5 watches the promise returned by handlers and forwards rejections to the error middleware.\n\nWhy not A: That was Express 4's behaviour without a wrapper.\n\nWhy not B: The rejection is handled by Express, so it is not an unhandled rejection.\n\nWhy not D: Express never turns an error into a success response.",
+      "codeSnippet": "",
+      "tags": [
+        "express-5",
+        "errors"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "REST API Design",
+      "difficulty": "easy",
+      "question": "What is a REST API?",
+      "answer": "Short answer: A REST API exposes resources (users, orders) at URLs and uses HTTP methods as the actions, with stateless requests and standard status codes.\n\nHow it works: GET reads, POST creates, PUT replaces, PATCH updates part, DELETE removes. Stateless means each request carries everything the server needs, such as the auth token, so any server instance can handle it. Responses use status codes and usually JSON.\n\nExample: An e-commerce API: GET /api/orders lists, POST /api/orders creates, PATCH /api/orders/42 changes the status, DELETE /api/orders/42 cancels.\n\nCommon mistake: Designing every endpoint as POST /doSomething (RPC style) and still calling it REST.\n\nInterview tip: Mention statelessness and why it helps scaling (any server can answer any request).",
+      "codeSnippet": "GET    /api/orders        list orders\nPOST   /api/orders        create an order\nGET    /api/orders/42     one order\nPATCH  /api/orders/42     change some fields\nDELETE /api/orders/42     delete it",
+      "tags": [
+        "rest"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "REST API Design",
+      "difficulty": "easy",
+      "question": "Which HTTP status codes should an API use, and when?",
+      "answer": "Short answer: Use the code that matches what happened: 2xx success, 4xx the client's mistake, 5xx the server's mistake.\n\nHow it works: The ones you need:\n200 OK: a read or update worked\n201 Created: POST created something (send the new item back)\n204 No Content: success with nothing to return (DELETE)\n400 Bad Request: invalid input\n401 Unauthorized: not logged in or token expired\n403 Forbidden: logged in but not allowed\n404 Not Found: the item does not exist\n409 Conflict: duplicate, e.g. email already registered\n422 Unprocessable: valid JSON but it breaks a rule\n429 Too Many Requests: rate limit hit\n500 Internal Server Error: a bug or crash on the server\n\nExample: A signup API returns 201 with the new user, 400 if the email is missing, 409 if it is already registered and 429 after too many attempts.\n\nCommon mistake: Returning 200 with { error: \"...\" }. Frontend code, monitoring and retries all trust the status code, so the failure looks like a success.\n\nInterview tip: Explain 401 vs 403 before you are asked; it is the most common follow-up.",
+      "codeSnippet": "res.status(201).json(order);\nres.status(409).json({ message: 'Email already registered' });\nres.status(204).end();",
+      "tags": [
+        "status-codes"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "REST API Design",
+      "difficulty": "medium",
+      "question": "What is the difference between PUT and PATCH?",
+      "answer": "Short answer: PUT replaces the whole resource with what you send; PATCH changes only the fields you send.\n\nHow it works: With PUT, fields you leave out are removed or reset, so the client must send the full object. With PATCH, missing fields stay as they are. Both should be idempotent in a good design: sending the same request twice gives the same result.\n\nExample: Profile { name: 'Ali', city: 'Lahore' }. PATCH { city: 'Karachi' } keeps the name. PUT { city: 'Karachi' } leaves an object without a name.\n\nCommon mistake: Implementing PUT like PATCH (or the other way round), so clients get surprised when data disappears.\n\nInterview tip: Say which one you use for \"edit profile\" (PATCH) and why.",
+      "codeSnippet": "// current: { name: 'Ali', city: 'Lahore' }\nPATCH /users/1  { \"city\": \"Karachi\" }  -> { name: 'Ali', city: 'Karachi' }\nPUT   /users/1  { \"city\": \"Karachi\" }  -> { city: 'Karachi' } (name gone)",
+      "tags": [
+        "put",
+        "patch"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "REST API Design",
+      "difficulty": "medium",
+      "question": "What is the difference between 401 and 403?",
+      "answer": "Short answer: 401 means \"we do not know who you are\" (not authenticated). 403 means \"we know who you are, and you are not allowed\" (not authorised).\n\nHow it works: 401 Unauthorized is badly named: it is about authentication. No token, an expired token or a bad token gives 401, and logging in may fix it. 403 Forbidden is about permissions: the user is logged in, but their role or ownership does not allow the action, so logging in again will not help.\n\nExample: A normal user calls DELETE /api/admin/users/5 with a valid token: 403. A visitor calls it without a token: 401.\n\nCommon mistake: Returning 401 for permission problems; the frontend then logs the user out instead of showing \"not allowed\".\n\nInterview tip: Some APIs return 404 instead of 403 for other users' private items so they do not reveal that the item exists; mention it as a bonus.",
+      "codeSnippet": "if (!req.user) return res.status(401).json({ message: 'Please log in' });\nif (req.user.role !== 'admin') return res.status(403).json({ message: 'Admins only' });",
+      "tags": [
+        "status-codes",
+        "auth"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "REST API Design",
+      "difficulty": "medium",
+      "question": "How should you design REST URLs?",
+      "answer": "Short answer: Use plural nouns for resources, let the HTTP method be the verb, and put filters, sorting and paging in the query string.\n\nHow it works:\nNouns, not verbs: /orders, not /getOrders\nPlural: /users/42\nNesting only for clear ownership: /users/42/orders\nQuery for options: /orders?status=paid&sort=-createdAt&page=2\nActions that are not CRUD: a sub-resource such as POST /orders/42/cancel\nLowercase with hyphens: /order-items\n\nExample: Instead of GET /getPaidOrdersForUser?id=42, use GET /users/42/orders?status=paid.\n\nCommon mistake: Nesting too deep (/users/1/orders/2/items/3/reviews); keep it to one level and use top-level resources with filters.\n\nInterview tip: Mention consistency: one style across the whole API matters more than any single rule.",
+      "codeSnippet": "GET  /api/users/42/orders?status=paid&page=2\nPOST /api/orders/42/cancel\n// avoid: GET /api/getUserOrders?id=42",
+      "tags": [
+        "rest",
+        "urls"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "REST API Design",
+      "difficulty": "medium",
+      "question": "What is idempotency, and why does it matter?",
+      "answer": "Short answer: An operation is idempotent if doing it once or many times leaves the same final state.\n\nHow it works: GET, PUT and DELETE should be idempotent; POST usually is not, because each call creates something new. It matters because networks fail: browsers, mobile apps, load balancers and your own retry code resend requests. A retried PUT is harmless; a retried POST can create two orders or charge a card twice.\n\nExample: A payment request times out on the client but actually succeeded on the server. The app retries, and without protection the customer pays twice.\n\nCommon mistake: Retrying POST requests automatically in an HTTP client without an idempotency key.\n\nInterview tip: Connect idempotency to retries and give the payment example; that is what interviewers are checking.",
+      "codeSnippet": "PUT /users/1 { \"name\": \"Ali\" }  // 5 times -> same result\nPOST /orders { ... }             // 5 times -> 5 orders!",
+      "tags": [
+        "idempotency"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "REST API Design",
+      "difficulty": "hard",
+      "question": "Offset vs cursor pagination: what is the difference, and when does offset fail?",
+      "answer": "Short answer: Offset pagination skips N items; cursor pagination asks for items after the last one seen. Offset is simple but slow on deep pages and unstable when data changes.\n\nHow it works: Offset (?page=3&limit=20 = skip 40): easy and allows jumping to any page, but the database still walks the skipped rows, and new items shift every page, causing duplicates or gaps. Cursor (?after=<last id>): uses an index to continue exactly where the user stopped, stays fast at any depth and is stable, but cannot jump straight to page 50.\n\nExample: A social feed with infinite scroll uses cursors; an admin table with page numbers uses offsets.\n\nCommon mistake: Using skip with large offsets on a big collection, which makes page 10,000 take seconds.\n\nInterview tip: Return the next cursor in the response ({ items, nextCursor }) so the client never builds it itself.",
+      "codeSnippet": "// offset\nOrder.find().sort({ _id: -1 }).skip((page - 1) * 20).limit(20);\n// cursor\nOrder.find(after ? { _id: { $lt: after } } : {}).sort({ _id: -1 }).limit(20);\n// response: { items, nextCursor: items.at(-1)?._id }",
+      "tags": [
+        "pagination"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "REST API Design",
+      "difficulty": "hard",
+      "question": "How do you version a REST API, and how do you retire an old version?",
+      "answer": "Short answer: Put a version in the URL (/api/v1) or in a header, create a new version only for breaking changes, and retire old versions with a published date and warning headers.\n\nHow it works: URL versioning is the most common because it is visible and easy to route. Adding fields is not breaking; renaming or removing fields, changing types or changing behaviour is. To retire a version: announce a date, send Deprecation and Sunset headers, log which clients still call it, contact them, then remove it.\n\nExample: A mobile app cannot force every user to update, so v1 stays alive for months while new app versions use v2.\n\nCommon mistake: Making breaking changes in place, which breaks old mobile apps that users have not updated.\n\nInterview tip: Mention mobile clients; they are the main reason versioning exists.",
+      "codeSnippet": "app.use('/api/v1', v1Router);\napp.use('/api/v2', v2Router);\n// in v1 responses\nres.set('Sunset', 'Wed, 31 Dec 2026 23:59:59 GMT');",
+      "tags": [
+        "versioning"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "REST API Design",
+      "difficulty": "hard",
+      "question": "How do you validate input in an Express API and return useful errors?",
+      "answer": "Short answer: Validate body, query and params with a schema in middleware before the controller, keep only known fields, and return 400 with a list of field errors.\n\nHow it works: Libraries such as zod, Joi or express-validator describe the expected shape once. The middleware converts types (page '2' to 2), strips unknown fields (so nobody can sneak in role: 'admin'), and returns errors like [{ field: 'email', message: 'Invalid email' }] so the frontend can show each one next to its input.\n\nExample: A register form sends an invalid email and a short password; the API returns both errors at once, and the form highlights both fields.\n\nCommon mistake: Validating only on the frontend. Anyone can call the API directly with curl or Postman.\n\nInterview tip: Mention mass assignment as the security reason for stripping unknown fields.",
+      "codeSnippet": "const schema = z.object({\n  email: z.string().email(),\n  password: z.string().min(8),\n});\nconst validate = (s) => (req, res, next) => {\n  const r = s.safeParse(req.body);\n  if (!r.success) return res.status(400).json({ errors: r.error.issues });\n  req.body = r.data; // only known fields\n  next();\n};",
+      "tags": [
+        "validation"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "REST API Design",
+      "difficulty": "hard",
+      "question": "A mobile app sends \"create order\" twice because of a bad network. How do you prevent a duplicate order?",
+      "answer": "Short answer: Use an idempotency key: the client sends the same unique key with every retry, and the server returns the saved result instead of creating a second order.\n\nHow it works: The app creates a UUID per checkout and sends it in an Idempotency-Key header. The server stores the key, the user and the response, with a unique index on (key, user). If the key is seen again, it returns the stored response. The unique index also stops two parallel retries from both succeeding.\n\nExample: Stripe and other payment APIs work exactly this way; a retried charge with the same key never charges twice.\n\nCommon mistake: Checking for \"a similar order in the last minute\" instead; it blocks real repeat orders and still fails under race conditions.\n\nInterview tip: Mention the unique index for race conditions; that is the detail most answers miss.",
+      "codeSnippet": "app.post('/orders', protect, async (req, res) => {\n  const key = req.get('Idempotency-Key');\n  const done = await IdemKey.findOne({ key, user: req.user._id });\n  if (done) return res.status(done.status).json(done.body);\n  const order = await Order.create({ ...req.body, user: req.user._id });\n  await IdemKey.create({ key, user: req.user._id, status: 201, body: order });\n  res.status(201).json(order);\n});",
+      "tags": [
+        "idempotency",
+        "scenario"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "REST API Design",
+      "difficulty": "easy",
+      "question": "Which HTTP method should create a new resource?",
+      "options": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ],
+      "correctAnswer": "POST",
+      "answer": "Why B: POST /orders creates a new order, and the server chooses its id.\n\nWhy not A: GET only reads and must not change data.\n\nWhy not C: PUT replaces a resource at a known URL; it is not the usual way to create with a server-chosen id.\n\nWhy not D: DELETE removes a resource.",
+      "codeSnippet": "",
+      "tags": [
+        "rest"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "REST API Design",
+      "difficulty": "medium",
+      "question": "A DELETE succeeds and returns no body. Which status code fits best?",
+      "options": [
+        "200",
+        "201",
+        "204",
+        "404"
+      ],
+      "correctAnswer": "204",
+      "answer": "Why C: 204 No Content means the request worked and there is nothing to send back.\n\nWhy not A: 200 is fine if you return a body, but with no body 204 is clearer.\n\nWhy not B: 201 is for creating something.\n\nWhy not D: 404 means the item was not found.",
+      "codeSnippet": "",
+      "tags": [
+        "status-codes"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "REST API Design",
+      "difficulty": "medium",
+      "question": "A logged-in user tries to open an admin-only route. Which status code should you return?",
+      "options": [
+        "400",
+        "401",
+        "403",
+        "404"
+      ],
+      "correctAnswer": "403",
+      "answer": "Why C: The user is known but not allowed: that is 403 Forbidden.\n\nWhy not A: 400 is for invalid input.\n\nWhy not B: 401 means not logged in; this user is logged in.\n\nWhy not D: 404 is sometimes used to hide private items, but for an admin route 403 is the honest answer.",
+      "codeSnippet": "",
+      "tags": [
+        "status-codes"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "REST API Design",
+      "difficulty": "medium",
+      "question": "Which set of methods should be idempotent?",
+      "options": [
+        "GET, POST and PATCH",
+        "GET, PUT and DELETE",
+        "POST and PUT",
+        "Only GET"
+      ],
+      "correctAnswer": "GET, PUT and DELETE",
+      "answer": "Why B: Repeating GET, PUT or DELETE leaves the same final state.\n\nWhy not A and C: POST usually creates a new item each time, so it is not idempotent.\n\nWhy not D: GET is idempotent, but so are PUT and DELETE.",
+      "codeSnippet": "",
+      "tags": [
+        "idempotency"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "REST API Design",
+      "difficulty": "hard",
+      "question": "Which pagination stays correct when new items keep being added to the top of a feed?",
+      "options": [
+        "Offset (skip and limit)",
+        "Cursor-based (items after the last id)",
+        "Random pages",
+        "Loading everything at once"
+      ],
+      "correctAnswer": "Cursor-based (items after the last id)",
+      "answer": "Why B: A cursor continues from the last item the user saw, so new items at the top do not shift the next page.\n\nWhy not A: New items push everything down, so the next offset page repeats items.\n\nWhy not C: Random pages make no sense for a feed.\n\nWhy not D: Loading everything does not scale and wastes bandwidth.",
+      "codeSnippet": "",
+      "tags": [
+        "pagination"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "REST API Design",
+      "difficulty": "hard",
+      "question": "A client adds \"role\": \"admin\" to a profile update request and becomes an admin. What is this bug called?",
+      "options": [
+        "CSRF",
+        "Mass assignment",
+        "SQL injection",
+        "Rate limiting"
+      ],
+      "correctAnswer": "Mass assignment",
+      "answer": "Why B: The server copied the whole request body into the user model, including a field the user should never set.\n\nWhy not A: CSRF tricks a logged-in browser into sending a request; here the attacker sends it directly.\n\nWhy not C: Injection inserts query syntax; here the value is a normal field.\n\nWhy not D: Rate limiting is a defence, not a bug.\n\nFix: Accept only allowed fields (name, city), for example with a validation schema.",
+      "codeSnippet": "",
+      "tags": [
+        "security",
+        "validation"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Authentication & Security",
+      "difficulty": "easy",
+      "question": "What is the difference between authentication and authorization?",
+      "answer": "Short answer: Authentication checks who you are; authorization checks what you are allowed to do.\n\nHow it works: Authentication happens at login (email + password, Google sign-in) and then on every request through a token or session. Authorization runs after it: roles (admin, user), ownership (you can edit only your own posts) or plans (paid users only). Failing authentication gives 401; failing authorization gives 403.\n\nExample: In this project, protect checks the JWT (authentication), adminOnly checks the role, and per-language access checks whether a user may open a topic (authorization).\n\nCommon mistake: Doing authorization only in the frontend by hiding buttons; the API must check it too.\n\nInterview tip: Give one example of role-based and one of ownership-based authorization.",
+      "codeSnippet": "router.delete('/users/:id',\n  protect,              // authentication: who are you?\n  requireRole('admin'), // authorization: may you do this?\n  deleteUser);",
+      "tags": [
+        "auth"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Authentication & Security",
+      "difficulty": "easy",
+      "question": "Why do you hash passwords with bcrypt instead of encrypting them or using SHA-256?",
+      "answer": "Short answer: Passwords must be stored so that even the server cannot recover them. bcrypt is one-way, salted and deliberately slow, which makes stolen hashes very hard to crack.\n\nHow it works: Encryption is reversible: whoever steals the key gets every password. SHA-256 is one-way but very fast, so a GPU can try billions of guesses per second. bcrypt (or argon2) adds a random salt to each password (equal passwords get different hashes) and has a cost factor that makes each guess slow; you can raise it as computers get faster.\n\nExample: A database leak exposes 1 million bcrypt hashes at cost 12. Cracking even weak passwords takes attackers months instead of minutes.\n\nCommon mistake: Writing your own scheme with sha256(password + secret), or comparing hashes with === instead of bcrypt.compare.\n\nInterview tip: Mention the cost factor and that a login taking about 100 ms is a deliberate trade-off.",
+      "codeSnippet": "const hash = await bcrypt.hash(password, 12); // cost 12, salt included\nconst ok = await bcrypt.compare(input, hash);",
+      "tags": [
+        "bcrypt",
+        "passwords"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Authentication & Security",
+      "difficulty": "medium",
+      "question": "How does JWT authentication work?",
+      "answer": "Short answer: After login, the server signs a token with the user id and an expiry. The client sends it with every request, and the server verifies the signature instead of looking up a session.\n\nHow it works: A JWT has three base64url parts: header (algorithm), payload (claims such as id and exp) and signature. jwt.verify recomputes the signature with the secret: if anyone changed the payload, or the token has expired, verification fails. The payload is encoded, not encrypted, so anyone can read it.\n\nExample: Login returns { token }; the React app stores it and sends Authorization: Bearer <token>; the protect middleware verifies it and loads the user.\n\nCommon mistake: Putting sensitive data (password hash, phone number) in the payload, or using a short, guessable secret.\n\nInterview tip: Add the trade-off: easy to scale (no session store) but hard to revoke before it expires.",
+      "codeSnippet": "const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });\n// later\nconst { id } = jwt.verify(token, process.env.JWT_SECRET); // throws if changed or expired",
+      "tags": [
+        "jwt"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Authentication & Security",
+      "difficulty": "medium",
+      "question": "JWT or session cookies: what are the trade-offs?",
+      "answer": "Short answer: Sessions keep login state on the server and are easy to revoke; JWTs keep it in a signed token and are easy to scale but hard to revoke.\n\nHow it works:\nSessions: the browser holds only a random id; the server looks it up in Redis or a database on each request. Logout or \"block user\" works instantly. All servers need the shared store.\nJWT: no lookup needed to trust the token, works well for mobile apps and many services. But a stolen token works until it expires, and tokens are larger.\nA common mix: short-lived JWT access tokens plus refresh tokens stored server-side.\n\nExample: A banking app with \"log out all devices\" leans on sessions or short tokens; a public API used by mobile apps leans on JWTs.\n\nCommon mistake: Saying JWTs are \"more secure\" than sessions; they are a different trade-off, not more secure.\n\nInterview tip: Pick one for a given scenario and justify it; interviewers value the reasoning more than the choice.",
+      "codeSnippet": "",
+      "tags": [
+        "jwt",
+        "sessions"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Authentication & Security",
+      "difficulty": "medium",
+      "question": "Where should a web app store the auth token: localStorage or a cookie?",
+      "answer": "Short answer: An HttpOnly, Secure, SameSite cookie is the safer default; localStorage is simpler but exposes the token to any XSS bug.\n\nHow it works: localStorage: any script on the page can read it, so one XSS bug (a bad npm package, an unescaped comment) lets an attacker steal the token and use it from anywhere. HttpOnly cookie: JavaScript cannot read it, so XSS cannot steal it, but the browser sends it automatically, so you must stop CSRF with SameSite=Lax or Strict (and CSRF tokens for older cases).\n\nExample: Many SPAs keep a short-lived access token in memory and the refresh token in an HttpOnly cookie, getting the benefits of both.\n\nCommon mistake: Choosing localStorage and then ignoring XSS, or choosing cookies and forgetting SameSite and CORS credentials settings.\n\nInterview tip: Name both attacks (XSS and CSRF) and which storage each one affects; that is the whole answer in one sentence.",
+      "codeSnippet": "res.cookie('token', token, {\n  httpOnly: true,  // no JavaScript access\n  secure: true,    // HTTPS only\n  sameSite: 'lax', // blocks most CSRF\n  maxAge: 7 * 24 * 60 * 60 * 1000,\n});",
+      "tags": [
+        "cookies",
+        "xss",
+        "csrf"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Authentication & Security",
+      "difficulty": "medium",
+      "question": "How do you set up CORS correctly in an Express API?",
+      "answer": "Short answer: Allow only your real frontend origins, and if you use cookies, enable credentials and never use *.\n\nHow it works: CORS headers tell browsers which other origins may read your API's responses. For non-simple requests (JSON body, Authorization header) the browser first sends an OPTIONS preflight, which must succeed. With credentials: true, Access-Control-Allow-Origin must be an exact origin, not *.\n\nExample: AskedIn allows https://askedin.vercel.app in production and http://localhost:5173 in development, read from an environment variable.\n\nCommon mistake: Thinking CORS protects the API. It only controls what browsers allow; curl and Postman ignore it, so authentication is still required.\n\nInterview tip: Explain the preflight request; it is behind most \"CORS error\" questions.",
+      "codeSnippet": "const cors = require('cors');\napp.use(cors({\n  origin: ['https://askedin.vercel.app', 'http://localhost:5173'],\n  credentials: true,\n}));",
+      "tags": [
+        "cors"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Authentication & Security",
+      "difficulty": "hard",
+      "question": "How do refresh tokens work, and why use them?",
+      "answer": "Short answer: A short-lived access token is used on every request, and a long-lived refresh token, stored safely and saved on the server, is used only to get new access tokens.\n\nHow it works: The access token lives about 15 minutes, so a stolen one is useful only briefly. The refresh token (days or weeks) lives in an HttpOnly cookie and is stored, hashed, in the database. /auth/refresh checks it and issues a new access token. With rotation, each refresh also issues a new refresh token and deletes the old one. If an old refresh token is ever used again, it was stolen: revoke all the user's tokens. Logout deletes the refresh token.\n\nExample: A user's laptop is stolen; the user clicks \"log out all devices\", which deletes every stored refresh token. The thief's access token stops working within 15 minutes.\n\nCommon mistake: Making the access token long-lived \"because refresh is complicated\", or storing refresh tokens in localStorage.\n\nInterview tip: Say \"rotation with reuse detection\"; it is the phrase that shows depth.",
+      "codeSnippet": "app.post('/auth/refresh', async (req, res) => {\n  const stored = await RefreshToken.findOne({ token: hash(req.cookies.rt) });\n  if (!stored) return res.status(401).end();\n  await stored.deleteOne(); // rotation\n  const rt = await issueRefreshToken(stored.user);\n  res.cookie('rt', rt, { httpOnly: true, secure: true, sameSite: 'strict' });\n  res.json({ accessToken: signAccess(stored.user) });\n});",
+      "tags": [
+        "jwt",
+        "refresh-token"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Authentication & Security",
+      "difficulty": "hard",
+      "question": "How do you log a user out of every device or kill old JWTs after a password change?",
+      "answer": "Short answer: Store a value on the user that old tokens cannot match, and check it on every request: a passwordChangedAt time or a tokenVersion number.\n\nHow it works:\npasswordChangedAt: when verifying, reject tokens whose iat (issued at) is earlier than that time.\ntokenVersion: put the user's current version in the token; increase it on \"log out everywhere\", so every older token fails.\nBoth need one user lookup per request, which most APIs already do to load req.user.\n\nExample: This project sets passwordChangedAt on reset, so a stolen token stops working as soon as the real owner resets the password.\n\nCommon mistake: Keeping a huge blocklist of every logged-out token, which grows forever.\n\nInterview tip: Mention that this is how you get session-like control while keeping JWTs.",
+      "codeSnippet": "const decoded = jwt.verify(token, process.env.JWT_SECRET);\nconst user = await User.findById(decoded.id).select('+passwordChangedAt');\nif (user.passwordChangedAt && decoded.iat * 1000 < user.passwordChangedAt.getTime()) {\n  return res.status(401).json({ message: 'Password changed, please log in again' });\n}",
+      "tags": [
+        "jwt",
+        "logout"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Authentication & Security",
+      "difficulty": "hard",
+      "question": "What is NoSQL injection, and how do you prevent it in a Node + MongoDB API?",
+      "answer": "Short answer: It is sending query operators instead of plain values, so the database runs a different query than the developer intended.\n\nHow it works: Express parses JSON bodies into objects, so req.body.email can be { \"$ne\": null } instead of a string. Passed straight into findOne({ email }), it means \"any user with an email\". Prevention: validate types with a schema, convert with String(), enable mongoose.set('sanitizeFilter', true), and never build queries from raw req.body.\n\nExample: A login that also checks the password in the query (findOne({ email, password })) can be bypassed with { \"$ne\": null } in both fields, logging the attacker in as the first user, often the admin.\n\nCommon mistake: Thinking MongoDB is safe from injection because it does not use SQL.\n\nInterview tip: Show the payload and the one-line fix; concrete beats abstract here.",
+      "codeSnippet": "// vulnerable\nUser.findOne({ email: req.body.email });\n// safer\nconst email = String(req.body.email || '');\nUser.findOne({ email });\nmongoose.set('sanitizeFilter', true); // strips $ operators from user input",
+      "tags": [
+        "injection",
+        "mongodb"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Authentication & Security",
+      "difficulty": "hard",
+      "question": "Which security measures would you add to a production Express API?",
+      "answer": "Short answer: Several layers: secure headers, rate limits, size limits, strict CORS, validation, safe secrets and safe error messages.\n\nHow it works:\nhelmet: secure HTTP headers\nRate limiting: strict on login, register and password reset\nBody size limit: express.json({ limit: '100kb' })\nCORS: an allow-list of origins\nValidation: a schema on every input, unknown fields removed\nSecrets: environment variables, rotated if leaked\nErrors: generic messages, no stack traces in production\nPasswords: bcrypt; tokens with expiry\nDependencies: npm audit in CI\nHTTPS everywhere, and logging of failed logins\n\nExample: AskedIn uses helmet, a rate limiter that trusts the Render proxy's IP header, body size limits and a CORS allow-list.\n\nCommon mistake: Adding helmet and calling the API \"secure\"; one layer is never enough.\n\nInterview tip: Use the phrase \"defence in depth\" and pick three measures to explain properly rather than listing twenty.",
+      "codeSnippet": "app.use(helmet());\napp.use(express.json({ limit: '100kb' }));\napp.use('/api/auth/login', rateLimit({ windowMs: 15 * 60 * 1000, limit: 10 }));",
+      "tags": [
+        "security",
+        "helmet"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Authentication & Security",
+      "difficulty": "easy",
+      "question": "Which of these should you use to store passwords?",
+      "options": [
+        "base64",
+        "md5",
+        "bcrypt",
+        "JSON.stringify"
+      ],
+      "correctAnswer": "bcrypt",
+      "answer": "Why C: bcrypt is one-way, salted and slow on purpose, which makes stolen hashes hard to crack.\n\nWhy not A: base64 is an encoding; anyone can decode it instantly.\n\nWhy not B: md5 is far too fast and broken; billions of guesses per second are possible.\n\nWhy not D: JSON.stringify just stores the password as plain text.",
+      "codeSnippet": "",
+      "tags": [
+        "passwords"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Authentication & Security",
+      "difficulty": "medium",
+      "question": "Can anyone read the data inside a JWT's payload?",
+      "options": [
+        "No, it is encrypted",
+        "Yes, it is only base64url-encoded",
+        "Only the server can",
+        "Only after it expires"
+      ],
+      "correctAnswer": "Yes, it is only base64url-encoded",
+      "answer": "Why B: The payload is just base64url text; paste a token into jwt.io and you can read it.\n\nWhy not A: Standard JWTs are signed, not encrypted (encrypted JWTs, JWE, are a different thing).\n\nWhy not C: Only the server can create a valid signature, but anyone can read the payload.\n\nWhy not D: Expiry does not change who can read it.\n\nFix: Keep secrets and personal data out of the payload.",
+      "codeSnippet": "",
+      "tags": [
+        "jwt"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Authentication & Security",
+      "difficulty": "medium",
+      "question": "Which cookie flag stops JavaScript in the page from reading the cookie?",
+      "options": [
+        "Secure",
+        "SameSite",
+        "HttpOnly",
+        "Max-Age"
+      ],
+      "correctAnswer": "HttpOnly",
+      "answer": "Why C: HttpOnly hides the cookie from document.cookie, so an XSS script cannot steal it.\n\nWhy not A: Secure only sends the cookie over HTTPS.\n\nWhy not B: SameSite controls when the cookie is sent with cross-site requests (CSRF).\n\nWhy not D: Max-Age sets how long the cookie lives.",
+      "codeSnippet": "",
+      "tags": [
+        "cookies"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Authentication & Security",
+      "difficulty": "medium",
+      "question": "What is the best defence against attackers guessing passwords on your login route?",
+      "options": [
+        "Longer JWT expiry",
+        "Rate limiting login attempts",
+        "Using GET for login",
+        "Disabling CORS"
+      ],
+      "correctAnswer": "Rate limiting login attempts",
+      "answer": "Why B: Limiting attempts per IP and per account makes guessing thousands of passwords impractical.\n\nWhy not A: Token expiry has nothing to do with guessing passwords.\n\nWhy not C: GET puts the password in the URL and logs, which is worse.\n\nWhy not D: CORS only affects browsers; attack scripts ignore it.",
+      "codeSnippet": "",
+      "tags": [
+        "rate-limit"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Authentication & Security",
+      "difficulty": "hard",
+      "question": "The login query is User.findOne({ email: req.body.email }) and an attacker sends {\"email\": {\"$ne\": null}}. What can happen?",
+      "options": [
+        "MongoDB throws a syntax error",
+        "It can match the first user in the database",
+        "Nothing, Mongoose blocks it by default",
+        "The server returns 400 automatically"
+      ],
+      "correctAnswer": "It can match the first user in the database",
+      "answer": "Why B: { $ne: null } means \"email is not null\", which matches any user, so the first one is returned.\n\nWhy not A: It is a valid MongoDB query, so there is no error.\n\nWhy not C: sanitizeFilter is off by default; you must enable it or validate input.\n\nWhy not D: Nothing validates the body unless you add validation.\n\nFix: Validate that email is a string and enable mongoose.set('sanitizeFilter', true).",
+      "codeSnippet": "",
+      "tags": [
+        "injection"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Authentication & Security",
+      "difficulty": "hard",
+      "question": "Why is a JWT hard to cancel before it expires?",
+      "options": [
+        "It is stored in the database",
+        "The server checks only the signature, not a stored session",
+        "Browsers cache it",
+        "It has no expiry"
+      ],
+      "correctAnswer": "The server checks only the signature, not a stored session",
+      "answer": "Why B: A valid signature is enough for jwt.verify; nothing on the server marks a token as cancelled.\n\nWhy not A: Plain JWTs are not stored server-side; that is exactly why they are hard to revoke.\n\nWhy not C: Browser caching is not the issue; the server would accept the token from anywhere.\n\nWhy not D: JWTs normally do have an exp claim.\n\nFix: Check passwordChangedAt or a tokenVersion, or use short access tokens with refresh tokens.",
+      "codeSnippet": "",
+      "tags": [
+        "jwt"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Error Handling & Testing",
+      "difficulty": "easy",
+      "question": "What is the difference between operational errors and programmer errors?",
+      "answer": "Short answer: Operational errors are expected problems in a correct program; programmer errors are bugs.\n\nHow it works: Operational: invalid input, a missing record, a duplicate email, a database timeout, a failed payment. Handle them and return the right status code. Programmer: reading a property of undefined, calling a missing function, a wrong argument type. You cannot safely handle them at run time; log them, fix the code, and let the process restart if needed.\n\nExample: A user enters a wrong password (operational, 401). A refactor leaves order.customer undefined (programmer error, 500 plus a bug fix).\n\nCommon mistake: Wrapping everything in try/catch and returning 400 for bugs, which hides them from monitoring.\n\nInterview tip: This distinction decides what goes in the error handler's \"safe message\" path versus the \"log and alert\" path.",
+      "codeSnippet": "// operational: handle it\nif (!user) throw new AppError('User not found', 404);\n// programmer error: fix it\nconst name = order.customer.name; // customer is undefined",
+      "tags": [
+        "errors"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Error Handling & Testing",
+      "difficulty": "medium",
+      "question": "How do you handle errors from async route handlers in Express 4 and Express 5?",
+      "answer": "Short answer: Express 4 does not catch rejected promises, so you need try/catch or a wrapper. Express 5 sends them to the error middleware automatically.\n\nHow it works: In Express 4, an async handler that throws produces an unhandled rejection: the request hangs and the error middleware never runs. The common fix was an asyncHandler wrapper that adds .catch(next). Express 5 does this itself, so handlers can just throw or await.\n\nExample: Moving an API to Express 5 lets you delete every asyncHandler(...) wrapper and every try/catch that only called next(err).\n\nCommon mistake: Writing try/catch in every route that only does res.status(500).json(...), duplicating error logic.\n\nInterview tip: Know both; many companies still run Express 4.",
+      "codeSnippet": "// Express 4 wrapper\nconst asyncHandler = (fn) => (req, res, next) =>\n  Promise.resolve(fn(req, res, next)).catch(next);\napp.get('/users', asyncHandler(async (req, res) => {\n  res.json(await User.find());\n}));",
+      "tags": [
+        "async",
+        "express"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Error Handling & Testing",
+      "difficulty": "medium",
+      "question": "How do you build a central error handler with a custom error class?",
+      "answer": "Short answer: Create an AppError with a status code, throw it from controllers, and let one error middleware turn every error into the same JSON shape.\n\nHow it works: AppError marks expected errors (isOperational) and carries the status. The error middleware shows their message to the client; for anything else it logs the full error and sends a generic 500 message. It can also map library errors: a Mongoose CastError (bad id) to 400, a duplicate key error (code 11000) to 409.\n\nExample: Every endpoint in the API returns { success: false, message, errors? } for failures, so the frontend has one place to show error toasts.\n\nCommon mistake: Leaking internal error messages, such as a MongoDB connection string in a stack trace.\n\nInterview tip: Mention mapping of library errors (CastError, 11000); it shows real API experience.",
+      "codeSnippet": "class AppError extends Error {\n  constructor(message, status = 400) {\n    super(message);\n    this.status = status;\n    this.isOperational = true;\n  }\n}\napp.use((err, req, res, next) => {\n  if (err.name === 'CastError') err = new AppError('Invalid id', 400);\n  if (err.code === 11000) err = new AppError('Already exists', 409);\n  if (!err.isOperational) console.error(err);\n  res.status(err.status || 500).json({ message: err.isOperational ? err.message : 'Something went wrong' });\n});",
+      "tags": [
+        "errors",
+        "middleware"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Error Handling & Testing",
+      "difficulty": "medium",
+      "question": "What should you do with uncaughtException and unhandledRejection?",
+      "answer": "Short answer: Treat them as a last safety net: log the error with full details, then exit with a non-zero code and let a process manager restart the app.\n\nHow it works: After an uncaught exception, the app may be half-way through something (an open transaction, a broken connection), so continuing is risky. Recent Node versions already crash on unhandled rejections by default. The platform (PM2, Docker, Kubernetes, Render) restarts the process within seconds.\n\nExample: A bug throws inside a setTimeout callback; the handler logs it to the error tracker with the stack, exits, and Render starts a fresh instance.\n\nCommon mistake: Adding process.on('uncaughtException', () => {}) to \"keep the server alive\"; the app keeps running in a broken state and hides the bug.\n\nInterview tip: Say \"log, exit, restart\" and mention a graceful shutdown attempt before exiting if possible.",
+      "codeSnippet": "process.on('unhandledRejection', (reason) => {\n  logger.fatal({ reason }, 'Unhandled rejection');\n  process.exit(1);\n});\nprocess.on('uncaughtException', (err) => {\n  logger.fatal(err, 'Uncaught exception');\n  process.exit(1);\n});",
+      "tags": [
+        "errors",
+        "process"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Error Handling & Testing",
+      "difficulty": "medium",
+      "question": "How should a Node.js API do logging in production?",
+      "answer": "Short answer: Use a structured logger that writes JSON with a level, a timestamp and context such as a request id, and send logs to a log service.\n\nHow it works: pino or winston instead of console.log: levels (error, warn, info, debug) let you change detail per environment; JSON lines can be searched and filtered (\"all errors for userId 42\"); a request id ties every line of one request together. Log each request's method, path, status and duration.\n\nExample: A user reports \"checkout failed at 3:15\"; searching the logs for their user id shows the payment provider timed out on that request.\n\nCommon mistake: Logging passwords, tokens, full card numbers or whole request bodies, which turns logs into a security risk.\n\nInterview tip: Mention log levels per environment and redacting secrets.",
+      "codeSnippet": "const pino = require('pino');\nconst logger = pino({ level: process.env.LOG_LEVEL || 'info', redact: ['req.headers.authorization'] });\nlogger.info({ userId: user.id, orderId }, 'Order created');\nlogger.error({ err }, 'Payment failed');",
+      "tags": [
+        "logging"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Error Handling & Testing",
+      "difficulty": "medium",
+      "question": "What is the difference between unit, integration and end-to-end tests for an API?",
+      "answer": "Short answer: Unit tests check one function alone, integration tests check several parts together (route + middleware + database), and end-to-end tests check the whole app like a real user.\n\nHow it works:\nUnit: fast, many of them, dependencies faked; e.g. a price or discount calculator\nIntegration: Supertest calls a route, which runs middleware and a test database\nEnd-to-end: Playwright opens the real frontend and clicks through signup\nThe testing pyramid: many unit, a good number of integration, a few end-to-end\n\nExample: For a login feature: a unit test for the password rules, an integration test for POST /auth/login with right and wrong passwords, and one E2E test for the whole login form.\n\nCommon mistake: Writing only E2E tests; they are slow and flaky, and when they fail it is hard to see why.\n\nInterview tip: For backend roles, stress integration tests: they catch most real bugs in APIs.",
+      "codeSnippet": "",
+      "tags": [
+        "testing"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Error Handling & Testing",
+      "difficulty": "hard",
+      "question": "How do you test an Express API with Jest and Supertest?",
+      "answer": "Short answer: Export the Express app without calling listen(), then use Supertest to send real HTTP requests to it in memory and check the status and body.\n\nHow it works: app.js creates and exports the app; server.js imports it and calls listen(). Tests import app.js, so no port is opened and tests can run in parallel. Use a separate test database (or mongodb-memory-server), clear it before each test, and seed only what each test needs.\n\nExample: A test registers a user, logs in, saves the token, and then checks that GET /api/admin/users returns 403 for that normal user.\n\nCommon mistake: Running tests against the development or production database, or sharing state between tests so they pass or fail depending on order.\n\nInterview tip: Mention that integration tests with a real (test) database give more confidence than mocking Mongoose.",
+      "codeSnippet": "const request = require('supertest');\nconst app = require('../app');\n\ntest('POST /api/auth/login rejects a wrong password', async () => {\n  const res = await request(app)\n    .post('/api/auth/login')\n    .send({ email: 'ali@x.com', password: 'wrong' });\n  expect(res.status).toBe(401);\n  expect(res.body.message).toMatch(/invalid/i);\n});",
+      "tags": [
+        "jest",
+        "supertest"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Error Handling & Testing",
+      "difficulty": "hard",
+      "question": "What should you mock in API tests, and what should you not mock?",
+      "answer": "Short answer: Mock things outside your system that are slow, cost money or send real messages; do not mock your own database layer in integration tests.\n\nHow it works:\nMock: email (Brevo, SendGrid), payment gateways, SMS, third-party APIs, the clock when testing expiry.\nDo not mock: your own Mongoose queries in integration tests, because then the test no longer checks the real query, indexes or validation.\nToo many mocks give tests that pass while production breaks.\n\nExample: The register test mocks sendEmail and checks it was called with the user's address, but uses a real test database to check the user was saved with a hashed password.\n\nCommon mistake: Mocking User.findOne to return a fake user, then shipping a query with a typo in the field name that the test never noticed.\n\nInterview tip: Use jest.useFakeTimers() or a mocked Date for token-expiry tests; it is a good concrete example.",
+      "codeSnippet": "jest.mock('../utils/sendEmail', () => jest.fn().mockResolvedValue(true));\nconst sendEmail = require('../utils/sendEmail');\n// ... call the register route\nexpect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'ali@x.com' }));",
+      "tags": [
+        "mocking",
+        "jest"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Error Handling & Testing",
+      "difficulty": "hard",
+      "question": "How do you debug a Node.js application?",
+      "answer": "Short answer: Locally, run Node with --inspect and use breakpoints in Chrome DevTools or VS Code. In production, use logs, CPU profiles and heap snapshots.\n\nHow it works: --inspect opens a debugging port; --inspect-brk also pauses on the first line (useful for scripts). In DevTools (chrome://inspect) or the VS Code debugger you can set breakpoints, step through code and inspect variables. node --watch restarts on file changes. For production: structured logs with request ids, --cpu-prof for slow code, heap snapshots for memory.\n\nExample: A seed script fails halfway; running it with --inspect-brk and a breakpoint in the loop shows one record has a missing topic.\n\nCommon mistake: Debugging only with console.log in production and redeploying for every new log line.\n\nInterview tip: Mention conditional breakpoints and the VS Code \"auto attach\" setting; it shows daily practice.",
+      "codeSnippet": "node --inspect server.js\nnode --inspect-brk scripts/seed.js\nnode --cpu-prof server.js   # writes a .cpuprofile to open in DevTools",
+      "tags": [
+        "debugging"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Error Handling & Testing",
+      "difficulty": "hard",
+      "question": "Memory keeps growing in production until the app restarts. How do you find the cause?",
+      "answer": "Short answer: Confirm the growth with metrics, then take heap snapshots some time apart and compare which objects keep increasing.\n\nHow it works: 1) Watch process.memoryUsage().heapUsed over hours; a sawtooth that keeps rising is a leak.\n2) Take 2-3 heap snapshots (DevTools, or v8.writeHeapSnapshot() on a signal) under load.\n3) Use the comparison view to see which constructors grow.\n4) Follow the retainers to the code that holds them.\nUsual suspects: a Map or cache without a limit, arrays that collect data per request, listeners or timers never removed, closures holding big objects.\n\nExample: Snapshots show thousands of growing strings retained by a Map called rateLimitHits; the in-memory rate limiter never removed old IPs.\n\nCommon mistake: Raising the memory limit or adding a daily restart and calling it fixed.\n\nInterview tip: Mention comparing snapshots, not reading one; a single snapshot rarely shows a leak.",
+      "codeSnippet": "const v8 = require('node:v8');\nprocess.on('SIGUSR2', () => {\n  const file = v8.writeHeapSnapshot(); // open in Chrome DevTools > Memory\n  console.log('snapshot written to', file);\n});",
+      "tags": [
+        "memory-leak",
+        "debugging"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Error Handling & Testing",
+      "difficulty": "easy",
+      "question": "Which of these is a programmer error, not an operational error?",
+      "options": [
+        "The database is down",
+        "A user sends an invalid email",
+        "Reading a property of undefined",
+        "A payment API times out"
+      ],
+      "correctAnswer": "Reading a property of undefined",
+      "answer": "Why C: It is a bug in the code; the fix is changing the code, not handling it at run time.\n\nWhy not A, B and D: These are expected situations a correct program must handle with a proper response or retry.",
+      "codeSnippet": "",
+      "tags": [
+        "errors"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Error Handling & Testing",
+      "difficulty": "medium",
+      "question": "In Express 4, an async handler throws and there is no try/catch. What happens?",
+      "options": [
+        "The error middleware handles it",
+        "The request hangs and an unhandled rejection is reported",
+        "Express returns 500 automatically",
+        "The error is ignored and 200 is sent"
+      ],
+      "correctAnswer": "The request hangs and an unhandled rejection is reported",
+      "answer": "Why B: Express 4 does not look at the promise a handler returns, so the rejection is unhandled and no response is sent.\n\nWhy not A and C: That is Express 5's behaviour, not Express 4's.\n\nWhy not D: Nothing sends a response, so the client gets nothing, not 200.\n\nFix: Use an asyncHandler wrapper or try/catch with next(err), or upgrade to Express 5.",
+      "codeSnippet": "",
+      "tags": [
+        "express",
+        "async"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Error Handling & Testing",
+      "difficulty": "medium",
+      "question": "What should a process do after an 'uncaughtException'?",
+      "options": [
+        "Ignore it and keep serving",
+        "Log it and exit, so a process manager restarts it",
+        "Retry the last request",
+        "Clear the cache"
+      ],
+      "correctAnswer": "Log it and exit, so a process manager restarts it",
+      "answer": "Why B: The app's state may be broken, so the safe move is to log it and restart cleanly.\n\nWhy not A: Continuing in an unknown state can corrupt data and hides the bug.\n\nWhy not C: There is no general way to know which request caused it or that retrying is safe.\n\nWhy not D: Clearing a cache does not fix a broken state.",
+      "codeSnippet": "",
+      "tags": [
+        "process"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Error Handling & Testing",
+      "difficulty": "medium",
+      "question": "Why export the Express app from app.js without calling listen() there?",
+      "options": [
+        "listen() is deprecated",
+        "So tests can use it with Supertest without opening a port",
+        "To make the server faster",
+        "Express requires it"
+      ],
+      "correctAnswer": "So tests can use it with Supertest without opening a port",
+      "answer": "Why B: Tests import app.js and send requests in memory; server.js calls listen() for real runs.\n\nWhy not A: listen() is not deprecated.\n\nWhy not C: It does not change speed at run time.\n\nWhy not D: Express works either way; it is a testing convention.",
+      "codeSnippet": "",
+      "tags": [
+        "testing"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Error Handling & Testing",
+      "difficulty": "hard",
+      "question": "Which tool lets tests run against MongoDB without installing a database server?",
+      "options": [
+        "jest.fn()",
+        "mongodb-memory-server",
+        "nodemon",
+        "supertest"
+      ],
+      "correctAnswer": "mongodb-memory-server",
+      "answer": "Why B: It downloads and starts a real MongoDB binary in memory for the test run.\n\nWhy not A: jest.fn() creates mock functions, not a database.\n\nWhy not C: nodemon restarts the app on file changes.\n\nWhy not D: supertest sends HTTP requests; it does not provide a database.",
+      "codeSnippet": "",
+      "tags": [
+        "testing",
+        "mongodb"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Error Handling & Testing",
+      "difficulty": "hard",
+      "question": "Which flag starts Node so Chrome DevTools or VS Code can attach a debugger?",
+      "options": [
+        "--trace",
+        "--inspect",
+        "--prof",
+        "--debug-mode"
+      ],
+      "correctAnswer": "--inspect",
+      "answer": "Why B: --inspect opens the debugging port (9229 by default); --inspect-brk also pauses on the first line.\n\nWhy not A: There is no general --trace flag for debugging (there are specific ones like --trace-warnings).\n\nWhy not C: --prof writes a low-level V8 profiling log, not a debugger connection.\n\nWhy not D: --debug-mode does not exist.",
+      "codeSnippet": "",
+      "tags": [
+        "debugging"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "easy",
+      "question": "Why does Node.js have child processes and worker threads if it is single-threaded?",
+      "answer": "Short answer: Because CPU-heavy work blocks the single JavaScript thread. Worker threads, child processes and cluster let Node use more cores and keep the main thread free.\n\nHow it works:\nworker_threads: run JavaScript in parallel threads inside the same process\nchild_process: run another program or Node script as a separate process\ncluster: run several copies of your server process to use every CPU core\nThe main thread stays responsive for requests while the heavy work happens elsewhere.\n\nExample: An app generates PDF invoices: a worker thread builds the PDF, so the API keeps answering other users during the 2 seconds it takes.\n\nCommon mistake: Using these for I/O work such as database calls; I/O is already non-blocking, so it only adds overhead.\n\nInterview tip: Start with \"single-threaded for JavaScript, not for the machine\" and then map each tool to its use.",
+      "codeSnippet": "",
+      "tags": [
+        "worker-threads",
+        "child-process"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "medium",
+      "question": "What is the difference between spawn, exec, execFile and fork?",
+      "answer": "Short answer: spawn streams a command's output, exec buffers it through a shell, execFile runs a program without a shell, and fork starts another Node script with a message channel.\n\nHow it works:\nspawn: streams stdout/stderr; good for long or large-output commands (ffmpeg)\nexec: runs in a shell and buffers all output (1 MB limit by default); handy for short commands, risky with user input\nexecFile: like exec but without a shell; safer and a little faster\nfork: a special spawn for Node scripts with process.send() and the 'message' event\n\nExample: A video app uses spawn('ffmpeg', [...]) and reads progress from stderr; a deploy script uses execFile('git', ['rev-parse', 'HEAD']) to get the commit hash.\n\nCommon mistake: Using exec for a command that prints a lot, which fails with \"maxBuffer exceeded\", or passing user input to exec.\n\nInterview tip: Explain \"shell or no shell\"; it is the security part interviewers look for.",
+      "codeSnippet": "const { spawn, execFile, fork } = require('node:child_process');\nspawn('ffmpeg', ['-i', 'in.mp4', 'out.webm']).stderr.on('data', console.log);\nexecFile('git', ['rev-parse', 'HEAD'], (err, out) => console.log(out.trim()));\nconst child = fork('./report-worker.js');\nchild.send({ month: '2026-10' });",
+      "tags": [
+        "child-process"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "medium",
+      "question": "What are worker threads, and when should you use them?",
+      "answer": "Short answer: Worker threads run JavaScript in parallel inside the same process, each with its own event loop and memory. Use them for CPU-bound work.\n\nHow it works: A worker is started with new Worker(file, { workerData }). It talks to the main thread with postMessage; data is copied, or transferred without copying for ArrayBuffers, and SharedArrayBuffer allows real shared memory. Good uses: hashing big files, image processing, parsing very large JSON, heavy calculations.\n\nExample: An image-upload API resizes photos in a worker pool, so a 300 ms resize does not delay other users' requests.\n\nCommon mistake: Moving database queries or HTTP calls into workers; they are already async, so you just pay for an extra V8 instance.\n\nInterview tip: Say \"CPU-bound goes to workers, I/O-bound stays on the event loop\".",
+      "codeSnippet": "const { Worker } = require('node:worker_threads');\nconst worker = new Worker('./resize.js', { workerData: { file: 'photo.jpg' } });\nworker.on('message', (result) => console.log('done', result));\nworker.on('error', console.error);",
+      "tags": [
+        "worker-threads"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "medium",
+      "question": "What does the cluster module do?",
+      "answer": "Short answer: cluster starts several worker processes from one primary process; all of them share the same port, so the app can use every CPU core.\n\nHow it works: The primary forks workers (often one per core). Incoming connections are spread across workers, round-robin on most systems. Each worker is a full copy of the app with its own memory and event loop. If one crashes, the others keep serving and the primary can start a replacement.\n\nExample: On an 8-core server, one process uses one core; with cluster, 8 workers handle about 8 times the CPU-bound traffic.\n\nCommon mistake: Expecting workers to share variables, sessions or in-memory caches; each worker has its own memory.\n\nInterview tip: Mention that in containers you often run one process per container and scale replicas instead.",
+      "codeSnippet": "const cluster = require('node:cluster');\nconst os = require('node:os');\nif (cluster.isPrimary) {\n  for (let i = 0; i < os.availableParallelism(); i++) cluster.fork();\n  cluster.on('exit', () => cluster.fork()); // replace crashed workers\n} else {\n  require('./server'); // every worker listens on the same port\n}",
+      "tags": [
+        "cluster",
+        "scaling"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "medium",
+      "question": "Worker threads, cluster or child processes: how do you choose?",
+      "answer": "Short answer: Worker threads for a heavy calculation inside a request, cluster to run more copies of the whole server, child processes to run another program or isolate risky work.\n\nHow it works:\nWorker threads: cheap data exchange, optional shared memory; e.g. resizing an image\nCluster: scale the web server across cores and survive crashes; e.g. a busy API on one big machine\nChild process: run ffmpeg, Python, git or ImageMagick, or keep untrusted work in a separate process\n\nExample: A video platform uses cluster (or replicas) for its API, a worker pool for thumbnail generation, and spawn('ffmpeg') for transcoding.\n\nCommon mistake: Reaching for cluster to fix one slow, CPU-heavy route; every worker would still block on that route.\n\nInterview tip: Give the three one-liners; it is a classic comparison question.",
+      "codeSnippet": "",
+      "tags": [
+        "worker-threads",
+        "cluster",
+        "child-process"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "medium",
+      "question": "Why is exec with user input dangerous, and what should you use instead?",
+      "answer": "Short answer: exec runs the command through a shell, so user input can add extra commands (command injection). Use execFile or spawn with an argument array, and validate the input.\n\nHow it works: In a shell, characters such as ; && | and $( ) start new commands. If a query parameter is pasted into the command string, \"photo.jpg; rm -rf /\" runs two commands. execFile and spawn pass arguments directly to the program without a shell, so those characters are just text.\n\nExample: An image converter route builds exec(`convert ${req.query.file} out.png`); an attacker downloads the server's .env file with a crafted file name.\n\nCommon mistake: \"Escaping\" input by hand with replace() and calling it safe.\n\nInterview tip: Combine both fixes: no shell (execFile) plus an allow-list or strict pattern for the input.",
+      "codeSnippet": "// dangerous\nexec(`convert ${req.query.file} out.png`);\n// safer\nif (!/^[\\w-]+\\.jpg$/.test(req.query.file)) return res.status(400).end();\nexecFile('convert', [req.query.file, 'out.png']);",
+      "tags": [
+        "security",
+        "child-process"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "hard",
+      "question": "Write a worker thread example that does heavy work without blocking requests.",
+      "answer": "Short answer: Put the heavy code in a worker file that reads workerData and posts the result back, then wrap the worker in a promise and await it in the route.\n\nHow it works: The worker gets its input through workerData and replies with parentPort.postMessage. The route creates the worker, resolves on 'message', rejects on 'error' (and on a non-zero 'exit'). While the worker computes, the main event loop keeps serving other requests.\n\nExample: GET /fib/40 takes about a second of CPU. In the main thread it freezes the API; in a worker the API keeps responding.\n\nCommon mistake: Creating a new worker on every request in production; use a pool (see the next question).\n\nInterview tip: Show the promise wrapper; it is what makes workers easy to use with async/await.",
+      "codeSnippet": "// fib-worker.js\nconst { parentPort, workerData } = require('node:worker_threads');\nconst fib = (n) => (n < 2 ? n : fib(n - 1) + fib(n - 2));\nparentPort.postMessage(fib(workerData));\n\n// route\nconst runFib = (n) => new Promise((resolve, reject) => {\n  const w = new Worker('./fib-worker.js', { workerData: n });\n  w.once('message', resolve);\n  w.once('error', reject);\n});\napp.get('/fib/:n', async (req, res) => res.json({ result: await runFib(Number(req.params.n)) }));",
+      "tags": [
+        "worker-threads",
+        "scenario"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "hard",
+      "question": "After moving to cluster mode, users get logged out at random. Why?",
+      "answer": "Short answer: Each worker has its own memory, so sessions stored in memory exist in only one worker; the next request may go to another worker that does not know the user.\n\nHow it works: The same applies to in-memory caches, rate-limit counters and WebSocket rooms. Fix: keep shared state outside the process (Redis or the database), or use stateless JWTs. For WebSockets, use sticky sessions plus an adapter such as the Socket.IO Redis adapter so messages reach users on other workers.\n\nExample: Rate limiting also breaks: with 4 workers, each counts separately, so a user gets 4 times the allowed attempts. A Redis store for the rate limiter fixes it.\n\nCommon mistake: Turning on sticky sessions for everything to hide the problem; the state is still lost when a worker restarts.\n\nInterview tip: Say \"the app must be stateless to scale horizontally\"; that is the principle behind the answer.",
+      "codeSnippet": "const session = require('express-session');\nconst { RedisStore } = require('connect-redis');\napp.use(session({\n  store: new RedisStore({ client: redisClient }), // shared by all workers\n  secret: process.env.SESSION_SECRET,\n  resave: false,\n  saveUninitialized: false,\n}));",
+      "tags": [
+        "cluster",
+        "sessions",
+        "scenario"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "hard",
+      "question": "Why should you not create a new worker thread for every request?",
+      "answer": "Short answer: Starting a worker creates a new V8 instance, which costs tens of milliseconds and several MB of memory; under load this can cost more than the work itself.\n\nHow it works: Use a fixed pool of workers, usually sized to the CPU cores, and send tasks to it. Pool workers stay warm, so each task starts immediately, and the pool queues tasks when all workers are busy, which also protects the server from overload. Libraries such as piscina do this for you.\n\nExample: 100 parallel uploads each start a worker: the server creates 100 V8 instances, memory jumps by hundreds of MB and the container is killed. With a pool of 4, tasks queue and memory stays flat.\n\nCommon mistake: Making the pool bigger than the number of cores; the extra workers just compete for the same CPUs.\n\nInterview tip: Mention queue limits and timeouts for the pool; they show production thinking.",
+      "codeSnippet": "const Piscina = require('piscina');\nconst pool = new Piscina({ filename: require.resolve('./resize.js') });\napp.post('/resize', async (req, res) => {\n  res.json(await pool.run({ file: req.body.file })); // reuses warm workers\n});",
+      "tags": [
+        "worker-threads",
+        "pool"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "hard",
+      "question": "How do PM2 cluster mode and Docker/Kubernetes replicas relate to Node's cluster module?",
+      "answer": "Short answer: PM2's cluster mode is Node's cluster module plus process management. In containers you usually run one process per container and scale by adding replicas.\n\nHow it works: pm2 start app.js -i max forks one process per core using cluster, restarts crashed ones, keeps logs and supports zero-downtime reloads. Docker and Kubernetes take over those jobs at a higher level: each container runs one Node process, the orchestrator restarts it, and a load balancer spreads traffic across replicas. Either way the app must be stateless.\n\nExample: On a single VPS, PM2 cluster mode is the simple way to use all cores. On Kubernetes, the same app runs as 4 replicas of 1 process each.\n\nCommon mistake: Running PM2 cluster inside every Kubernetes pod as well, which doubles the layers of process management and makes resource limits confusing.\n\nInterview tip: Show you know where each tool fits: VPS -> PM2, containers -> replicas.",
+      "codeSnippet": "pm2 start server.js -i max     # one process per core\npm2 reload server              # zero-downtime restart",
+      "tags": [
+        "pm2",
+        "scaling"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "easy",
+      "question": "Which module runs JavaScript in parallel threads inside one Node process?",
+      "options": [
+        "cluster",
+        "child_process",
+        "worker_threads",
+        "events"
+      ],
+      "correctAnswer": "worker_threads",
+      "answer": "Why C: worker_threads creates threads inside the same process.\n\nWhy not A: cluster creates separate processes.\n\nWhy not B: child_process also creates separate processes.\n\nWhy not D: events is the EventEmitter module; it has nothing to do with threads.",
+      "codeSnippet": "",
+      "tags": [
+        "worker-threads"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "medium",
+      "question": "Which child_process function runs a command through a shell and buffers all of its output?",
+      "options": [
+        "spawn",
+        "exec",
+        "fork",
+        "execFile"
+      ],
+      "correctAnswer": "exec",
+      "answer": "Why B: exec uses a shell and returns the whole output at once (1 MB limit by default).\n\nWhy not A: spawn streams the output and does not use a shell by default.\n\nWhy not C: fork starts a Node script with a message channel.\n\nWhy not D: execFile buffers output but runs the program without a shell.",
+      "codeSnippet": "",
+      "tags": [
+        "child-process"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "medium",
+      "question": "How does the cluster module help a Node web server?",
+      "options": [
+        "It makes each request use more threads",
+        "It runs several processes that share one port, so all CPU cores are used",
+        "It caches responses",
+        "It replaces the event loop"
+      ],
+      "correctAnswer": "It runs several processes that share one port, so all CPU cores are used",
+      "answer": "Why B: Each worker is a full copy of the server, and connections are spread across them.\n\nWhy not A: A single request still runs on one thread in one worker.\n\nWhy not C: cluster does no caching.\n\nWhy not D: Every worker still has its own normal event loop.",
+      "codeSnippet": "",
+      "tags": [
+        "cluster"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "medium",
+      "question": "What is fork() mainly used for?",
+      "options": [
+        "Copying a file",
+        "Starting another Node.js script with a message channel",
+        "Creating a thread",
+        "Restarting the server"
+      ],
+      "correctAnswer": "Starting another Node.js script with a message channel",
+      "answer": "Why B: fork() starts a Node script as a child process and connects them with process.send() and the 'message' event.\n\nWhy not A: Copying files is fs.copyFile.\n\nWhy not C: Threads come from worker_threads; fork creates a process.\n\nWhy not D: Restarting is done by a process manager, not fork().",
+      "codeSnippet": "",
+      "tags": [
+        "child-process"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "hard",
+      "question": "Why is exec(`convert ${req.query.file} out.png`) dangerous?",
+      "options": [
+        "It is slow",
+        "It allows command injection through the shell",
+        "convert does not exist on Linux",
+        "exec cannot read files"
+      ],
+      "correctAnswer": "It allows command injection through the shell",
+      "answer": "Why B: A value like 'a.jpg; rm -rf /' becomes a second shell command.\n\nWhy not A: Speed is not the issue; security is.\n\nWhy not C: ImageMagick's convert is common on Linux.\n\nWhy not D: exec runs any command, including ones that read files.\n\nFix: Use execFile('convert', [file, 'out.png']) and validate the file name.",
+      "codeSnippet": "",
+      "tags": [
+        "security"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Child Processes, Worker Threads & Cluster",
+      "difficulty": "hard",
+      "question": "Can worker threads share memory with the main thread?",
+      "options": [
+        "No, never",
+        "Yes, all variables are shared automatically",
+        "Only through SharedArrayBuffer (or by transferring objects)",
+        "Only in cluster mode"
+      ],
+      "correctAnswer": "Only through SharedArrayBuffer (or by transferring objects)",
+      "answer": "Why C: Normal messages are copied. SharedArrayBuffer is truly shared, and ArrayBuffers can be transferred (moved) without copying.\n\nWhy not A: SharedArrayBuffer does allow shared memory.\n\nWhy not B: Each worker has its own heap; normal variables are never shared.\n\nWhy not D: Cluster workers are separate processes and share no memory at all.",
+      "codeSnippet": "",
+      "tags": [
+        "worker-threads"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "easy",
+      "question": "Why should you not use synchronous fs functions inside request handlers?",
+      "answer": "Short answer: Sync functions block the event loop until the disk finishes, so every other user waits.\n\nHow it works: readFileSync, writeFileSync and the other Sync functions stop the single JavaScript thread. A 20 ms read on each request means the server can handle at most about 50 requests per second, no matter how many cores it has. They are fine at startup (reading a config file once) and in CLI scripts.\n\nExample: A route that serves a template with fs.readFileSync works in development, but under load response times climb for every route.\n\nCommon mistake: Thinking a small file is always fast; on a busy or network disk, a \"small\" read can take much longer.\n\nInterview tip: Say where Sync is acceptable (startup, scripts) to show you are not following the rule blindly.",
+      "codeSnippet": "// at startup: fine\nconst config = JSON.parse(fs.readFileSync('config.json', 'utf8'));\n// in a route: use the async version\napp.get('/report', async (req, res) => {\n  res.type('text').send(await fs.promises.readFile('report.txt', 'utf8'));\n});",
+      "tags": [
+        "blocking",
+        "fs"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "medium",
+      "question": "How does Redis caching speed up an API? Explain the cache-aside pattern.",
+      "answer": "Short answer: Cache-aside: check Redis first; on a hit return the cached value, on a miss read from the database, save the result in Redis with an expiry, then return it.\n\nHow it works: Redis keeps data in memory, so reads take under a millisecond compared with several milliseconds or more for a database query. Cache-aside keeps the application in control: the cache is filled only with data someone asked for, and a TTL makes old entries expire by themselves.\n\nExample: The AskedIn languages list is read on almost every page and changes rarely; caching it for 5 minutes removes most of those database queries.\n\nCommon mistake: Caching user-specific or permission-dependent data under a shared key, so one user sees another user's data.\n\nInterview tip: Mention hit rate and TTL, and that you would cache only hot, rarely changing data.",
+      "codeSnippet": "async function getLanguages() {\n  const cached = await redis.get('languages');\n  if (cached) return JSON.parse(cached);\n  const languages = await Language.find({ isActive: true }).lean();\n  await redis.set('languages', JSON.stringify(languages), { EX: 300 }); // 5 min\n  return languages;\n}",
+      "tags": [
+        "caching",
+        "redis"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "medium",
+      "question": "What is cache invalidation, and which strategies do you know?",
+      "answer": "Short answer: Invalidation means removing or refreshing cached data when the real data changes, so users do not see old values.\n\nHow it works:\nTTL only: simple, but data can be stale until it expires\nDelete on write: remove the key whenever the data changes; accurate, but every write path must remember it\nVersioned keys: languages:v42, bump the version on update\nWrite-through: update the cache at the same time as the database\nMost APIs combine a short TTL with delete-on-write as a safety net.\n\nExample: An admin activates JavaScript; the update route deletes the 'languages' key, so the next visitor sees JavaScript immediately instead of after 5 minutes.\n\nCommon mistake: Forgetting one write path (a bulk upload or a script) that changes data without clearing the cache.\n\nInterview tip: Quote the classic joke (\"two hard things: cache invalidation and naming things\") and then show you know real strategies.",
+      "codeSnippet": "async function updateLanguage(id, data) {\n  const lang = await Language.findByIdAndUpdate(id, data, { new: true });\n  await redis.del('languages'); // next read rebuilds the cache\n  return lang;\n}",
+      "tags": [
+        "caching",
+        "invalidation"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "medium",
+      "question": "What is database connection pooling, and how should a Node app connect to MongoDB?",
+      "answer": "Short answer: A pool keeps several database connections open and reuses them. Connect once at startup and share that connection everywhere.\n\nHow it works: Opening a connection (TCP + TLS + authentication) takes tens of milliseconds, so doing it per request is slow and can exhaust the database's connection limit. The MongoDB driver keeps a pool (maxPoolSize, 100 by default); Mongoose uses it automatically after mongoose.connect(). Size it for your server and for the database plan's limits.\n\nExample: A serverless function that connects on every call quickly hits Atlas's connection limit; caching the connection outside the handler fixes it.\n\nCommon mistake: Calling mongoose.connect inside a route or middleware.\n\nInterview tip: Mention that with cluster or many replicas, the total is pool size times processes, which must stay under the database limit.",
+      "codeSnippet": "// db.js, called once from server.js before app.listen\nawait mongoose.connect(process.env.MONGO_URI, { maxPoolSize: 20 });\n// wrong: a new connection per request\n// app.get('/x', async () => { await mongoose.connect(uri); ... });",
+      "tags": [
+        "database",
+        "connection-pool"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "medium",
+      "question": "How should you handle configuration and secrets across environments?",
+      "answer": "Short answer: Read all config from environment variables, keep a git-ignored .env file only for local development, set real values in the hosting platform, and validate them at startup.\n\nHow it works: dotenv or node --env-file loads .env locally; Render, Vercel or Kubernetes secrets provide values in production. Validate required variables at startup and stop with a clear message if one is missing, instead of failing later on a random request. Set NODE_ENV=production so libraries switch to production behaviour. Rotate any secret that leaks.\n\nExample: AskedIn's server needs MONGO_URI, JWT_SECRET and the Brevo key; locally they come from server/.env, on Render from the service's environment settings.\n\nCommon mistake: Committing .env to git, or putting secrets in frontend environment variables (anything with VITE_ is public in the browser).\n\nInterview tip: Mention startup validation; it turns a confusing runtime bug into a clear deploy error.",
+      "codeSnippet": "const required = ['MONGO_URI', 'JWT_SECRET'];\nconst missing = required.filter((k) => !process.env[k]);\nif (missing.length) {\n  console.error('Missing env vars:', missing.join(', '));\n  process.exit(1);\n}",
+      "tags": [
+        "config",
+        "env"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "medium",
+      "question": "How do you reduce API response size and time?",
+      "answer": "Short answer: Send only what is needed, in pages, compressed, and let clients cache what rarely changes.\n\nHow it works:\nProjection: select only the fields the screen uses\nPagination: never return unbounded lists\nCompression: gzip or brotli via middleware or a proxy such as Nginx\n.lean(): plain objects from Mongoose for read-only data, which is faster\nHTTP caching: Cache-Control and ETag for data that rarely changes\n\nExample: A users list sent full documents (bookmarks, hashes, history) at 2 MB; selecting name, email and createdAt with a limit of 20 made it 8 KB.\n\nCommon mistake: Removing fields in JavaScript after loading full documents; the database and network already did the expensive work.\n\nInterview tip: Measure first (response size, time to first byte) and mention which change gave the biggest win.",
+      "codeSnippet": "app.use(require('compression')());\nconst users = await User.find()\n  .select('name email createdAt') // not the whole document\n  .limit(20)\n  .lean();                         // plain objects, faster",
+      "tags": [
+        "performance",
+        "compression"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "hard",
+      "question": "How do you shut down a Node server gracefully?",
+      "answer": "Short answer: On SIGTERM, stop accepting new connections, let in-flight requests finish, close database connections, then exit, with a timeout as a safety net.\n\nHow it works: Platforms send SIGTERM before stopping a container and SIGKILL after a grace period (often 30 seconds). server.close() stops new connections and calls back when open ones finish; then close MongoDB and Redis and exit. A timer forces exit if something hangs. For long keep-alive connections, server.closeIdleConnections() helps.\n\nExample: Without it, each deploy cuts off users mid-checkout; with it, deploys are invisible to users.\n\nCommon mistake: Calling process.exit(0) directly in the SIGTERM handler, which kills requests that are still running.\n\nInterview tip: Mention health checks: mark the instance unhealthy first so the load balancer stops sending new traffic.",
+      "codeSnippet": "process.on('SIGTERM', () => {\n  console.log('Shutting down...');\n  server.close(async () => {\n    await mongoose.connection.close();\n    process.exit(0);\n  });\n  setTimeout(() => process.exit(1), 10000).unref(); // give up after 10 s\n});",
+      "tags": [
+        "deployment",
+        "shutdown"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "hard",
+      "question": "After a release, API p95 latency jumped from 100 ms to 2 s. How do you investigate?",
+      "answer": "Short answer: Find out what changed and where the time goes: all endpoints or one, CPU or waiting, then profile or check queries. Roll back first if users are badly affected.\n\nHow it works: 1) Compare the release diff and the timing of the jump.\n2) All endpoints slow: suspect the event loop (lag, CPU) or a shared dependency (database, Redis).\n3) One endpoint slow: check its queries; explain() for missing indexes, N+1 queries, too much data loaded.\n4) Check outgoing calls: a slow third-party API without a timeout.\n5) Profile with --cpu-prof or Clinic.js Flame.\n6) Fix, add a test or alert, and write a short postmortem.\n\nExample: The release added a filter on status; explain() shows a full collection scan, and an index on { user: 1, status: 1 } brings p95 back to 90 ms.\n\nCommon mistake: Guessing and redeploying random changes instead of measuring.\n\nInterview tip: Structure the answer as a process (scope, hypothesis, measure, fix, prevent); that is what the interviewer is grading.",
+      "codeSnippet": "const explain = await Order.find({ user: id, status: 'paid' }).explain('executionStats');\nconsole.log(explain.executionStats.totalDocsExamined); // huge? add an index\norderSchema.index({ user: 1, status: 1 });",
+      "tags": [
+        "performance",
+        "scenario"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "hard",
+      "question": "What is the N+1 query problem, and how do you fix it in a Node + MongoDB API?",
+      "answer": "Short answer: You run 1 query for a list and then 1 more query for each item. It is fast with test data and very slow in production.\n\nHow it works: For 20 posts with authors, that is 21 queries, each with network latency. Fix it by loading related data in one go: Mongoose populate (which batches with $in), one find with $in on the collected ids, an aggregation with $lookup, or DataLoader in GraphQL.\n\nExample: A dashboard showing 50 orders with customer names made 51 queries and took 800 ms; one $in query brought it to 40 ms.\n\nCommon mistake: Hiding N+1 inside a helper (getAuthorName(id)) called in a loop, so it does not look like a query.\n\nInterview tip: Mention logging the query count per request (mongoose.set('debug', true) locally) to catch it early.",
+      "codeSnippet": "// N+1\nconst posts = await Post.find().limit(20);\nfor (const p of posts) p.author = await User.findById(p.authorId); // 20 extra queries\n// fixed: 2 queries\nconst ids = posts.map((p) => p.authorId);\nconst authors = await User.find({ _id: { $in: ids } }).lean();",
+      "tags": [
+        "database",
+        "n-plus-one"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "hard",
+      "question": "Why does a Node app crash with \"JavaScript heap out of memory\", and how do you fix it?",
+      "answer": "Short answer: The V8 heap has a size limit; loading too much data at once (or a leak) goes past it. The real fix is streaming or batching, not only a bigger limit.\n\nHow it works: The default limit depends on the system and Node version (often around 2-4 GB on 64-bit, lower in small containers). A big file read, a huge query result, or building a giant array or string can exceed it. --max-old-space-size raises the limit, but it must stay below the container's memory or the OS kills the process instead.\n\nExample: A monthly report loads 500,000 orders with find() and crashes a 512 MB Render instance; a Mongoose cursor that writes rows to a CSV stream uses about 60 MB.\n\nCommon mistake: Raising --max-old-space-size above the container's memory, which turns a clear Node error into a mysterious OOM kill.\n\nInterview tip: Separate the two causes: too much data at once (stream it) versus a leak (heap snapshots).",
+      "codeSnippet": "// instead of loading 500k orders at once\nconst cursor = Order.find({ month }).lean().cursor();\nfor await (const order of cursor) {\n  writeCsvRow(order); // one document in memory at a time\n}\n// node --max-old-space-size=1536 server.js  (temporary patch)",
+      "tags": [
+        "memory",
+        "scenario"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "easy",
+      "question": "Which signal do Docker and Kubernetes send first when they stop your app?",
+      "options": [
+        "SIGKILL",
+        "SIGTERM",
+        "SIGINT",
+        "SIGHUP"
+      ],
+      "correctAnswer": "SIGTERM",
+      "answer": "Why B: SIGTERM politely asks the app to stop, giving it time to shut down gracefully.\n\nWhy not A: SIGKILL comes after the grace period and cannot be caught.\n\nWhy not C: SIGINT is what Ctrl+C sends in a terminal.\n\nWhy not D: SIGHUP traditionally means the terminal closed or config should reload.",
+      "codeSnippet": "",
+      "tags": [
+        "deployment"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "medium",
+      "question": "In the cache-aside pattern, what happens on a cache miss?",
+      "options": [
+        "Return an empty response",
+        "Read from the database, save it in the cache, then return it",
+        "Wait until the cache is filled",
+        "Clear the whole cache"
+      ],
+      "correctAnswer": "Read from the database, save it in the cache, then return it",
+      "answer": "Why B: The application loads the data itself and fills the cache so the next request is a hit.\n\nWhy not A: The user would get wrong data.\n\nWhy not C: Nothing else fills the cache in cache-aside; the app must do it.\n\nWhy not D: Clearing everything would make every request a miss.",
+      "codeSnippet": "",
+      "tags": [
+        "caching"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "medium",
+      "question": "Where should mongoose.connect() be called?",
+      "options": [
+        "In every route handler",
+        "Once when the app starts",
+        "In every model file",
+        "After each request ends"
+      ],
+      "correctAnswer": "Once when the app starts",
+      "answer": "Why B: One connect at startup creates the pool that every request then reuses.\n\nWhy not A: Connecting per request is slow and can exhaust database connections.\n\nWhy not C: Models use the shared connection; they should not connect themselves.\n\nWhy not D: Connecting after requests makes no sense; the connection must exist before them.",
+      "codeSnippet": "",
+      "tags": [
+        "database"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "medium",
+      "question": "What reduces the size of large JSON responses sent over the network?",
+      "options": [
+        "Using PUT instead of GET",
+        "Compressing responses with gzip or brotli",
+        "Adding more middleware",
+        "Sending the response twice"
+      ],
+      "correctAnswer": "Compressing responses with gzip or brotli",
+      "answer": "Why B: JSON is repetitive text, so gzip or brotli often shrink it to a small fraction of its size.\n\nWhy not A: The method does not change the response size.\n\nWhy not C: Middleware by itself does not shrink anything (except compression middleware).\n\nWhy not D: Sending twice is an error, not an optimisation.",
+      "codeSnippet": "",
+      "tags": [
+        "performance"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "hard",
+      "question": "Listing 20 orders with their customers runs 21 database queries. What is this called?",
+      "options": [
+        "Race condition",
+        "N+1 query problem",
+        "Deadlock",
+        "Cache stampede"
+      ],
+      "correctAnswer": "N+1 query problem",
+      "answer": "Why B: 1 query for the list plus 1 per item: the N+1 problem.\n\nWhy not A: A race condition is about timing between concurrent operations.\n\nWhy not C: A deadlock is when operations wait on each other forever.\n\nWhy not D: A cache stampede is many requests rebuilding the same expired cache key at once.\n\nFix: Load the customers with one $in query or populate.",
+      "codeSnippet": "",
+      "tags": [
+        "n-plus-one"
+      ]
+    },
+    {
+      "type": "mcq",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "hard",
+      "question": "A Node app in a 512 MB container crashes with \"JavaScript heap out of memory\" while building a big report. What is the best first fix?",
+      "options": [
+        "Increase the request timeout",
+        "Stream or paginate the data instead of loading it all into memory",
+        "Add more CPU cores",
+        "Use var instead of const"
+      ],
+      "correctAnswer": "Stream or paginate the data instead of loading it all into memory",
+      "answer": "Why B: Processing one batch at a time keeps memory flat, whatever the report size.\n\nWhy not A: The process runs out of memory, not time.\n\nWhy not C: CPU cores do not add heap memory.\n\nWhy not D: var vs const has no effect on memory use.",
+      "codeSnippet": "",
+      "tags": [
+        "memory"
+      ]
+    }
+  ]
+}

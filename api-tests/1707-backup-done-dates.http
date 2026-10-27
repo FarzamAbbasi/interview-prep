@@ -3,7 +3,7 @@
 ### Use the LOCAL database only (step 4 restores into it).
 
 @baseUrl = http://localhost:5000/api
-@adminEmail = askedin143@gmail.com
+@adminEmail = changeme
 @adminPassword = changeme
 @adminToken = {{adminLogin.response.body.data.token}}
 
