@@ -14,7 +14,9 @@ import {
   SiNodedotjs,
   SiMysql,
   SiLaravel,
-} from 'react-icons/si';
+  SiMongodb,
+  SiExpress,
+} from "react-icons/si";
 
 // Language "icon" value (set by the admin) -> logo component
 export const ICONS = {
@@ -33,6 +35,8 @@ export const ICONS = {
   nodejs: SiNodedotjs,
   mysql: SiMysql,
   laravel: SiLaravel,
+  mongodb: SiMongodb,
+  express: SiExpress,
 };
 
 export const ICON_KEYS = Object.keys(ICONS);

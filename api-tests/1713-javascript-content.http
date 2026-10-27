@@ -1,0 +1,24 @@
+### IPP-1713 JavaScript content (new format) (dry run only, nothing saved)
+### Put ADMIN_PASSWORD from server/.env while testing, then put CHANGE_ME back.
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = changeme
+@adminToken = {{adminLogin.response.body.data.token}}
+
+
+### 1. Admin login -> expect 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Dry run -> after "npm run clear:language -- javascript --yes --language": languages.added 1, questions.added 208,
+###    skipped 0, errors [], topicsNew has 13 names. (Without clearing: updated 10, added 198, old questions stay.)
+POST {{baseUrl}}/admin/backup/import?dryRun=true
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+< ../server/data/uploads/javascript.json
