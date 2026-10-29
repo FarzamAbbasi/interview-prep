@@ -1,0 +1,1832 @@
+{
+  "_readme": [
+    "Coding problems for JavaScript. Strings (5 free + 1 hard, IPP-1714/1720) and Arrays (6 + 1 hard, IPP-1719/1720). Hard ones need full access.",
+    "Each problem: scenario, description, examples, constraints, starter code, tests (visible = shown on Run, hidden = only on Submit), failHint (shown when that test fails), 3 hints, solution (code + explanation parts), followUp, relatedTopic (a JavaScript Q&A topic).",
+    "Tests call functionName(...args) and compare the result with expected (deep equal).",
+    "companies stays empty until real interview data is collected."
+  ],
+  "language": "javascript",
+  "problems": [
+    {
+      "title": "Reverse a string",
+      "slug": "reverse-a-string",
+      "topic": "Strings",
+      "order": 1,
+      "difficulty": "easy",
+      "isFree": true,
+      "scenario": "A chat app has a fun \"mirror\" button that shows a message backwards.",
+      "description": "Write a function reverseString(str) that returns the characters of str in reverse order. Spaces and symbols are characters too and must stay in the result.",
+      "functionName": "reverseString",
+      "starterCode": "function reverseString(str) {\n  // your code here\n}",
+      "examples": [
+        {
+          "input": "reverseString(\"hello\")",
+          "output": "\"olleh\"",
+          "explanation": "The last character comes first."
+        },
+        {
+          "input": "reverseString(\"hello world\")",
+          "output": "\"dlrow olleh\"",
+          "explanation": "The space is reversed along with the letters."
+        }
+      ],
+      "constraints": [
+        "0 <= str.length <= 10,000",
+        "str contains normal letters, digits, spaces and symbols"
+      ],
+      "tests": [
+        {
+          "args": [
+            "hello"
+          ],
+          "expected": "olleh",
+          "visible": true
+        },
+        {
+          "args": [
+            "AskedIn"
+          ],
+          "expected": "nIdeksA",
+          "visible": true
+        },
+        {
+          "args": [
+            ""
+          ],
+          "expected": "",
+          "visible": true,
+          "failHint": "An empty string should return an empty string, not undefined."
+        },
+        {
+          "args": [
+            "a"
+          ],
+          "expected": "a",
+          "visible": false
+        },
+        {
+          "args": [
+            "racecar"
+          ],
+          "expected": "racecar",
+          "visible": false
+        },
+        {
+          "args": [
+            "hello world"
+          ],
+          "expected": "dlrow olleh",
+          "visible": false,
+          "failHint": "Spaces are characters too. Keep them in the reversed result."
+        },
+        {
+          "args": [
+            "12345"
+          ],
+          "expected": "54321",
+          "visible": false
+        },
+        {
+          "args": [
+            "  ab"
+          ],
+          "expected": "ba  ",
+          "visible": false,
+          "failHint": "Leading spaces become trailing spaces after reversing. Do not trim."
+        }
+      ],
+      "hints": [
+        "Strings have no reverse() method, but arrays do.",
+        "Turn the string into an array of characters with split(\"\").",
+        "Chain three methods: split, reverse, join."
+      ],
+      "solution": {
+        "code": "function reverseString(str) {\n  return str.split('').reverse().join('');\n}",
+        "explanation": "Short answer: convert the string to an array, reverse the array, and join it back into a string.\n\nHow it works: str.split(\"\") gives [\"h\",\"e\",\"l\",\"l\",\"o\"]. reverse() flips the array in place. join(\"\") glues the characters back together with nothing between them.\n\nComplexity: O(n) time and O(n) extra space for the array.\n\nCommon mistake: calling str.reverse(). Strings do not have a reverse method, so this throws \"str.reverse is not a function\".\n\nInterview tip: say that strings are immutable in JavaScript, so you must build a new string. Then mention the emoji follow-up to show depth."
+      },
+      "followUp": "How would you reverse \"👍ok\" correctly? split(\"\") breaks the emoji into two broken halves; [...str] splits by real characters.",
+      "relatedTopic": "Basics & Types",
+      "companies": []
+    },
+    {
+      "title": "Check if a phrase is a palindrome",
+      "slug": "valid-palindrome",
+      "topic": "Strings",
+      "order": 2,
+      "difficulty": "easy",
+      "isFree": true,
+      "scenario": "A word game gives bonus points when a player types a palindrome phrase.",
+      "description": "Write a function isPalindrome(str) that returns true if str reads the same forwards and backwards, and false otherwise. Ignore letter case and ignore every character that is not a letter or a digit.",
+      "functionName": "isPalindrome",
+      "starterCode": "function isPalindrome(str) {\n  // your code here\n}",
+      "examples": [
+        {
+          "input": "isPalindrome(\"racecar\")",
+          "output": "true",
+          "explanation": "Same letters in both directions."
+        },
+        {
+          "input": "isPalindrome(\"A man, a plan, a canal: Panama\")",
+          "output": "true",
+          "explanation": "After removing spaces and punctuation and lower-casing, it becomes \"amanaplanacanalpanama\"."
+        },
+        {
+          "input": "isPalindrome(\"hello\")",
+          "output": "false",
+          "explanation": "\"hello\" backwards is \"olleh\"."
+        }
+      ],
+      "constraints": [
+        "0 <= str.length <= 10,000",
+        "Only letters (a-z, A-Z) and digits (0-9) are compared"
+      ],
+      "tests": [
+        {
+          "args": [
+            "racecar"
+          ],
+          "expected": true,
+          "visible": true
+        },
+        {
+          "args": [
+            "A man, a plan, a canal: Panama"
+          ],
+          "expected": true,
+          "visible": true,
+          "failHint": "Lower-case the string and remove everything that is not a letter or digit before comparing."
+        },
+        {
+          "args": [
+            "hello"
+          ],
+          "expected": false,
+          "visible": true
+        },
+        {
+          "args": [
+            ""
+          ],
+          "expected": true,
+          "visible": false,
+          "failHint": "An empty string reads the same both ways, so it is a palindrome."
+        },
+        {
+          "args": [
+            "a"
+          ],
+          "expected": true,
+          "visible": false
+        },
+        {
+          "args": [
+            "No 'x' in Nixon"
+          ],
+          "expected": true,
+          "visible": false,
+          "failHint": "Apostrophes and spaces must be ignored, and \"N\" and \"n\" are the same."
+        },
+        {
+          "args": [
+            "ab"
+          ],
+          "expected": false,
+          "visible": false
+        },
+        {
+          "args": [
+            "Was it a car or a cat I saw?"
+          ],
+          "expected": true,
+          "visible": false
+        },
+        {
+          "args": [
+            "0P"
+          ],
+          "expected": false,
+          "visible": false,
+          "failHint": "Digits count as characters: \"0\" and \"p\" are different, so do not remove digits."
+        }
+      ],
+      "hints": [
+        "First clean the string, then compare.",
+        "Use toLowerCase() and a regular expression like /[^a-z0-9]/g to remove unwanted characters.",
+        "A cleaned string is a palindrome if it equals its own reverse."
+      ],
+      "solution": {
+        "code": "function isPalindrome(str) {\n  const clean = str.toLowerCase().replace(/[^a-z0-9]/g, '');\n  return clean === clean.split('').reverse().join('');\n}",
+        "explanation": "Short answer: clean the string (lower case, letters and digits only), then check if it equals its reverse.\n\nHow it works: toLowerCase() makes \"A\" and \"a\" equal. replace(/[^a-z0-9]/g, \"\") removes spaces, commas and other symbols. Reversing and comparing tells us if both directions match.\n\nComplexity: O(n) time and O(n) extra space for the cleaned and reversed strings.\n\nCommon mistake: removing only spaces and forgetting punctuation, or removing digits with /[^a-z]/g. Then \"0P\" wrongly becomes a palindrome.\n\nInterview tip: after the simple version, offer the two-pointer version that compares from both ends and uses O(1) extra space. Interviewers like seeing both."
+      },
+      "followUp": "Can you solve it with two pointers (one from the start, one from the end) without creating a new string?",
+      "relatedTopic": "Basics & Types",
+      "companies": []
+    },
+    {
+      "title": "Count the vowels",
+      "slug": "count-vowels",
+      "topic": "Strings",
+      "order": 3,
+      "difficulty": "easy",
+      "isFree": true,
+      "scenario": "A language-learning app shows how many vowels a word has to help with pronunciation.",
+      "description": "Write a function countVowels(str) that returns how many vowels (a, e, i, o, u) are in str. Capital vowels count too. The letter \"y\" is not a vowel here.",
+      "functionName": "countVowels",
+      "starterCode": "function countVowels(str) {\n  // your code here\n}",
+      "examples": [
+        {
+          "input": "countVowels(\"hello\")",
+          "output": "2",
+          "explanation": "\"e\" and \"o\"."
+        },
+        {
+          "input": "countVowels(\"AskedIn\")",
+          "output": "3",
+          "explanation": "\"A\", \"e\" and \"I\". Capital vowels count."
+        },
+        {
+          "input": "countVowels(\"rhythm\")",
+          "output": "0",
+          "explanation": "No a, e, i, o or u."
+        }
+      ],
+      "constraints": [
+        "0 <= str.length <= 10,000"
+      ],
+      "tests": [
+        {
+          "args": [
+            "hello"
+          ],
+          "expected": 2,
+          "visible": true
+        },
+        {
+          "args": [
+            "AskedIn"
+          ],
+          "expected": 3,
+          "visible": true,
+          "failHint": "Capital vowels count too. Compare in lower case, or use the \"i\" flag in a regex."
+        },
+        {
+          "args": [
+            "rhythm"
+          ],
+          "expected": 0,
+          "visible": true,
+          "failHint": "When there are no vowels, return 0. Note: str.match() returns null, not [], when nothing matches."
+        },
+        {
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visible": false,
+          "failHint": "An empty string has 0 vowels. Make sure you do not read .length of null."
+        },
+        {
+          "args": [
+            "AEIOU"
+          ],
+          "expected": 5,
+          "visible": false,
+          "failHint": "Capital vowels count too."
+        },
+        {
+          "args": [
+            "Programming is fun"
+          ],
+          "expected": 5,
+          "visible": false
+        },
+        {
+          "args": [
+            "xyz 123!"
+          ],
+          "expected": 0,
+          "visible": false
+        },
+        {
+          "args": [
+            "aaa"
+          ],
+          "expected": 3,
+          "visible": false,
+          "failHint": "Count every vowel, not only the different ones."
+        }
+      ],
+      "hints": [
+        "Go through each character and check if it is one of \"aeiou\".",
+        "Lower-case the character first so \"A\" is treated like \"a\".",
+        "Shorter way: str.match(/[aeiou]/gi) returns all vowels, or null if there are none."
+      ],
+      "solution": {
+        "code": "function countVowels(str) {\n  const matches = str.match(/[aeiou]/gi);\n  return matches ? matches.length : 0;\n}",
+        "explanation": "Short answer: find all vowels with a case-insensitive regex and return how many were found.\n\nHow it works: /[aeiou]/gi matches any vowel (g = all matches, i = ignore case). match() returns an array of matches, or null when there are none, so we return 0 in that case.\n\nComplexity: O(n) time. The matches array uses O(k) space, where k is the number of vowels.\n\nCommon mistake: writing str.match(/[aeiou]/gi).length. It crashes with \"Cannot read properties of null\" when the string has no vowels.\n\nInterview tip: also show the loop version with a Set of vowels. It explains your thinking clearly and avoids the null case completely."
+      },
+      "followUp": "Return an object with the count of each vowel, e.g. { a: 1, e: 1, i: 0, o: 1, u: 0 }.",
+      "relatedTopic": "Basics & Types",
+      "companies": []
+    },
+    {
+      "title": "Capitalize every word",
+      "slug": "capitalize-every-word",
+      "topic": "Strings",
+      "order": 4,
+      "difficulty": "medium",
+      "isFree": true,
+      "scenario": "A blog shows post titles typed by users. Make every word start with a capital letter.",
+      "description": "Write a function capitalizeWords(str) that makes the first letter of every word upper case. Words are separated by spaces. Keep the number of spaces exactly the same, and do not change any other letters.",
+      "functionName": "capitalizeWords",
+      "starterCode": "function capitalizeWords(str) {\n  // your code here\n}",
+      "examples": [
+        {
+          "input": "capitalizeWords(\"hello world\")",
+          "output": "\"Hello World\"",
+          "explanation": "Both words start with a capital letter."
+        },
+        {
+          "input": "capitalizeWords(\"  js  is fun\")",
+          "output": "\"  Js  Is Fun\"",
+          "explanation": "Extra spaces stay exactly where they were."
+        }
+      ],
+      "constraints": [
+        "0 <= str.length <= 10,000",
+        "Words are separated by one or more spaces",
+        "Only the first letter of each word changes"
+      ],
+      "tests": [
+        {
+          "args": [
+            "hello world"
+          ],
+          "expected": "Hello World",
+          "visible": true
+        },
+        {
+          "args": [
+            "  js  is fun"
+          ],
+          "expected": "  Js  Is Fun",
+          "visible": true,
+          "failHint": "Double spaces create empty strings after split(' '). ''[0] is undefined, so check the word is not empty first."
+        },
+        {
+          "args": [
+            ""
+          ],
+          "expected": "",
+          "visible": true,
+          "failHint": "An empty string should return an empty string."
+        },
+        {
+          "args": [
+            "a"
+          ],
+          "expected": "A",
+          "visible": false
+        },
+        {
+          "args": [
+            "already Capital"
+          ],
+          "expected": "Already Capital",
+          "visible": false
+        },
+        {
+          "args": [
+            "123 abc"
+          ],
+          "expected": "123 Abc",
+          "visible": false
+        },
+        {
+          "args": [
+            "hELLO"
+          ],
+          "expected": "HELLO",
+          "visible": false,
+          "failHint": "Only change the first letter. Leave the rest of the word as it is (do not lower-case it)."
+        },
+        {
+          "args": [
+            "one two three"
+          ],
+          "expected": "One Two Three",
+          "visible": false
+        }
+      ],
+      "hints": [
+        "Split the string into words with split(' ').",
+        "Some \"words\" will be empty strings when there are double spaces. Leave them as they are.",
+        "For each non-empty word: w[0].toUpperCase() + w.slice(1). Then join(' ')."
+      ],
+      "solution": {
+        "code": "function capitalizeWords(str) {\n  return str\n    .split(' ')\n    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))\n    .join(' ');\n}",
+        "explanation": "Short answer: split on single spaces, capitalize the first letter of each non-empty word, and join with single spaces again.\n\nHow it works: split(' ') on \"  js  is fun\" gives [\"\", \"\", \"js\", \"\", \"is\", \"fun\"]. Empty items stand for the extra spaces, so we keep them unchanged. join(' ') puts every space back in the same place.\n\nComplexity: O(n) time and O(n) extra space.\n\nCommon mistake: using w[0].toUpperCase() without checking for empty words. On double spaces this throws \"Cannot read properties of undefined (reading 'toUpperCase')\".\n\nInterview tip: mention the regex alternative str.replace(/\\b\\w/g, c => c.toUpperCase()), but explain that \\b also treats apostrophes as word breaks (\"don't\" becomes \"Don'T\")."
+      },
+      "followUp": "How would you also make the rest of each word lower case, so \"hELLO\" becomes \"Hello\"?",
+      "relatedTopic": "Basics & Types",
+      "companies": []
+    },
+    {
+      "title": "Check if two words are anagrams",
+      "slug": "valid-anagram",
+      "topic": "Strings",
+      "order": 5,
+      "difficulty": "medium",
+      "isFree": true,
+      "scenario": "A puzzle game checks whether the player's answer uses exactly the same letters as the given word.",
+      "description": "Write a function isAnagram(a, b) that returns true if a and b contain exactly the same letters the same number of times, in any order. Ignore letter case and ignore spaces.",
+      "functionName": "isAnagram",
+      "starterCode": "function isAnagram(a, b) {\n  // your code here\n}",
+      "examples": [
+        {
+          "input": "isAnagram(\"listen\", \"silent\")",
+          "output": "true",
+          "explanation": "Same letters, different order."
+        },
+        {
+          "input": "isAnagram(\"Dormitory\", \"dirty room\")",
+          "output": "true",
+          "explanation": "Case and spaces are ignored."
+        },
+        {
+          "input": "isAnagram(\"aab\", \"abb\")",
+          "output": "false",
+          "explanation": "Same letters, but different counts."
+        }
+      ],
+      "constraints": [
+        "0 <= a.length, b.length <= 10,000",
+        "Letter case and spaces are ignored"
+      ],
+      "tests": [
+        {
+          "args": [
+            "listen",
+            "silent"
+          ],
+          "expected": true,
+          "visible": true
+        },
+        {
+          "args": [
+            "hello",
+            "world"
+          ],
+          "expected": false,
+          "visible": true
+        },
+        {
+          "args": [
+            "Dormitory",
+            "dirty room"
+          ],
+          "expected": true,
+          "visible": true,
+          "failHint": "Lower-case both strings and remove spaces before comparing."
+        },
+        {
+          "args": [
+            "",
+            ""
+          ],
+          "expected": true,
+          "visible": false
+        },
+        {
+          "args": [
+            "a",
+            "aa"
+          ],
+          "expected": false,
+          "visible": false,
+          "failHint": "Same letters is not enough. Each letter must appear the same number of times."
+        },
+        {
+          "args": [
+            "rat",
+            "car"
+          ],
+          "expected": false,
+          "visible": false
+        },
+        {
+          "args": [
+            "Listen",
+            "Silent"
+          ],
+          "expected": true,
+          "visible": false,
+          "failHint": "\"L\" and \"l\" are the same letter here. Compare in lower case."
+        },
+        {
+          "args": [
+            "aab",
+            "abb"
+          ],
+          "expected": false,
+          "visible": false,
+          "failHint": "A Set only keeps unique letters and loses the counts. Compare counts or sorted letters instead."
+        },
+        {
+          "args": [
+            "night",
+            "thing"
+          ],
+          "expected": true,
+          "visible": false
+        }
+      ],
+      "hints": [
+        "Clean both strings the same way first: lower case, no spaces.",
+        "Two anagrams look identical after sorting their letters.",
+        "clean(s) = s.toLowerCase().replace(/\\s/g, '').split('').sort().join('')"
+      ],
+      "solution": {
+        "code": "function isAnagram(a, b) {\n  const clean = (s) => s.toLowerCase().replace(/\\s/g, '').split('').sort().join('');\n  return clean(a) === clean(b);\n}",
+        "explanation": "Short answer: clean both strings, sort their letters, and compare the results.\n\nHow it works: \"Dormitory\" and \"dirty room\" both become \"dimoorrty\" after lower-casing, removing spaces and sorting. If the sorted strings are equal, the letters and their counts are equal.\n\nComplexity: O(n log n) time because of sorting, O(n) extra space.\n\nCommon mistake: comparing new Set(a) with new Set(b). A Set removes duplicates, so \"aab\" and \"abb\" look the same even though the counts differ.\n\nInterview tip: after the sort version, offer the O(n) version: count letters of a in an object, subtract the letters of b, and check every count is 0."
+      },
+      "followUp": "Solve it in O(n) time using a letter-count object instead of sorting.",
+      "relatedTopic": "Arrays & Iteration",
+      "companies": []
+    },
+    {
+      "title": "Longest substring without repeating characters",
+      "slug": "longest-substring-without-repeating",
+      "topic": "Strings",
+      "order": 6,
+      "difficulty": "hard",
+      "isFree": false,
+      "scenario": "A password checker shows the longest stretch of a password where no character repeats.",
+      "description": "Write a function lengthOfLongestSubstring(s) that returns the length of the longest substring of s with no repeated characters. A substring is a continuous part of the string.",
+      "functionName": "lengthOfLongestSubstring",
+      "starterCode": "function lengthOfLongestSubstring(s) {\n  // your code here\n}",
+      "examples": [
+        {
+          "input": "lengthOfLongestSubstring(\"abcabcbb\")",
+          "output": "3",
+          "explanation": "\"abc\" is the longest part without a repeat."
+        },
+        {
+          "input": "lengthOfLongestSubstring(\"bbbbb\")",
+          "output": "1",
+          "explanation": "Only \"b\"."
+        },
+        {
+          "input": "lengthOfLongestSubstring(\"pwwkew\")",
+          "output": "3",
+          "explanation": "\"wke\". \"pwke\" is not continuous, so it does not count."
+        }
+      ],
+      "constraints": [
+        "0 <= s.length <= 50,000",
+        "s has letters, digits, symbols and spaces",
+        "Aim for O(n) time"
+      ],
+      "tests": [
+        {
+          "args": [
+            "abcabcbb"
+          ],
+          "expected": 3,
+          "visible": true
+        },
+        {
+          "args": [
+            "bbbbb"
+          ],
+          "expected": 1,
+          "visible": true
+        },
+        {
+          "args": [
+            "pwwkew"
+          ],
+          "expected": 3,
+          "visible": true,
+          "failHint": "A substring must be continuous. Counting different characters (\"pwke\" = 4) is not the answer."
+        },
+        {
+          "args": [
+            ""
+          ],
+          "expected": 0,
+          "visible": false,
+          "failHint": "An empty string has no characters, so the answer is 0."
+        },
+        {
+          "args": [
+            " "
+          ],
+          "expected": 1,
+          "visible": false
+        },
+        {
+          "args": [
+            "dvdf"
+          ],
+          "expected": 3,
+          "visible": false,
+          "failHint": "On a repeat, move the start to just after the EARLIER copy of that character, not to the current position (\"vdf\" = 3)."
+        },
+        {
+          "args": [
+            "abba"
+          ],
+          "expected": 2,
+          "visible": false,
+          "failHint": "Never move the start backwards. In \"abba\" the last \"a\" was seen before the current start, so ignore that old position."
+        },
+        {
+          "args": [
+            "au"
+          ],
+          "expected": 2,
+          "visible": false
+        },
+        {
+          "args": [
+            "tmmzuxt"
+          ],
+          "expected": 5,
+          "visible": false
+        }
+      ],
+      "hints": [
+        "Use a \"window\" [start, i] that never contains a repeated character, and grow it one character at a time.",
+        "Remember the last index where each character was seen (a Map).",
+        "On a repeat at index i, set start = Math.max(start, lastSeen.get(ch) + 1). The answer is the biggest i - start + 1."
+      ],
+      "solution": {
+        "code": "function lengthOfLongestSubstring(s) {\n  const lastSeen = new Map(); // character -> last index\n  let start = 0;\n  let best = 0;\n  for (let i = 0; i < s.length; i++) {\n    const ch = s[i];\n    if (lastSeen.has(ch)) start = Math.max(start, lastSeen.get(ch) + 1);\n    lastSeen.set(ch, i);\n    best = Math.max(best, i - start + 1);\n  }\n  return best;\n}",
+        "explanation": "Short answer: sliding window. Keep a window without repeats, remember where each character was last seen, and jump the window start past a repeat.\n\nHow it works: for \"dvdf\", the window grows to \"dv\". The second \"d\" was last seen at 0, so start moves to 1 and the window is \"vd\", then \"vdf\" (length 3). Math.max keeps start from moving backwards, which matters for \"abba\".\n\nComplexity: O(n) time (each character is visited once) and O(k) space for the Map, where k is the number of different characters.\n\nCommon mistake: start = lastSeen.get(ch) + 1 without Math.max. For \"abba\" the last \"a\" points to index 0, start jumps back to 1, and the answer becomes 3 instead of 2.\n\nInterview tip: first describe the O(n²) \"check every substring\" idea, then improve it to the sliding window. Naming the pattern (\"sliding window\") out loud scores points."
+      },
+      "followUp": "Return the substring itself, not just its length. If there are several, return the first one.",
+      "relatedTopic": "Coding Challenges & Polyfills",
+      "companies": []
+    },
+    {
+      "topic": "Arrays",
+      "isFree": false,
+      "relatedTopic": "Arrays & Iteration",
+      "companies": [],
+      "title": "Find the largest number",
+      "slug": "find-largest-number",
+      "order": 1,
+      "difficulty": "easy",
+      "scenario": "A fitness app shows the highest step count of the week on the summary screen.",
+      "description": "Write a function findLargest(nums) that returns the largest number in the array nums. If the array is empty, return null.",
+      "functionName": "findLargest",
+      "starterCode": "function findLargest(nums) {\n  // your code here\n}",
+      "examples": [
+        {
+          "input": "findLargest([3, 7, 2])",
+          "output": "7",
+          "explanation": "7 is bigger than 3 and 2."
+        },
+        {
+          "input": "findLargest([-5, -2, -9])",
+          "output": "-2",
+          "explanation": "All numbers are negative; -2 is the largest."
+        },
+        {
+          "input": "findLargest([])",
+          "output": "null",
+          "explanation": "An empty array has no largest number."
+        }
+      ],
+      "constraints": [
+        "0 <= nums.length <= 10,000",
+        "nums contains only numbers (they can be negative)"
+      ],
+      "tests": [
+        {
+          "args": [
+            [
+              3,
+              7,
+              2
+            ]
+          ],
+          "expected": 7,
+          "visible": true
+        },
+        {
+          "args": [
+            [
+              -5,
+              -2,
+              -9
+            ]
+          ],
+          "expected": -2,
+          "visible": true,
+          "failHint": "Starting with max = 0 breaks when every number is negative. Start with the first element instead."
+        },
+        {
+          "args": [
+            []
+          ],
+          "expected": null,
+          "visible": true,
+          "failHint": "An empty array has no largest number, so return null (Math.max() of nothing gives -Infinity)."
+        },
+        {
+          "args": [
+            [
+              42
+            ]
+          ],
+          "expected": 42,
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              1,
+              1,
+              1
+            ]
+          ],
+          "expected": 1,
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              0,
+              -1
+            ]
+          ],
+          "expected": 0,
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              10,
+              9,
+              8,
+              7
+            ]
+          ],
+          "expected": 10,
+          "visible": false,
+          "failHint": "sort() without a compare function sorts as text: [10, 9, 8, 7].sort() gives [10, 7, 8, 9]. Use a loop, or sort((a, b) => a - b)."
+        },
+        {
+          "args": [
+            [
+              -1,
+              5,
+              -10,
+              5
+            ]
+          ],
+          "expected": 5,
+          "visible": false
+        }
+      ],
+      "hints": [
+        "Keep the biggest number seen so far while you walk through the array.",
+        "Start with the first element, not with 0. All numbers could be negative.",
+        "Handle the empty array first: if (!nums.length) return null."
+      ],
+      "solution": {
+        "code": "function findLargest(nums) {\n  if (!nums.length) return null;\n  let max = nums[0];\n  for (const n of nums) {\n    if (n > max) max = n;\n  }\n  return max;\n}",
+        "explanation": "Short answer: return null for an empty array, otherwise walk through the numbers and keep the biggest one.\n\nHow it works: max starts as the first number, so negative arrays work. Every bigger number replaces it. After the loop, max holds the largest value.\n\nComplexity: O(n) time and O(1) extra space.\n\nCommon mistake: let max = 0. For [-5, -2, -9] it returns 0, a number that is not even in the array.\n\nInterview tip: mention Math.max(...nums) as a one-liner, but say it returns -Infinity for [] and can fail on huge arrays (too many arguments). That shows you know its limits."
+      },
+      "followUp": "Return both the largest number and its index, e.g. { value: 7, index: 1 }."
+    },
+    {
+      "topic": "Arrays",
+      "isFree": false,
+      "relatedTopic": "Arrays & Iteration",
+      "companies": [],
+      "title": "Remove duplicates from an array",
+      "slug": "remove-duplicates",
+      "order": 2,
+      "difficulty": "easy",
+      "scenario": "A shop page shows the tags of all products. Each tag should appear only once.",
+      "description": "Write a function removeDuplicates(arr) that returns a new array without repeated values. Keep the order in which values first appear, and do not change the original array.",
+      "functionName": "removeDuplicates",
+      "starterCode": "function removeDuplicates(arr) {\n  // your code here\n}",
+      "examples": [
+        {
+          "input": "removeDuplicates([1, 2, 2, 3, 1])",
+          "output": "[1, 2, 3]",
+          "explanation": "The second 2 and the second 1 are removed."
+        },
+        {
+          "input": "removeDuplicates([3, 1, 3, 2, 1])",
+          "output": "[3, 1, 2]",
+          "explanation": "Order of first appearance, not sorted."
+        }
+      ],
+      "constraints": [
+        "0 <= arr.length <= 10,000",
+        "Values are numbers, strings or booleans",
+        "1 and \"1\" are different values"
+      ],
+      "tests": [
+        {
+          "args": [
+            [
+              1,
+              2,
+              2,
+              3,
+              1
+            ]
+          ],
+          "expected": [
+            1,
+            2,
+            3
+          ],
+          "visible": true
+        },
+        {
+          "args": [
+            [
+              "a",
+              "b",
+              "a"
+            ]
+          ],
+          "expected": [
+            "a",
+            "b"
+          ],
+          "visible": true
+        },
+        {
+          "args": [
+            []
+          ],
+          "expected": [],
+          "visible": true
+        },
+        {
+          "args": [
+            [
+              1,
+              "1",
+              1
+            ]
+          ],
+          "expected": [
+            1,
+            "1"
+          ],
+          "visible": false,
+          "failHint": "1 and \"1\" are different values. Converting everything to strings (or using object keys) mixes them up."
+        },
+        {
+          "args": [
+            [
+              5,
+              5,
+              5,
+              5
+            ]
+          ],
+          "expected": [
+            5
+          ],
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              3,
+              1,
+              3,
+              2,
+              1
+            ]
+          ],
+          "expected": [
+            3,
+            1,
+            2
+          ],
+          "visible": false,
+          "failHint": "Keep the order of first appearance. Do not sort the result."
+        },
+        {
+          "args": [
+            [
+              true,
+              false,
+              true
+            ]
+          ],
+          "expected": [
+            true,
+            false
+          ],
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              0,
+              -1,
+              0,
+              -1
+            ]
+          ],
+          "expected": [
+            0,
+            -1
+          ],
+          "visible": false
+        }
+      ],
+      "hints": [
+        "A Set keeps each value only once.",
+        "A Set also remembers the order in which values were added.",
+        "Turn the Set back into an array with [...new Set(arr)]."
+      ],
+      "solution": {
+        "code": "function removeDuplicates(arr) {\n  return [...new Set(arr)];\n}",
+        "explanation": "Short answer: put the values into a Set (which drops repeats) and spread it back into a new array.\n\nHow it works: a Set stores each value once and keeps insertion order. [...set] creates a new array, so the original arr is not changed. Set compares values with ===, so 1 and \"1\" stay separate.\n\nComplexity: O(n) time and O(n) extra space.\n\nCommon mistake: using an object as a lookup (seen[value] = true). Object keys are strings, so 1 and \"1\" become the same key.\n\nInterview tip: also show the filter version arr.filter((v, i) => arr.indexOf(v) === i) and explain it is O(n²), while the Set version is O(n)."
+      },
+      "followUp": "Remove duplicate objects by one field, e.g. users with the same id."
+    },
+    {
+      "topic": "Arrays",
+      "isFree": false,
+      "relatedTopic": "Arrays & Iteration",
+      "companies": [],
+      "title": "Second largest number",
+      "slug": "second-largest-number",
+      "order": 3,
+      "difficulty": "easy",
+      "scenario": "A quiz app shows the runner-up score below the top score.",
+      "description": "Write a function secondLargest(nums) that returns the largest number that is smaller than the maximum. Repeats of the maximum do not count. If there is no such number, return null.",
+      "functionName": "secondLargest",
+      "starterCode": "function secondLargest(nums) {\n  // your code here\n}",
+      "examples": [
+        {
+          "input": "secondLargest([3, 7, 2, 9])",
+          "output": "7",
+          "explanation": "9 is the largest, 7 comes next."
+        },
+        {
+          "input": "secondLargest([5, 5, 4])",
+          "output": "4",
+          "explanation": "The second 5 is the same value as the maximum, so 4 is the answer."
+        },
+        {
+          "input": "secondLargest([8])",
+          "output": "null",
+          "explanation": "Only one value, so there is no second largest."
+        }
+      ],
+      "constraints": [
+        "0 <= nums.length <= 10,000",
+        "nums contains only numbers (they can be negative)"
+      ],
+      "tests": [
+        {
+          "args": [
+            [
+              3,
+              7,
+              2,
+              9
+            ]
+          ],
+          "expected": 7,
+          "visible": true
+        },
+        {
+          "args": [
+            [
+              5,
+              5,
+              4
+            ]
+          ],
+          "expected": 4,
+          "visible": true,
+          "failHint": "A repeat of the largest value does not count. Look for the biggest value that is smaller than the maximum."
+        },
+        {
+          "args": [
+            [
+              8
+            ]
+          ],
+          "expected": null,
+          "visible": true,
+          "failHint": "With fewer than two different values there is no second largest, so return null."
+        },
+        {
+          "args": [
+            []
+          ],
+          "expected": null,
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              2,
+              2,
+              2
+            ]
+          ],
+          "expected": null,
+          "visible": false,
+          "failHint": "All values are the same, so there is no second largest. Return null."
+        },
+        {
+          "args": [
+            [
+              -3,
+              -1,
+              -2
+            ]
+          ],
+          "expected": -2,
+          "visible": false,
+          "failHint": "Starting with 0 fails when every number is negative. Start with -Infinity."
+        },
+        {
+          "args": [
+            [
+              1,
+              2
+            ]
+          ],
+          "expected": 1,
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              10,
+              10,
+              9,
+              9,
+              8
+            ]
+          ],
+          "expected": 9,
+          "visible": false
+        }
+      ],
+      "hints": [
+        "Track two values while looping: the largest and the second largest.",
+        "When you find a new largest, the old largest becomes the second largest.",
+        "Only update the second largest with numbers that are smaller than the largest (n < first)."
+      ],
+      "solution": {
+        "code": "function secondLargest(nums) {\n  let first = -Infinity;\n  let second = -Infinity;\n  for (const n of nums) {\n    if (n > first) {\n      second = first;\n      first = n;\n    } else if (n < first && n > second) {\n      second = n;\n    }\n  }\n  return second === -Infinity ? null : second;\n}",
+        "explanation": "Short answer: one loop that keeps the largest and the second largest values, ignoring repeats of the largest.\n\nHow it works: a bigger number pushes the old largest down to second place. A number between the two becomes the new second. n < first skips repeats of the maximum. If second never changed, there was no second value.\n\nComplexity: O(n) time and O(1) extra space.\n\nCommon mistake: sorting and taking index 1: [5, 5, 4] sorted descending gives 5 at index 1. Default sort() also compares numbers as text.\n\nInterview tip: say the one-loop version is O(n) while sorting is O(n log n). Interviewers often ask \"can you do it in one pass?\" next."
+      },
+      "followUp": "Generalise it: return the k-th largest distinct number."
+    },
+    {
+      "topic": "Arrays",
+      "isFree": false,
+      "relatedTopic": "Arrays & Iteration",
+      "companies": [],
+      "title": "Chunk an array",
+      "slug": "chunk-an-array",
+      "order": 4,
+      "difficulty": "medium",
+      "scenario": "A product page shows 3 products per row. Split the product list into rows.",
+      "description": "Write a function chunk(arr, size) that splits arr into smaller arrays of length size. The last chunk may be shorter. An empty array gives an empty result.",
+      "functionName": "chunk",
+      "starterCode": "function chunk(arr, size) {\n  // your code here\n}",
+      "examples": [
+        {
+          "input": "chunk([1, 2, 3, 4, 5], 2)",
+          "output": "[[1, 2], [3, 4], [5]]",
+          "explanation": "Two per chunk; 5 is left alone at the end."
+        },
+        {
+          "input": "chunk([1, 2, 3], 5)",
+          "output": "[[1, 2, 3]]",
+          "explanation": "The size is bigger than the array, so everything fits in one chunk."
+        }
+      ],
+      "constraints": [
+        "0 <= arr.length <= 10,000",
+        "size is a whole number, 1 or more",
+        "Do not change the original array"
+      ],
+      "tests": [
+        {
+          "args": [
+            [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            2
+          ],
+          "expected": [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              5
+            ]
+          ],
+          "visible": true
+        },
+        {
+          "args": [
+            [
+              1,
+              2,
+              3
+            ],
+            3
+          ],
+          "expected": [
+            [
+              1,
+              2,
+              3
+            ]
+          ],
+          "visible": true,
+          "failHint": "When the array splits evenly, there is no extra empty chunk at the end."
+        },
+        {
+          "args": [
+            [],
+            2
+          ],
+          "expected": [],
+          "visible": true,
+          "failHint": "An empty array gives [] (no chunks), not [[]]."
+        },
+        {
+          "args": [
+            [
+              1,
+              2,
+              3
+            ],
+            5
+          ],
+          "expected": [
+            [
+              1,
+              2,
+              3
+            ]
+          ],
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              1,
+              2,
+              3,
+              4
+            ],
+            1
+          ],
+          "expected": [
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [
+              3
+            ],
+            [
+              4
+            ]
+          ],
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              "a",
+              "b",
+              "c",
+              "d"
+            ],
+            2
+          ],
+          "expected": [
+            [
+              "a",
+              "b"
+            ],
+            [
+              "c",
+              "d"
+            ]
+          ],
+          "visible": false,
+          "failHint": "When the array splits evenly, do not push an empty chunk at the end."
+        },
+        {
+          "args": [
+            [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ],
+            3
+          ],
+          "expected": [
+            [
+              1,
+              2,
+              3
+            ],
+            [
+              4,
+              5,
+              6
+            ],
+            [
+              7
+            ]
+          ],
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            4
+          ],
+          "expected": [
+            [
+              1,
+              2,
+              3,
+              4
+            ],
+            [
+              5,
+              6
+            ]
+          ],
+          "visible": false
+        }
+      ],
+      "hints": [
+        "Move through the array in steps of size: i = 0, size, 2 * size, ...",
+        "arr.slice(i, i + size) gives one chunk without changing arr.",
+        "slice never goes past the end, so the last shorter chunk works by itself."
+      ],
+      "solution": {
+        "code": "function chunk(arr, size) {\n  const result = [];\n  for (let i = 0; i < arr.length; i += size) {\n    result.push(arr.slice(i, i + size));\n  }\n  return result;\n}",
+        "explanation": "Short answer: loop with a step of size and push arr.slice(i, i + size) each time.\n\nHow it works: for [1, 2, 3, 4, 5] and size 2, i takes 0, 2, 4 and the slices are [1, 2], [3, 4], [5]. If arr is empty the loop never runs, so the result is [].\n\nComplexity: O(n) time and O(n) extra space for the new arrays.\n\nCommon mistake: building the current chunk item by item and always pushing it after the loop. That adds [[]] for an empty array and an empty chunk when the array splits evenly.\n\nInterview tip: mention that slice copies, so the original array stays the same, and that splice would change it. This is a favourite follow-up question."
+      },
+      "followUp": "What should happen if size is 0 or negative? Add a check and explain your choice."
+    },
+    {
+      "topic": "Arrays",
+      "isFree": false,
+      "relatedTopic": "Arrays & Iteration",
+      "companies": [],
+      "title": "Flatten a nested array",
+      "slug": "flatten-nested-array",
+      "order": 5,
+      "difficulty": "medium",
+      "scenario": "A menu comes from the server as nested categories. The search box needs one flat list of items.",
+      "description": "Write a function flatten(arr) that returns a new array with all values from arr and from every array nested inside it, at any depth, in the same order. Try to solve it without Array.prototype.flat.",
+      "functionName": "flatten",
+      "starterCode": "function flatten(arr) {\n  // your code here\n}",
+      "examples": [
+        {
+          "input": "flatten([1, [2, 3], 4])",
+          "output": "[1, 2, 3, 4]",
+          "explanation": "One level of nesting removed."
+        },
+        {
+          "input": "flatten([1, [2, [3, [4]]]])",
+          "output": "[1, 2, 3, 4]",
+          "explanation": "Every level is flattened, not just the first."
+        }
+      ],
+      "constraints": [
+        "Nesting can be any depth (up to 100 levels)",
+        "Values are numbers, strings, booleans or null",
+        "Keep falsy values like 0, false and null"
+      ],
+      "tests": [
+        {
+          "args": [
+            [
+              1,
+              [
+                2,
+                3
+              ],
+              4
+            ]
+          ],
+          "expected": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "visible": true
+        },
+        {
+          "args": [
+            [
+              1,
+              [
+                2,
+                [
+                  3,
+                  [
+                    4
+                  ]
+                ]
+              ]
+            ]
+          ],
+          "expected": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "visible": true,
+          "failHint": "Arrays can be nested many levels deep. One level of flat() or concat is not enough. Use recursion."
+        },
+        {
+          "args": [
+            []
+          ],
+          "expected": [],
+          "visible": true
+        },
+        {
+          "args": [
+            [
+              [],
+              [
+                []
+              ]
+            ]
+          ],
+          "expected": [],
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              "a",
+              [
+                "b"
+              ]
+            ]
+          ],
+          "expected": [
+            "a",
+            "b"
+          ],
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              1,
+              2,
+              3
+            ]
+          ],
+          "expected": [
+            1,
+            2,
+            3
+          ],
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ]
+            ]
+          ],
+          "expected": [
+            1,
+            2,
+            3
+          ],
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              0,
+              [
+                null,
+                [
+                  false
+                ]
+              ]
+            ]
+          ],
+          "expected": [
+            0,
+            null,
+            false
+          ],
+          "visible": false,
+          "failHint": "Keep falsy values like 0, null and false. Check Array.isArray(item), not if (item)."
+        }
+      ],
+      "hints": [
+        "For each item: if it is an array, it needs flattening too.",
+        "A function that calls itself (recursion) handles any depth.",
+        "Array.isArray(item) ? result.push(...flatten(item)) : result.push(item)"
+      ],
+      "solution": {
+        "code": "function flatten(arr) {\n  const result = [];\n  for (const item of arr) {\n    if (Array.isArray(item)) result.push(...flatten(item));\n    else result.push(item);\n  }\n  return result;\n}",
+        "explanation": "Short answer: walk through the array; push normal values, and for nested arrays push the result of flattening them first (recursion).\n\nHow it works: flatten([1, [2, [3]]]) pushes 1, then calls flatten([2, [3]]), which pushes 2 and calls flatten([3]). Each call returns a flat list, so any depth works.\n\nComplexity: O(n) time, where n is the total number of values, and O(d) call stack for nesting depth d.\n\nCommon mistake: arr.flat() or [].concat(...arr) only remove ONE level. Another one: if (item) skips 0, null and false.\n\nInterview tip: after recursion, mention arr.flat(Infinity) for real projects, and offer an iterative version with a stack to avoid deep recursion limits."
+      },
+      "followUp": "Add a second parameter depth, so flatten([1, [2, [3]]], 1) gives [1, 2, [3]], like Array.prototype.flat."
+    },
+    {
+      "topic": "Arrays",
+      "isFree": false,
+      "relatedTopic": "Arrays & Iteration",
+      "companies": [],
+      "title": "Two Sum",
+      "slug": "two-sum",
+      "order": 6,
+      "difficulty": "medium",
+      "scenario": "A gift card can be spent on exactly two items. Find two prices that add up to the card amount.",
+      "description": "Write a function twoSum(nums, target) that returns the indexes [i, j] of the two numbers that add up to target, with i < j. There is always exactly one answer, and you cannot use the same element twice.",
+      "functionName": "twoSum",
+      "starterCode": "function twoSum(nums, target) {\n  // your code here\n}",
+      "examples": [
+        {
+          "input": "twoSum([2, 7, 11, 15], 9)",
+          "output": "[0, 1]",
+          "explanation": "nums[0] + nums[1] = 2 + 7 = 9."
+        },
+        {
+          "input": "twoSum([3, 2, 4], 6)",
+          "output": "[1, 2]",
+          "explanation": "2 + 4 = 6. Using 3 twice (index 0 + index 0) is not allowed."
+        },
+        {
+          "input": "twoSum([3, 3], 6)",
+          "output": "[0, 1]",
+          "explanation": "Two different elements may have the same value."
+        }
+      ],
+      "constraints": [
+        "2 <= nums.length <= 10,000",
+        "Numbers can be negative or zero",
+        "Exactly one valid answer exists"
+      ],
+      "tests": [
+        {
+          "args": [
+            [
+              2,
+              7,
+              11,
+              15
+            ],
+            9
+          ],
+          "expected": [
+            0,
+            1
+          ],
+          "visible": true
+        },
+        {
+          "args": [
+            [
+              3,
+              2,
+              4
+            ],
+            6
+          ],
+          "expected": [
+            1,
+            2
+          ],
+          "visible": true,
+          "failHint": "You cannot use the same element twice: 3 + 3 here would use index 0 twice."
+        },
+        {
+          "args": [
+            [
+              3,
+              3
+            ],
+            6
+          ],
+          "expected": [
+            0,
+            1
+          ],
+          "visible": true,
+          "failHint": "Two different elements can have the same value. Check indexes, not values."
+        },
+        {
+          "args": [
+            [
+              -1,
+              -2,
+              -3,
+              -4,
+              -5
+            ],
+            -8
+          ],
+          "expected": [
+            2,
+            4
+          ],
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              0,
+              4,
+              3,
+              0
+            ],
+            0
+          ],
+          "expected": [
+            0,
+            3
+          ],
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              1,
+              5,
+              9,
+              13
+            ],
+            22
+          ],
+          "expected": [
+            2,
+            3
+          ],
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              5,
+              75,
+              25
+            ],
+            100
+          ],
+          "expected": [
+            1,
+            2
+          ],
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              1,
+              2
+            ],
+            3
+          ],
+          "expected": [
+            0,
+            1
+          ],
+          "visible": false
+        }
+      ],
+      "hints": [
+        "For each number n you need target - n. Where have you seen that number before?",
+        "A Map can remember value -> index for the numbers already visited.",
+        "Check the Map BEFORE adding the current number, so an element is never paired with itself."
+      ],
+      "solution": {
+        "code": "function twoSum(nums, target) {\n  const seen = new Map(); // value -> index\n  for (let i = 0; i < nums.length; i++) {\n    const need = target - nums[i];\n    if (seen.has(need)) return [seen.get(need), i];\n    seen.set(nums[i], i);\n  }\n  return null;\n}",
+        "explanation": "Short answer: one pass with a Map of numbers already seen; for each number, look up target - number.\n\nHow it works: for [3, 2, 4] and 6: at 3 we need 3 (not seen yet), store 3 -> 0. At 2 we need 4 (not seen), store 2 -> 1. At 4 we need 2, found at index 1, so return [1, 2]. Looking up before storing stops 3 + 3 from using index 0 twice.\n\nComplexity: O(n) time and O(n) extra space.\n\nCommon mistake: nums.indexOf(target - nums[i]) without checking that the index is different from i. For [3, 2, 4] it returns [0, 0].\n\nInterview tip: start by naming the O(n²) double loop, then improve it to O(n) with a Map. Showing that step is exactly what interviewers look for."
+      },
+      "followUp": "What changes if the array is sorted? Solve it with two pointers and O(1) extra space."
+    },
+    {
+      "title": "Trapping rain water",
+      "slug": "trapping-rain-water",
+      "topic": "Arrays",
+      "order": 7,
+      "difficulty": "hard",
+      "isFree": false,
+      "scenario": "A city game shows how much rain water stays between buildings of different heights.",
+      "description": "Write a function trap(height) where height[i] is the height of a bar of width 1. Return how many units of water stay trapped between the bars after it rains.",
+      "functionName": "trap",
+      "starterCode": "function trap(height) {\n  // your code here\n}",
+      "examples": [
+        {
+          "input": "trap([0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1])",
+          "output": "6",
+          "explanation": "Water fills the dips between taller bars: 1 + 1 + 2 + 1 + 1 = 6."
+        },
+        {
+          "input": "trap([4, 2, 0, 3, 2, 5])",
+          "output": "9",
+          "explanation": "2 + 4 + 1 + 2 = 9 units."
+        },
+        {
+          "input": "trap([1, 2, 3, 4])",
+          "output": "0",
+          "explanation": "The bars only go up, so water runs off the left side."
+        }
+      ],
+      "constraints": [
+        "0 <= height.length <= 20,000",
+        "0 <= height[i] <= 100,000",
+        "Aim for O(n) time and O(1) extra space"
+      ],
+      "tests": [
+        {
+          "args": [
+            [
+              0,
+              1,
+              0,
+              2,
+              1,
+              0,
+              1,
+              3,
+              2,
+              1,
+              2,
+              1
+            ]
+          ],
+          "expected": 6,
+          "visible": true
+        },
+        {
+          "args": [
+            [
+              4,
+              2,
+              0,
+              3,
+              2,
+              5
+            ]
+          ],
+          "expected": 9,
+          "visible": true
+        },
+        {
+          "args": [
+            []
+          ],
+          "expected": 0,
+          "visible": true
+        },
+        {
+          "args": [
+            [
+              1,
+              2,
+              3,
+              4
+            ]
+          ],
+          "expected": 0,
+          "visible": false,
+          "failHint": "Water needs a taller bar on BOTH sides. Bars that only go up hold no water."
+        },
+        {
+          "args": [
+            [
+              5,
+              4,
+              1,
+              2
+            ]
+          ],
+          "expected": 1,
+          "visible": false,
+          "failHint": "The water level over a bar is set by the SHORTER of the tallest bar on its left and the tallest bar on its right."
+        },
+        {
+          "args": [
+            [
+              2,
+              0,
+              2
+            ]
+          ],
+          "expected": 2,
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              3,
+              0,
+              0,
+              2,
+              0,
+              4
+            ]
+          ],
+          "expected": 10,
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              0,
+              0,
+              0
+            ]
+          ],
+          "expected": 0,
+          "visible": false
+        },
+        {
+          "args": [
+            [
+              5,
+              2,
+              1,
+              2,
+              1,
+              5
+            ]
+          ],
+          "expected": 14,
+          "visible": false
+        }
+      ],
+      "hints": [
+        "Water above bar i = min(tallest bar on the left, tallest bar on the right) - height[i], if that is positive.",
+        "You could pre-compute leftMax[] and rightMax[] arrays (O(n) space).",
+        "Two pointers from both ends: always move the side with the smaller max; that side's max decides its water."
+      ],
+      "solution": {
+        "code": "function trap(height) {\n  let left = 0;\n  let right = height.length - 1;\n  let leftMax = 0;\n  let rightMax = 0;\n  let water = 0;\n  while (left < right) {\n    if (height[left] < height[right]) {\n      leftMax = Math.max(leftMax, height[left]);\n      water += leftMax - height[left];\n      left++;\n    } else {\n      rightMax = Math.max(rightMax, height[right]);\n      water += rightMax - height[right];\n      right--;\n    }\n  }\n  return water;\n}",
+        "explanation": "Short answer: two pointers move inward; the side with the lower bar is processed, because its own max is the limit for its water.\n\nHow it works: if height[left] < height[right], there is a taller bar on the right, so the water at left depends only on leftMax: add leftMax - height[left]. Otherwise do the same from the right. Each bar is handled once.\n\nComplexity: O(n) time and O(1) extra space.\n\nCommon mistake: using only the tallest bar on one side. For [5, 4, 1, 2] the left max is 5, but water over the 1 can only rise to 2 (the right side), so the answer is 1, not 4.\n\nInterview tip: explain the leftMax[]/rightMax[] version first (easy to prove correct), then show the two-pointer version as the O(1) space improvement."
+      },
+      "followUp": "Solve it with a stack instead, and explain when that version is easier to extend.",
+      "relatedTopic": "Coding Challenges & Polyfills",
+      "companies": []
+    }
+  ]
+}

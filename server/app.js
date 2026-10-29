@@ -34,6 +34,11 @@ app.use('/api/admin/users', require('./routes/userAdminRoutes')); // IPP-502 / 1
 app.use('/api/admin/stats', require('./routes/adminStatsRoutes')); // IPP-1001
 app.use('/api/admin/backup', require('./routes/backupRoutes')); // IPP-1005
 app.use('/api/progress', require('./routes/progressRoutes')); // IPP-1601
+app.use('/api/problems', require('./routes/problemRoutes')); // IPP-1715
+app.use('/api/admin/problems', require('./routes/problemAdminRoutes')); // IPP-1721
+app.use('/api/interview', require('./routes/interviewRoutes')); // IPP-1724
+app.use('/api/answer-check', require('./routes/answerCheckRoutes').router); // IPP-1728
+app.use('/api/admin/answer-check', require('./routes/answerCheckRoutes').adminRouter); // IPP-1728
 
 if (process.env.NODE_ENV === 'development') {
   app.use('/api/dev', require('./routes/devRoutes')); // IPP-302 test routes

@@ -26,27 +26,39 @@ async function getLastBackup(req, res) {
 
 /**
  * POST /api/admin/backup/import?dryRun=true   (IPP-1005 / IPP-1006, admin)
- * Body: a backup file ({ languages, questions, users?, quizAttempts? }) or an upload file for one language ({ language, questions }).
+ * Body: a backup file ({ languages, questions, problems?, users?, quizAttempts?, problemProgress?, interviewRounds? }) or an upload file for one language ({ language, questions }).
  * dryRun=true checks the file and returns counts + problems without saving anything.
  * A real import adds or updates content; users and quiz attempts are only added when missing. Nothing is deleted.
  */
 async function importBackup(req, res) {
-  const { languages, questions, users, quizAttempts } = normalizeUpload(req.body) || {};
-  if (![languages, questions, users, quizAttempts].some(Array.isArray)) {
+  const { languages, questions, problems, users, quizAttempts, problemProgress, interviewRounds } = normalizeUpload(req.body) || {}; // IPP-1722, 1723, 1727
+  if (![languages, questions, problems, users, quizAttempts, problemProgress, interviewRounds].some(Array.isArray)) {
     throw new AppError('This file has no "language" + "questions" (upload file) or "languages" / "questions" lists (backup file)', 400);
   }
   const dryRun = req.query.dryRun === 'true';
-  const result = await importContent({ languages, questions, users, quizAttempts }, { dryRun });
+  const result = await importContent({ languages, questions, problems, users, quizAttempts, problemProgress, interviewRounds }, { dryRun });
 
   const q = result.questions;
   let message = dryRun
     ? `Check done: ${q.added} new and ${q.updated} existing questions, ${q.skipped} with problems`
     : `Import done: ${q.added} questions added, ${q.updated} updated, ${q.skipped} skipped`;
+  if (result.problems) {
+    const p = result.problems;
+    message += dryRun ? `; ${p.added} new and ${p.updated} existing coding problems` : `; ${p.added} coding problems added, ${p.updated} updated`;
+  }
   if (result.users) {
     message += dryRun ? `; ${result.users.added} new users` : `; ${result.users.added} users added`;
   }
   if (result.quizAttempts) {
     message += dryRun ? `, ${result.quizAttempts.added} new quiz results` : `, ${result.quizAttempts.added} quiz results added`;
+  }
+  if (result.problemProgress) {
+    const p = result.problemProgress;
+    message += dryRun ? `, ${p.added} new coding progress rows` : `, ${p.added} coding progress rows added`;
+  }
+  if (result.interviewRounds) {
+    const r = result.interviewRounds; // IPP-1727
+    message += dryRun ? `, ${r.added} new interview rounds` : `, ${r.added} interview rounds added`;
   }
   sendSuccess(res, result, message);
 }

@@ -12,7 +12,7 @@
  */
 
 const LABEL_RE =
-  /^(Short answer|How it works|The ones you need|Example|Real example|Common mistake|Interview tip|Fix|Why not [A-D](?:(?:, | and )[A-D])*|Why [A-D])\s*:\s*(.*)$/i;
+  /^(Short answer|How it works|The ones you need|Example|Real example|Complexity|Common mistake|Interview tip|Fix|Why not [A-D](?:(?:, | and )[A-D])*|Why [A-D])\s*:\s*(.*)$/i;
 const ROW_RE = /^([^:]{1,45}):\s+(.+)$/;
 
 const BOXES = {

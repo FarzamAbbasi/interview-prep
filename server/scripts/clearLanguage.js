@@ -28,6 +28,7 @@ const Language = require('../models/Language');
 const Question = require('../models/Question');
 const Progress = require('../models/Progress');
 const QuizAttempt = require('../models/QuizAttempt');
+const InterviewRound = require('../models/InterviewRound');
 const User = require('../models/User');
 
 async function run() {
@@ -53,6 +54,7 @@ async function run() {
       questions: ids.length,
       progress: await Progress.countDocuments({ language: language._id }),
       quizAttempts: await QuizAttempt.countDocuments({ language: language._id }),
+      interviewRounds: await InterviewRound.countDocuments({ language: language._id }), // IPP-1727
       usersWithBookmarks: await User.countDocuments({ bookmarks: { $in: ids } }),
     };
     console.log(`${language.name}:`, counts);
@@ -64,6 +66,7 @@ async function run() {
     await User.updateMany({ bookmarks: { $in: ids } }, { $pull: { bookmarks: { $in: ids } } });
     await Progress.deleteMany({ language: language._id });
     await QuizAttempt.deleteMany({ language: language._id });
+    await InterviewRound.deleteMany({ language: language._id }); // IPP-1727
     await Question.deleteMany({ language: language._id });
     if (alsoLanguage) await language.deleteOne();
     console.log(`Deleted.${alsoLanguage ? ' The language was deleted too.' : ' The language and its topics were kept.'}`);

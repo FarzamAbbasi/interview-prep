@@ -3,8 +3,11 @@
  *
  *   npm run seed                          -> add/update data from data/languages.json + data/questions.json
  *   npm run seed:fresh                    -> delete languages, questions and quiz attempts first, then seed
+ *                                            (IPP-1722: also coding problems + coding progress; run import:problems after it,
+ *                                             or restore a backup file: since IPP-1723 it has the problems too)
  *   npm run seed -- --file=data/backups/backup-2026-10-21-1530.json   -> restore from a backup file
- *                                                                        (a full backup also adds missing users + quiz results, IPP-1007)
+ *                                                                        (a full backup also adds missing users + quiz results, IPP-1007;
+ *                                                                         both backups add / update coding problems, IPP-1723)
  *   npm run seed -- --file=data/uploads/react.json                    -> an upload file for one language (IPP-1006)
  *   npm run seed -- --env=.env.live                                   -> use another settings file (live database, IPP-1202)
  *
@@ -31,6 +34,9 @@ const mongoose = require('mongoose');
 const Language = require('../models/Language');
 const Question = require('../models/Question');
 const QuizAttempt = require('../models/QuizAttempt');
+const Problem = require('../models/Problem');
+const ProblemProgress = require('../models/ProblemProgress');
+const InterviewRound = require('../models/InterviewRound');
 const User = require('../models/User');
 const { importContent, normalizeUpload } = require('../utils/contentBackup');
 
@@ -44,7 +50,15 @@ function loadData() {
     const backupPath = path.resolve(path.join(__dirname, '..'), fileArg.split('=')[1]);
     const backup = normalizeUpload(readJson(backupPath));
     console.log(`Restoring from backup: ${backupPath}`);
-    return { languages: backup.languages || [], questions: backup.questions || [], users: backup.users, quizAttempts: backup.quizAttempts };
+    return {
+      languages: backup.languages || [],
+      questions: backup.questions || [],
+      users: backup.users,
+      quizAttempts: backup.quizAttempts,
+      problems: backup.problems, // IPP-1723 (older backups have none: then run npm run import:problems)
+      problemProgress: backup.problemProgress, // IPP-1722
+      interviewRounds: backup.interviewRounds, // IPP-1727
+    };
   }
   const dataDir = path.join(__dirname, '..', 'data');
   return {
@@ -108,18 +122,30 @@ async function run() {
     }
 
     if (isFresh) {
-      await Promise.all([Language.deleteMany(), Question.deleteMany(), QuizAttempt.deleteMany()]);
-      console.log('Fresh mode: languages, questions and quiz attempts deleted');
+      // IPP-1722: problems point to a language id, which changes when languages are re-created, so they go too
+      await Promise.all([
+        Language.deleteMany(),
+        Question.deleteMany(),
+        QuizAttempt.deleteMany(),
+        Problem.deleteMany(),
+        ProblemProgress.deleteMany(),
+        InterviewRound.deleteMany(), // IPP-1727: rounds point to questions / problems too
+      ]);
+      console.log('Fresh mode: languages, questions, quiz attempts, coding problems, coding progress and interview rounds deleted');
     }
 
-    const { languages, questions, users, quizAttempts } = loadData();
+    const { languages, questions, problems, users, quizAttempts, problemProgress, interviewRounds } = loadData();
 
     await fixIndexes(); // must run before inserting questions
 
     // Same rules as the admin import page (adds or updates, never deletes)
-    const result = await importContent({ languages, questions, users, quizAttempts });
+    const result = await importContent({ languages, questions, problems, users, quizAttempts, problemProgress, interviewRounds });
     console.log(`Languages: ${result.languages.added} added, ${result.languages.updated} updated`);
     console.log(`Questions: ${result.questions.added} added, ${result.questions.updated} updated, ${result.questions.skipped} skipped`);
+    if (result.problems) {
+      const p = result.problems;
+      console.log(`Coding problems: ${p.added} added, ${p.updated} updated, ${p.skipped} skipped`);
+    }
     if (result.users) {
       const u = result.users;
       console.log(`Users: ${u.added} added, ${u.existing} already there (not changed), ${u.skipped} skipped`);
@@ -127,6 +153,17 @@ async function run() {
     if (result.quizAttempts) {
       const a = result.quizAttempts;
       console.log(`Quiz results: ${a.added} added, ${a.existing} already there, ${a.skipped} skipped`);
+    }
+    if (result.problemProgress) {
+      const p = result.problemProgress;
+      console.log(`Coding progress: ${p.added} added, ${p.existing} already there, ${p.skipped} skipped`);
+      if (p.skipped) {
+        console.log('  Tip: if the problems were missing, run "npm run import:problems -- <language> --yes", then run this restore again.');
+      }
+    }
+    if (result.interviewRounds) {
+      const r = result.interviewRounds; // IPP-1727
+      console.log(`Interview rounds: ${r.added} added, ${r.existing} already there, ${r.skipped} skipped`);
     }
     if (result.errors.length) {
       console.log('\nSkipped items:');

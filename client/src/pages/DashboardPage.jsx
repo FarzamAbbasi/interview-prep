@@ -10,6 +10,7 @@ import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import PageLoader from '../components/ui/PageLoader';
 import LanguageIcon from '../components/languages/LanguageIcon';
+import InterviewRoundsBox from '../components/interview/InterviewRoundsBox';
 import usePageTitle from '../hooks/usePageTitle';
 
 const formatDate = (value) =>
@@ -124,6 +125,9 @@ export default function DashboardPage() {
           )}
         </div>
       </section>
+
+      {/* IPP-1726: Interview Mode rounds (own request, shown for every user) */}
+      <InterviewRoundsBox />
 
       {result.error && (
         <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">

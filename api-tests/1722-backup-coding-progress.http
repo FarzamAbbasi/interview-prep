@@ -1,0 +1,45 @@
+### IPP-1722 Coding progress in the full backup
+### Before: import problems (npm run import:problems -- javascript --yes) and Submit at least one problem while logged in.
+### Put ADMIN_PASSWORD while testing, then CHANGE_ME back.
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = changeme
+@token = {{login.response.body.data.token}}
+
+
+### 1. Admin login -> 200
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Full export -> backup.problemProgress is a list: [{ user (email), language "javascript", problem (slug),
+###    submits, fails, solved, solvedAt, code, createdAt, updatedAt }]
+GET {{baseUrl}}/admin/backup/export?scope=full
+Authorization: Bearer {{token}}
+
+
+### 3. Content-only export -> NO problemProgress (no personal data)
+GET {{baseUrl}}/admin/backup/export?scope=content
+Authorization: Bearer {{token}}
+
+
+### 4. Dry run with a small file -> problemProgress { added 0, existing 1, skipped 1 } (your own row exists; "no-such" problem skipped)
+###    and errors has 'problem not found (run npm run import:problems ...)'
+###    Change "user" to your admin email and "problem" to a problem you submitted.
+POST {{baseUrl}}/admin/backup/import?dryRun=true
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "problemProgress": [
+    { "user": "askedin143@gmail.com", "language": "javascript", "problem": "count-vowels", "submits": 1, "fails": 0, "solved": true },
+    { "user": "askedin143@gmail.com", "language": "javascript", "problem": "no-such", "submits": 1 }
+  ]
+}
+
+### 5. Admin -> Backup page: "Download full backup" shows "..., N coding progress rows";
+###    choosing that file shows a "Coding progress" box in the check result.

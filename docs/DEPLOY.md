@@ -88,6 +88,9 @@ Note: with a Gmail sender (no own domain) some emails may land in **Spam**. An o
    | `EMAIL_FROM` | the verified Brevo sender |
    | `EMAIL_FROM_NAME` | `AskedIn` |
    | `TRUST_PROXY` | `3` (Render sits behind Cloudflare + its own proxy; check `/api/health` shows your IP) |
+   | `AI_PROVIDER` | `gemini` (IPP-1728; `anthropic` / `openai` also work; empty = answer check off) |
+   | `AI_API_KEY` | the provider's API key (Gemini: aistudio.google.com) — never in the code |
+   | `AI_MODEL` | optional (default `gemini-3.5-flash-lite`) |
 
    New JWT secret:
    ```bash

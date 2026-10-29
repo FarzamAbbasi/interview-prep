@@ -16,10 +16,18 @@ function fileStamp() {
 }
 
 function Summary({ result }) {
-  const { languages, questions, users, quizAttempts, bookmarksMissing, errors, moreErrors, dryRun } = result;
+  const { languages, questions, problems, users, quizAttempts, problemProgress, interviewRounds, bookmarksMissing, errors, moreErrors, dryRun } =
+    result;
+  const skipped =
+    questions.skipped +
+    (problems?.skipped || 0) +
+    (users?.skipped || 0) +
+    (quizAttempts?.skipped || 0) +
+    (problemProgress?.skipped || 0) +
+    (interviewRounds?.skipped || 0);
   return (
     <div className="space-y-3">
-      <ul className="grid gap-2 text-sm sm:grid-cols-3">
+      <ul className={`grid gap-2 text-sm ${problems ? 'sm:grid-cols-2 md:grid-cols-4' : 'sm:grid-cols-3'}`}>
         <li className="rounded-md bg-slate-50 p-3">
           <p className="text-slate-500">Languages</p>
           <p className="font-semibold text-slate-900">
@@ -34,9 +42,18 @@ function Summary({ result }) {
           <p className="text-brand-700">Questions {dryRun ? 'to update' : 'updated'}</p>
           <p className="font-semibold text-brand-800">{questions.updated}</p>
         </li>
+        {problems && (
+          <li className="rounded-md bg-slate-50 p-3">
+            <p className="text-slate-500">Coding problems</p>
+            <p className="font-semibold text-slate-900">
+              {problems.added} new · {problems.updated} existing
+              {problems.skipped > 0 && ` · ${problems.skipped} skipped`}
+            </p>
+          </li>
+        )}
       </ul>
-      {(users || quizAttempts) && (
-        <ul className="grid gap-2 text-sm sm:grid-cols-2">
+      {(users || quizAttempts || problemProgress || interviewRounds) && (
+        <ul className={`grid gap-2 text-sm sm:grid-cols-2 ${problemProgress || interviewRounds ? 'md:grid-cols-4' : ''}`}>
           {users && (
             <li className="rounded-md bg-violet-50 p-3">
               <p className="text-violet-700">Users {dryRun ? 'to add' : 'added'}</p>
@@ -53,6 +70,24 @@ function Summary({ result }) {
               </p>
             </li>
           )}
+          {problemProgress && (
+            <li className="rounded-md bg-violet-50 p-3">
+              <p className="text-violet-700">Coding progress {dryRun ? 'to add' : 'added'}</p>
+              <p className="font-semibold text-violet-800">
+                {problemProgress.added} new · {problemProgress.existing} already there
+                {problemProgress.skipped > 0 && ` · ${problemProgress.skipped} skipped`}
+              </p>
+            </li>
+          )}
+          {interviewRounds && (
+            <li className="rounded-md bg-violet-50 p-3">
+              <p className="text-violet-700">Interview rounds {dryRun ? 'to add' : 'added'}</p>
+              <p className="font-semibold text-violet-800">
+                {interviewRounds.added} new · {interviewRounds.existing} already there
+                {interviewRounds.skipped > 0 && ` · ${interviewRounds.skipped} skipped`}
+              </p>
+            </li>
+          )}
         </ul>
       )}
       {bookmarksMissing > 0 && (
@@ -63,7 +98,7 @@ function Summary({ result }) {
       {errors.length > 0 && (
         <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
           <p className="flex items-center gap-1.5 text-sm font-semibold text-amber-800">
-            <HiOutlineExclamation /> {questions.skipped} item(s) {dryRun ? 'will be skipped' : 'were skipped'}
+            <HiOutlineExclamation /> {skipped} item(s) {dryRun ? 'will be skipped' : 'were skipped'}
           </p>
           <ul className="mt-2 max-h-56 list-disc space-y-1 overflow-y-auto pl-5 text-xs text-amber-900">
             {errors.map((e) => (
@@ -125,8 +160,11 @@ export default function AdminBackupPage() {
       setLastExport({
         languages: backup.languages.length,
         questions: backup.questions.length,
+        problems: backup.problems?.length, // IPP-1723
         users: backup.users?.length,
         quizAttempts: backup.quizAttempts?.length,
+        problemProgress: backup.problemProgress?.length, // IPP-1722
+        interviewRounds: backup.interviewRounds?.length, // IPP-1727
       });
       toast.success('Backup downloaded');
     } catch (err) {
@@ -162,7 +200,9 @@ export default function AdminBackupPage() {
       setFileError('This file is not valid JSON');
       return;
     }
-    if (!['languages', 'questions', 'users', 'quizAttempts'].some((key) => Array.isArray(data?.[key]))) {
+    if (
+      !['languages', 'questions', 'problems', 'users', 'quizAttempts', 'problemProgress', 'interviewRounds'].some((key) => Array.isArray(data?.[key]))
+    ) {
       setFileError('This does not look like a backup file (no "languages", "questions" or "users" list)');
       return;
     }
@@ -199,13 +239,17 @@ export default function AdminBackupPage() {
       preview.questions.updated +
       preview.languages.added +
       preview.languages.updated +
+      (preview.problems?.added || 0) +
+      (preview.problems?.updated || 0) +
       (preview.users?.added || 0) +
-      (preview.quizAttempts?.added || 0) >
+      (preview.quizAttempts?.added || 0) +
+      (preview.problemProgress?.added || 0) +
+      (preview.interviewRounds?.added || 0) >
       0;
 
   const scopes = [
-    { value: 'full', label: 'Full backup', text: 'Content + users (paid / blocked, bookmarks) + quiz results' },
-    { value: 'content', label: 'Content only', text: 'Languages and questions only, no personal data (safe to share)' },
+    { value: 'full', label: 'Full backup', text: 'Content + users (paid / blocked, bookmarks) + quiz results + coding progress + interview rounds' },
+    { value: 'content', label: 'Content only', text: 'Languages, questions and coding problems, no personal data (safe to share)' },
   ];
 
   return (
@@ -266,7 +310,10 @@ export default function AdminBackupPage() {
         {lastExport && (
           <p className="mt-3 text-sm text-slate-500">
             Last download: {lastExport.languages} languages, {lastExport.questions} questions
-            {lastExport.users !== undefined && `, ${lastExport.users} users, ${lastExport.quizAttempts} quiz results`}.
+            {lastExport.problems !== undefined && `, ${lastExport.problems} coding problems`}
+            {lastExport.users !== undefined && `, ${lastExport.users} users, ${lastExport.quizAttempts} quiz results`}
+            {lastExport.problemProgress !== undefined && `, ${lastExport.problemProgress} coding progress rows`}
+            {lastExport.interviewRounds !== undefined && `, ${lastExport.interviewRounds} interview rounds`}.
           </p>
         )}
       </section>
@@ -278,6 +325,7 @@ export default function AdminBackupPage() {
         </h2>
         <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-600">
           <li>Adds new questions and updates existing ones (same language + same question text).</li>
+          <li>Coding problems: new ones are added, existing ones updated (same language + slug); a hidden problem stays hidden.</li>
           <li>Nothing is deleted. Topics missing from the file are kept.</li>
           <li>
             Full backup: only <strong>missing</strong> users and quiz results are added (users matched by email). Existing users
@@ -309,8 +357,11 @@ export default function AdminBackupPage() {
           <div className="mt-4 space-y-4">
             <p className="text-sm text-slate-700">
               <strong>{file.name}</strong>: {file.data.languages?.length || 0} languages, {file.data.questions?.length || 0} questions
+              {Array.isArray(file.data.problems) && `, ${file.data.problems.length} coding problems`}
               {Array.isArray(file.data.users) && `, ${file.data.users.length} users`}
-              {Array.isArray(file.data.quizAttempts) && `, ${file.data.quizAttempts.length} quiz results`} in the file.
+              {Array.isArray(file.data.quizAttempts) && `, ${file.data.quizAttempts.length} quiz results`}
+              {Array.isArray(file.data.problemProgress) && `, ${file.data.problemProgress.length} coding progress rows`}
+              {Array.isArray(file.data.interviewRounds) && `, ${file.data.interviewRounds.length} interview rounds`} in the file.
             </p>
             <Summary result={preview} />
             <div className="flex flex-wrap gap-2">
@@ -343,8 +394,11 @@ export default function AdminBackupPage() {
         text={
           preview
             ? `${preview.questions.added} questions will be added and ${preview.questions.updated} updated` +
+              (preview.problems ? `, ${preview.problems.added} coding problems added and ${preview.problems.updated} updated` : '') +
               (preview.users ? `, ${preview.users.added} users added` : '') +
               (preview.quizAttempts ? `, ${preview.quizAttempts.added} quiz results added` : '') +
+              (preview.problemProgress ? `, ${preview.problemProgress.added} coding progress rows added` : '') +
+              (preview.interviewRounds ? `, ${preview.interviewRounds.added} interview rounds added` : '') +
               '. Tip: download a backup first.'
             : ''
         }

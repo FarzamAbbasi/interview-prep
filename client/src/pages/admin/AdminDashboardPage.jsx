@@ -10,6 +10,7 @@ import {
 import api, { getErrorMessage } from '../../api/axios';
 import Button from '../../components/ui/Button';
 import BackupReminder from '../../components/admin/BackupReminder';
+import AiCheckCard from '../../components/admin/AiCheckCard';
 import PageLoader from '../../components/ui/PageLoader';
 import usePageTitle from '../../hooks/usePageTitle';
 
@@ -85,6 +86,9 @@ export default function AdminDashboardPage() {
         <Tile icon={HiOutlineTranslate} label="Languages" value={languages.total} note={`${languages.active} active`} to="/admin/languages" />
         <Tile icon={HiOutlineAcademicCap} label="Quizzes taken" value={quizzes.total} note={`${quizzes.thisWeek} this week`} />
       </section>
+
+      {/* IPP-1730: AI answer check (status, numbers, daily limits) */}
+      <AiCheckCard />
 
       <section aria-labelledby="recent-heading">
         <div className="mb-3 flex items-center justify-between">

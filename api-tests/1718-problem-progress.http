@@ -1,0 +1,69 @@
+### IPP-1718 Coding problem progress (solved / attempted, Continue card, code on every device)
+### Needs the problems imported (IPP-1715). Uses the admin account; put ADMIN_PASSWORD while testing, then CHANGE_ME back.
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = CHANGE_ME
+@token = {{login.response.body.data.token}}
+
+
+### 1. Login -> 200
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Guest submit -> 401 "Please log in to continue"
+POST {{baseUrl}}/problems/javascript/count-vowels/submit
+Content-Type: application/json
+
+{ "passed": false, "code": "function countVowels(str) {}" }
+
+
+### 3. Failed submit -> 200 "Saved", progress { solved false, submits 1, fails 1 }
+POST {{baseUrl}}/problems/javascript/count-vowels/submit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "passed": false, "code": "function countVowels(str) { return 0; }" }
+
+
+### 4. Passed submit -> 200 "Solved", progress { solved true, submits 2, fails 1, solvedAt set }
+POST {{baseUrl}}/problems/javascript/count-vowels/submit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "passed": true, "code": "function countVowels(str) {\n  const m = str.match(/[aeiou]/gi);\n  return m ? m.length : 0;\n}" }
+
+
+### 5. Problem -> progress { solved true, submits 2, fails 1, code = the code from step 4 }
+GET {{baseUrl}}/problems/javascript/count-vowels
+Authorization: Bearer {{token}}
+
+
+### 6. List -> count-vowels status "solved", solved { total 1, easy 1 }, topics[0].solved 1,
+###    continue { kind "next", slug "reverse-a-string" } (first open problem not solved)
+GET {{baseUrl}}/problems?language=javascript
+Authorization: Bearer {{token}}
+
+
+### 7. Attempt another one, then the list again -> continue { kind "attempted", slug "capitalize-every-word" }
+POST {{baseUrl}}/problems/javascript/capitalize-every-word/submit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "passed": false, "code": "function capitalizeWords(str) { return str; }" }
+
+
+### 8. Wrong body -> 400 "passed must be true or false"
+POST {{baseUrl}}/problems/javascript/count-vowels/submit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "passed": "yes", "code": "x" }
+
+
+### 9. Guest list -> solved null, continue null, every status null
+GET {{baseUrl}}/problems?language=javascript

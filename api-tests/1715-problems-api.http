@@ -1,0 +1,48 @@
+### IPP-1715 Coding problems API
+### First, in the server folder:
+###   npm run import:problems -- javascript          (dry run: "5 problems checked", added 5)
+###   npm run import:problems -- javascript --yes    (saves)
+### Put ADMIN_PASSWORD from server/.env while testing, then put CHANGE_ME back.
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = CHANGE_ME
+@adminToken = {{adminLogin.response.body.data.token}}
+
+
+### 1. Guest list -> 200, hasAccess false, topics [{ name "Strings", total 5, free 5 }], 5 problems, isLocked false
+GET {{baseUrl}}/problems?language=javascript
+
+
+### 2. Guest, free problem -> 200, hints has 1 item, hintsTotal 3, solution null, solutionLocked true,
+###    tests 8, nav { index 4, total 5, prev "count-vowels", next "valid-anagram" }
+GET {{baseUrl}}/problems/javascript/capitalize-every-word
+
+
+### 3. Admin login -> 200
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 4. Admin, same problem -> 200, hasAccess true, hints 3, solution.code and solution.explanation present
+GET {{baseUrl}}/problems/javascript/capitalize-every-word
+Authorization: Bearer {{adminToken}}
+
+
+### 5. Unknown problem -> 404 "Problem not found"
+GET {{baseUrl}}/problems/javascript/no-such-problem
+
+
+### 6. Unknown language -> 404 "Language not found"
+GET {{baseUrl}}/problems?language=python
+
+
+### 7. Missing language -> 400 "Invalid language"
+GET {{baseUrl}}/problems
+
+
+### 8. Locked problem (only after a Pro topic is added, e.g. Arrays) -> guest gets 403, code NEEDS_FULL_ACCESS
+# GET {{baseUrl}}/problems/javascript/<a-pro-problem-slug>

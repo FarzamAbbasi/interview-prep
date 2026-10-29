@@ -7,12 +7,15 @@ import useAuth from '../../hooks/useAuth';
 
 const guestLinks = [
   { to: '/languages', label: 'Languages' },
+  { to: '/practice', label: 'Practice', isNew: true }, // IPP-1716
   { to: '/pricing', label: 'Pricing' },
 ];
 
 const userLinks = [
   { to: '/languages', label: 'Languages' },
   { to: '/quiz', label: 'Quiz' },
+  { to: '/practice', label: 'Practice' }, // IPP-1716
+  { to: '/interview', label: 'Interview', isNew: true }, // IPP-1725
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/bookmarks', label: 'Bookmarks' },
 ];
@@ -24,6 +27,11 @@ const linkClass = ({ isActive }) =>
       ? 'bg-brand-50 text-slate-900 md:border-brand-600 md:bg-transparent'
       : 'text-slate-600 hover:text-slate-900 md:border-transparent'
   }`;
+
+// Yellow "New" pill next to a new menu item (IPP-1716)
+const NewBadge = () => (
+  <span className="ml-1.5 rounded-full bg-mark px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase text-mark-ink">New</span>
+);
 
 export default function Navbar() {
   const { user, loading, isAdmin, logout } = useAuth();
@@ -74,6 +82,7 @@ export default function Navbar() {
           {links.map((l) => (
             <NavLink key={l.to} to={l.to} end={l.end} className={linkClass}>
               {l.label}
+              {l.isNew && <NewBadge />}
             </NavLink>
           ))}
         </div>
@@ -102,6 +111,7 @@ export default function Navbar() {
             {links.map((l) => (
               <NavLink key={l.to} to={l.to} end={l.end} className={linkClass}>
                 {l.label}
+                {l.isNew && <NewBadge />}
               </NavLink>
             ))}
           </div>

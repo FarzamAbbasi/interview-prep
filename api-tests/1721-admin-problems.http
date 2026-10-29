@@ -1,0 +1,73 @@
+### IPP-1721 Admin -> Problems (hide / show / delete)
+### Put ADMIN_PASSWORD while testing, then CHANGE_ME back.
+### Run the steps in order. Step 4 needs the id of "two-sum" from step 2: copy it into @problemId.
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = CHANGE_ME
+@token = {{login.response.body.data.token}}
+@problemId = {{list.response.body.$.data.problems[?(@.slug=='two-sum')]._id}}
+
+### 1. Admin login -> 200
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. List -> 200, 13 problems, each with isActive, solvedCount, triedCount
+# @name list
+GET {{baseUrl}}/admin/problems?language=javascript
+Authorization: Bearer {{token}}
+
+
+### 3. Without login -> 401
+GET {{baseUrl}}/admin/problems?language=javascript
+
+
+### 4. Hide -> 200 "Problem hidden", problem.isActive false
+PATCH {{baseUrl}}/admin/problems/{{problemId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "isActive": false }
+
+
+### 5. Public list -> "two-sum" is not in problems any more
+GET {{baseUrl}}/problems?language=javascript
+
+
+### 6. Admin can still open it -> 200, problem.isHidden true (guest gets 404)
+GET {{baseUrl}}/problems/javascript/two-sum
+Authorization: Bearer {{token}}
+
+
+### 7. Import keeps it hidden: run "npm run import:problems -- javascript --yes", then repeat step 5 -> still not listed
+
+
+### 8. Show again -> 200 "Problem is visible again"
+PATCH {{baseUrl}}/admin/problems/{{problemId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "isActive": true }
+
+
+### 9. Wrong body -> 400 "isActive must be true or false"
+PATCH {{baseUrl}}/admin/problems/{{problemId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "isActive": "no" }
+
+
+### 10. Delete -> 200 '"Two Sum" deleted', progressDeleted = number of users who tried it
+###     (it comes back with the next import, because it is still in javascript.json)
+DELETE {{baseUrl}}/admin/problems/{{problemId}}
+Authorization: Bearer {{token}}
+
+
+### 11. Delete again -> 404 "Problem not found"
+DELETE {{baseUrl}}/admin/problems/{{problemId}}
+Authorization: Bearer {{token}}

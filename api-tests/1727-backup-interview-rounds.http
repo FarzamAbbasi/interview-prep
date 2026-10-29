@@ -1,0 +1,63 @@
+### IPP-1727 Interview rounds in the full backup
+### Before: finish at least one interview round while logged in (IPP-1725).
+### Put ADMIN_PASSWORD while testing, then CHANGE_ME back.
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = Askedin-Admin-2026!x
+@token = {{login.response.body.data.token}}
+
+
+### 1. Admin login -> 200
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Full export -> backup.interviewRounds is a list of FINISHED rounds:
+###    [{ user (email), language "javascript", level, isTrial, status "completed", percentage, createdAt, ...,
+###       items: [{ kind, question (text) | null, problem (slug) | null, text, topic, rating, code, passed, total, points }] }]
+###    and every user has "interviewTrialAt" (null when the free round was not used)
+GET {{baseUrl}}/admin/backup/export?scope=full
+Authorization: Bearer {{token}}
+
+
+### 3. Content-only export -> NO interviewRounds (personal data)
+GET {{baseUrl}}/admin/backup/export?scope=content
+Authorization: Bearer {{token}}
+
+
+### 4. Dry run with a small file -> interviewRounds { added 1, existing 0, skipped 2 }, nothing saved.
+###    errors: "unknown user ..." and "only finished rounds are imported".
+###    (Optional: copy one round from step 2 into the list -> it counts as "existing".)
+POST {{baseUrl}}/admin/backup/import?dryRun=true
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "interviewRounds": [
+    {
+      "user": "askedin143@gmail.com", "language": "javascript", "level": "mid", "status": "completed",
+      "timeLimit": 1140, "createdAt": "2020-01-01T10:00:00.000Z", "completedAt": "2020-01-01T10:18:00.000Z",
+      "timeTaken": 1080, "score": 1.5, "total": 2, "percentage": 75,
+      "items": [
+        { "kind": "qa", "question": "No such question (kept as text)", "text": "No such question (kept as text)",
+          "topic": "basics", "topicName": "Basics", "difficulty": "easy", "seconds": 180, "rating": "knew", "points": 1 },
+        { "kind": "coding", "problem": "two-sum", "text": "Two Sum", "topic": "arrays", "topicName": "Arrays",
+          "difficulty": "medium", "seconds": 600, "code": "", "passed": 3, "total": 6, "points": 0.5 }
+      ]
+    },
+    { "user": "nobody@example.com", "language": "javascript", "level": "mid", "status": "completed", "timeLimit": 720,
+      "createdAt": "2020-01-02T10:00:00.000Z", "items": [{ "kind": "qa", "text": "x", "seconds": 180 }] },
+    { "user": "askedin143@gmail.com", "language": "javascript", "level": "mid", "status": "in-progress", "timeLimit": 720,
+      "createdAt": "2020-01-03T10:00:00.000Z", "items": [{ "kind": "qa", "text": "x", "seconds": 180 }] }
+  ]
+}
+
+
+### 5. Admin -> Backup page:
+###    - "Full backup" text ends with "+ interview rounds"; after download: "..., N interview rounds"
+###    - choosing that file shows an "Interview rounds" box in the check result (N already there)
+###    Command line: npm run backup -> "Interview rounds: N" line

@@ -12,7 +12,8 @@
     "test:email": "node scripts/testEmail.js",
     "dev:token": "node scripts/devToken.js",
     "set:password": "node scripts/setPassword.js",
-    "clear:language": "node scripts/clearLanguage.js"
+    "clear:language": "node scripts/clearLanguage.js",
+    "import:problems": "node scripts/importProblems.js"
   },
   "keywords": [],
   "author": "",

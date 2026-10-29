@@ -1,0 +1,148 @@
+### IPP-1730 Interview Mode with typed answers checked by AI (no "Show answer"; results only in the report)
+### Before: AI_PROVIDER / AI_API_KEY in server/.env (see 1728). Uses the admin (full access).
+### Put ADMIN_PASSWORD while testing, then CHANGE_ME back. Finish any running round first (409 ROUND_IN_PROGRESS).
+### Gemini free tier can be busy: then the answer is saved as "pending" (step 6 shows how that looks).
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = changeme
+@token = {{login.response.body.data.token}}
+@roundId = {{start.response.body.data._id}}
+
+
+### 1. Login -> 200
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Interview checks left today -> kind "interview", limit 50 (paid; free users 4)
+GET {{baseUrl}}/answer-check/status?source=interview
+Authorization: Bearer {{token}}
+
+
+### 3. Start a JS round -> 201. Q&A items have NO "answer" (model answer) any more: only the question.
+# @name start
+POST {{baseUrl}}/interview/start
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "language": "javascript", "level": "junior" }
+
+
+### 4. Too short -> 400 "Write a bit more (at least one sentence) before checking"
+POST {{baseUrl}}/interview/{{roundId}}/items/0/answer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "answer": "idk" }
+
+
+### 5. Answer item 0 -> 200 "Answer saved" at once (the AI checks it in the background; see the server log).
+###    No verdict in the response. Write a real answer to item 0's question.
+POST {{baseUrl}}/interview/{{roundId}}/items/0/answer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "answer": "PUT YOUR ANSWER TO QUESTION 1 HERE IN YOUR OWN WORDS" }
+
+
+### 5b. Switch interview checks OFF for a moment (so the next answer cannot be checked) -> 200
+PATCH {{baseUrl}}/admin/answer-check
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "practice": { "free": 2, "paid": 30 }, "interview": { "free": 4, "paid": 0 } }
+
+
+### 6. Answer item 1 (checks are off) -> 200 at once; its background check fails -> it becomes "pending"
+POST {{baseUrl}}/interview/{{roundId}}/items/1/answer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "answer": "Another answer in my own words for the second question." }
+
+
+### 6b. Switch interview checks back ON -> 200
+PATCH {{baseUrl}}/admin/answer-check
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "practice": { "free": 2, "paid": 30 }, "interview": { "free": 4, "paid": 50 } }
+
+
+### 7. Answer item 0 again -> 409 ALREADY_ANSWERED
+POST {{baseUrl}}/interview/{{roundId}}/items/0/answer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "answer": "Second try with another answer text." }
+
+
+### 8. The coding item (3) -> 400 "Only Q&A questions take a written answer"
+POST {{baseUrl}}/interview/{{roundId}}/items/3/answer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "answer": "This is not a Q&A question at all." }
+
+
+### 9. Rate before finishing -> 409 "Finish the round first"
+PATCH {{baseUrl}}/interview/{{roundId}}/items/1/rate
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "rating": "knew" }
+
+
+### 10. Finish (waits for running AI checks, up to ~45 s) -> report: item 0 { userAnswer, aiVerdict, aiPoints, rating from the verdict, answer = model answer },
+###     item 1 rating "pending", item 2 "skipped"; pending 1; total = 3 (pending left out of the score)
+POST {{baseUrl}}/interview/{{roundId}}/finish
+Authorization: Bearer {{token}}
+
+
+### 10b. "Check with AI again" for the pending item 1 (checks are back on since 6b) -> 200 "Checked by AI",
+###      updated report: item 1 has aiVerdict, pending 0. (Then step 11 says "does not need a rating": that is fine.)
+###      To test step 11 instead, skip this step.
+POST {{baseUrl}}/interview/{{roundId}}/items/1/recheck
+Authorization: Bearer {{token}}
+
+
+### 11. Rate the pending answer -> 200 "Rating saved", updated report: pending 0, total 4, new percentage
+PATCH {{baseUrl}}/interview/{{roundId}}/items/1/rate
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "rating": "partly" }
+
+
+### 12. Rate it again -> 400 "This answer does not need a rating"
+PATCH {{baseUrl}}/interview/{{roundId}}/items/1/rate
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "rating": "knew" }
+
+
+### 13. Admin limits back to the defaults -> 200
+PATCH {{baseUrl}}/admin/answer-check
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "practice": { "free": 2, "paid": 30 }, "interview": { "free": 4, "paid": 50 } }
+
+
+### 14. Admin numbers -> today.interview went up by 1 (only the checked answer counts)
+GET {{baseUrl}}/admin/answer-check
+Authorization: Bearer {{token}}
+
+
+### 15. Full backup -> interviewRounds[...].items have userAnswer, aiVerdict, aiPoints, rating
+GET {{baseUrl}}/admin/backup/export?scope=full
+Authorization: Bearer {{token}}
+
+
+### 16. Browser: a round -> type each answer -> Submit answer -> next question (no answer / verdict shown)
+###     -> report shows your answer, the AI verdict and the model answer; a "Rate it" row asks for your rating

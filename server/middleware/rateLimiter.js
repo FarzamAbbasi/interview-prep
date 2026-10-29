@@ -38,4 +38,15 @@ const emailLimiter = rateLimit({
   handler: sendLimitError,
 });
 
-module.exports = { authLimiter, generalLimiter, emailLimiter };
+// IPP-1728: AI answer check: 20 checks per 5 minutes per IP (the daily limit per user is checked separately).
+// Stops a script from burning the AI quota with many quick requests.
+const aiLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: 'Too many answer checks at once. Please wait a few minutes',
+  handler: sendLimitError,
+});
+
+module.exports = { authLimiter, generalLimiter, emailLimiter, aiLimiter };

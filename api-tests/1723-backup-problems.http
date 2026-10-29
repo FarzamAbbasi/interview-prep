@@ -1,0 +1,66 @@
+### IPP-1723 Coding problems in the backup (content only + full)
+### Before: problems imported (npm run import:problems -- javascript --yes).
+### Put ADMIN_PASSWORD while testing, then CHANGE_ME back.
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = changeme
+@token = {{login.response.body.data.token}}
+
+
+### 1. Admin login -> 200
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Content-only export -> backup.problems is a list (13 for JavaScript):
+###    [{ language "javascript", slug, title, topic, difficulty, isFree, tests, solution, ..., isActive, createdAt }]
+###    and still NO users / problemProgress
+GET {{baseUrl}}/admin/backup/export?scope=content
+Authorization: Bearer {{token}}
+
+
+### 3. Full export -> problems + users + quizAttempts + problemProgress
+GET {{baseUrl}}/admin/backup/export?scope=full
+Authorization: Bearer {{token}}
+
+
+### 4. Dry run ONLY (do not run it without dryRun: it would replace reverse-a-string with this short version)
+###    -> problems { added 0, updated 1, skipped 2 }
+###    errors: 'unknown language "python"' and 'solution fails test ...' (wrong solution is never saved)
+POST {{baseUrl}}/admin/backup/import?dryRun=true
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "problems": [
+    {
+      "language": "javascript", "slug": "reverse-a-string", "title": "Reverse a String", "topic": "Strings",
+      "difficulty": "easy", "isFree": true, "isActive": true, "description": "Reverse the string.",
+      "functionName": "reverseString", "starterCode": "function reverseString(s) {\n  // your code\n}",
+      "tests": [{ "args": ["abc"], "expected": "cba", "visible": true }, { "args": [""], "expected": "", "visible": false }],
+      "solution": { "code": "function reverseString(s) { return s.split('').reverse().join(''); }" }
+    },
+    {
+      "language": "python", "slug": "x", "title": "X", "topic": "Strings", "difficulty": "easy", "description": "x",
+      "functionName": "x", "starterCode": "function x() {}", "tests": [{ "args": [], "expected": 1, "visible": true }],
+      "solution": { "code": "function x() { return 1; }" }
+    },
+    {
+      "language": "javascript", "slug": "wrong-one", "title": "Wrong", "topic": "Strings", "difficulty": "easy", "description": "x",
+      "functionName": "add", "starterCode": "function add(a, b) {}", "tests": [{ "args": [1, 2], "expected": 3, "visible": true }],
+      "solution": { "code": "function add(a, b) { return a - b; }" }
+    }
+  ]
+}
+
+### 5. Hide test (in the browser):
+###    Admin -> Problems: Hide one problem -> Admin -> Backup -> Download content backup
+###    -> Show it again -> import that file -> the problem is Hidden again (hidden state comes back from the backup).
+
+### 6. Full restore on an empty database: npm run seed:fresh, then
+###    npm run seed -- --file=data/backups/backup-full-....json
+###    -> prints "Coding problems: 13 added" and coding progress is added too (no import:problems needed).

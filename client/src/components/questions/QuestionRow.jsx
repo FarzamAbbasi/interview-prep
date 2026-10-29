@@ -1,5 +1,9 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { HiCheck, HiChevronDown, HiOutlineStar, HiStar, HiOutlineLockClosed } from 'react-icons/hi';
 import AnswerText from './AnswerText';
+import AnswerChecker from './AnswerChecker';
+import { checksLeftText } from '../../utils/answerCheck';
 
 const difficultyStyle = {
   easy: 'bg-green-50 text-green-700',
@@ -11,8 +15,23 @@ const difficultyStyle = {
  * IPP-1602: one Q&A on the language page.
  * Click the question to open the answer. Logged-in users get the "done" circle,
  * full-access users the bookmark star. onDone / onBookmark / onNext are left out when not available.
+ * IPP-1729: checker = { usage, onUsage } when the AI answer check is on: "Practice with AI" under the answer
+ * hides it, the user writes in own words and gets it checked. loginToCheck = guest hint.
  */
-export default function QuestionRow({ question, open, onToggle, done, onDone, doneBusy, bookmarked, onBookmark, bookmarkBusy, onNext }) {
+export default function QuestionRow({
+  question,
+  open,
+  onToggle,
+  done,
+  onDone,
+  doneBusy,
+  bookmarked,
+  onBookmark,
+  bookmarkBusy,
+  onNext,
+  checker,
+  loginToCheck,
+}) {
   const { _id, question: text, answer, codeSnippet, difficulty, isLocked } = question;
   const answerId = `answer-${_id}`;
   const actionBtn =
@@ -76,14 +95,7 @@ export default function QuestionRow({ question, open, onToggle, done, onDone, do
               <HiOutlineLockClosed /> This answer is part of full access.
             </p>
           ) : (
-            <>
-              <AnswerText text={answer} />
-              {codeSnippet && (
-                <pre className="code-block">
-                  <code>{codeSnippet}</code>
-                </pre>
-              )}
-            </>
+            <AnswerArea id={_id} answer={answer} codeSnippet={codeSnippet} checker={checker} loginToCheck={loginToCheck} />
           )}
           <div className="flex flex-wrap gap-2 pt-1">
             {onDone && (
@@ -105,6 +117,57 @@ export default function QuestionRow({ question, open, onToggle, done, onDone, do
         </div>
       )}
     </article>
+  );
+}
+
+// The opened answer (as before) + IPP-1729 "Practice with AI": hides the answer until a check or "Show answer".
+// Remounts every time the row opens, so it starts with the answer visible again.
+function AnswerArea({ id, answer, codeSnippet, checker, loginToCheck }) {
+  const [practice, setPractice] = useState(false);
+  const [revealed, setRevealed] = useState(true);
+
+  return (
+    <>
+      {practice && (
+        <AnswerChecker questionId={id} usage={checker.usage} onUsage={checker.onUsage} revealed={revealed} onReveal={() => setRevealed(true)} />
+      )}
+      {revealed && (
+        <>
+          {practice && <p className="pt-1 text-sm font-semibold text-slate-900">Model answer</p>}
+          <AnswerText text={answer} />
+          {codeSnippet && (
+            <pre className="code-block">
+              <code>{codeSnippet}</code>
+            </pre>
+          )}
+        </>
+      )}
+      {!practice && checker && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-brand-50 px-3 py-2">
+          <button
+            type="button"
+            onClick={() => {
+              setPractice(true);
+              setRevealed(false);
+            }}
+            className="text-sm font-semibold text-brand-700 hover:underline"
+          >
+            ✨ Practice with AI
+          </button>
+          <span className="text-xs text-slate-600">Hide the answer, say it in your own words, get it checked.</span>
+          <span className="ml-auto text-xs text-slate-500">{checksLeftText(checker.usage)}</span>
+        </div>
+      )}
+      {loginToCheck && (
+        <p className="text-sm text-slate-500">
+          ✨{' '}
+          <Link to="/login" className="font-semibold text-brand-700 hover:underline">
+            Log in
+          </Link>{' '}
+          to practice this answer in your own words with AI.
+        </p>
+      )}
+    </>
   );
 }
 

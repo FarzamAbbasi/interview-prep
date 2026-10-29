@@ -16,13 +16,20 @@
  *   - languages are matched by slug; topics are merged (topics missing from the file are kept)
  *   - questions are matched by language + question text (no duplicates when importing twice)
  *
- * IPP-1007: a full backup also has "users" and "quizAttempts" (see utils/userBackup.js).
+ * IPP-1723: both backups also have "problems" (coding problems, same fields as data/problems/<language>.json
+ * plus language slug + isActive). They are matched by language + slug: new ones are added, existing ones updated
+ * (a hidden problem stays hidden). Every solution is run against its tests first; a broken problem is skipped.
+ *
+ * IPP-1007: a full backup also has "users" and "quizAttempts" (see utils/userBackup.js),
+ * and since IPP-1722 "problemProgress" (coding problems solved / tried), since IPP-1727 "interviewRounds".
  * Languages and questions keep their original createdAt when they are restored (an existing one keeps its own date).
  * Those are only ADDED when missing; existing users and attempts are never changed.
  */
 const mongoose = require('mongoose');
 const Language = require('../models/Language');
 const Question = require('../models/Question');
+const Problem = require('../models/Problem');
+const { checkProblemsList } = require('./problemCheck');
 const slugify = require('./slugify');
 const { buildUserBackup, importUsers, questionKey } = require('./userBackup');
 
@@ -36,6 +43,7 @@ const short = (text) => `"${String(text || '').slice(0, 50)}${String(text || '')
 async function buildBackup({ includeUsers = true } = {}) {
   const languages = await Language.find().sort('name').lean();
   const questions = await Question.find().populate('language', 'slug').sort('createdAt').lean();
+  const problems = await Problem.find().populate('language', 'slug').sort({ topicOrder: 1, order: 1, _id: 1 }).lean(); // IPP-1723
 
   const backup = {
     version: 2,
@@ -72,6 +80,11 @@ async function buildBackup({ includeUsers = true } = {}) {
         }
         return item;
       }),
+    // IPP-1723: coding problems (no personal data, so in "content only" too)
+    problems: problems
+      .filter((p) => p.language) // skip problems whose language was deleted
+      .sort((a, b) => a.language.slug.localeCompare(b.language.slug))
+      .map(({ _id, __v, language, topicSlug, topicOrder, updatedAt, ...rest }) => ({ language: language.slug, ...rest })),
   };
   if (includeUsers) Object.assign(backup, await buildUserBackup());
   return backup;
@@ -322,9 +335,13 @@ async function importContent(data, { dryRun = false } = {}) {
 
   if (!dryRun && questionOps.length) await Question.bulkWrite(questionOps);
 
+  // ---- Coding problems (IPP-1723) ----
+  const fileProblems = Array.isArray(data?.problems) ? data.problems : null;
+  const problemsResult = fileProblems ? await importProblems(fileProblems, { dryRun, slugToLanguage, addError }) : null;
+
   // ---- Users + quiz history (IPP-1007, full backup only) ----
   let people = {};
-  if (Array.isArray(data?.users) || Array.isArray(data?.quizAttempts)) {
+  if (['users', 'quizAttempts', 'problemProgress', 'interviewRounds'].some((key) => Array.isArray(data?.[key]))) {
     const idToSlug = new Map([...slugToLanguage.entries()].map(([slug, l]) => [String(l._id), slug]));
     const questionIds = new Map();
     (await Question.find({ language: { $in: [...slugToLanguage.values()].map((l) => l._id) } }, 'language question').lean()).forEach(
@@ -333,7 +350,7 @@ async function importContent(data, { dryRun = false } = {}) {
     if (dryRun) {
       fileQuestionKeys.forEach((k) => questionIds.has(k) || questionIds.set(k, new mongoose.Types.ObjectId()));
     }
-    people = await importUsers(data, { dryRun, questionIds, slugToLanguage, addError });
+    people = await importUsers(data, { dryRun, questionIds, slugToLanguage, addError, newProblems: problemsResult?.newProblems });
   }
 
   return {
@@ -341,12 +358,71 @@ async function importContent(data, { dryRun = false } = {}) {
     dryRun,
     languages: { added: languagesAdded, updated: languagesUpdated },
     questions: { added, updated, skipped },
+    ...(problemsResult ? { problems: problemsResult.counts } : {}),
     errors,
     moreErrors: errors.length >= MAX_ERRORS,
     languageItems,
     items,
     moreItems: fileQuestions.length > MAX_ITEMS,
   };
+}
+
+/**
+ * IPP-1723: add / update coding problems from a backup (matched by language + slug, never deletes).
+ * Returns counts and, for a dry run, the problems that would be new ("language slug|problem slug" -> { _id, language })
+ * so the coding progress of the same file can be checked against them.
+ */
+async function importProblems(rows, { dryRun, slugToLanguage, addError }) {
+  const counts = { added: 0, updated: 0, skipped: 0 };
+  const newProblems = new Map();
+  const ops = [];
+
+  // Group by language (the checker works on one language at a time: slugs must be unique per language)
+  const byLanguage = new Map();
+  rows.forEach((raw, i) => {
+    const slug = String(raw?.language || '').toLowerCase();
+    if (!byLanguage.has(slug)) byLanguage.set(slug, []);
+    byLanguage.get(slug).push({ raw, row: i + 1 });
+  });
+
+  for (const [languageSlug, list] of byLanguage) {
+    const lang = slugToLanguage.get(languageSlug);
+    if (!lang) {
+      list.forEach(({ raw, row }) => addError(`Coding problem #${row} ${short(raw?.slug)}: unknown language "${languageSlug || '(empty)'}"`));
+      counts.skipped += list.length;
+      continue;
+    }
+    const existing = new Set((await Problem.find({ language: lang._id }, 'slug').lean()).map((p) => p.slug));
+
+    for (const [i, result] of checkProblemsList(list.map((x) => x.raw)).entries()) {
+      const { raw } = list[i];
+      if (result.errors.length || !result.problem) {
+        result.errors.forEach((e) => addError(`Coding problem (${languageSlug}) ${e}`));
+        counts.skipped += 1;
+        continue;
+      }
+      const p = result.problem;
+      const isUpdate = existing.has(p.slug);
+      if (isUpdate) counts.updated += 1;
+      else {
+        counts.added += 1;
+        newProblems.set(`${languageSlug}|${p.slug}`, { _id: new mongoose.Types.ObjectId(), language: lang._id });
+      }
+
+      // isActive from the file (a hidden problem stays hidden); an old file without it keeps the current value
+      const now = new Date();
+      const set = { ...p, language: lang._id, updatedAt: now };
+      const setOnInsert = { createdAt: fileDate(raw.createdAt) || now };
+      if (typeof raw.isActive === 'boolean') set.isActive = raw.isActive;
+      else setOnInsert.isActive = true;
+      ops.push({
+        updateOne: { filter: { language: lang._id, slug: p.slug }, update: { $set: set, $setOnInsert: setOnInsert }, upsert: true, timestamps: false },
+      });
+    }
+  }
+
+  if (!dryRun && ops.length) await Problem.bulkWrite(ops);
+  return { counts, newProblems };
 }
 
 module.exports = { buildBackup, importContent, normalizeUpload };

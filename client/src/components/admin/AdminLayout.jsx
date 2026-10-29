@@ -6,12 +6,14 @@ import {
   HiOutlineUsers,
   HiOutlineDatabase,
   HiOutlineCloudUpload,
+  HiOutlineCode,
 } from 'react-icons/hi';
 
 const links = [
   { to: '/admin', label: 'Dashboard', icon: HiOutlineViewGrid, end: true },
   { to: '/admin/languages', label: 'Languages', icon: HiOutlineTranslate },
   { to: '/admin/questions', label: 'Questions', icon: HiOutlineQuestionMarkCircle },
+  { to: '/admin/problems', label: 'Problems', icon: HiOutlineCode }, // IPP-1721
   { to: '/admin/upload', label: 'Bulk upload', icon: HiOutlineCloudUpload },
   { to: '/admin/users', label: 'Users', icon: HiOutlineUsers },
   { to: '/admin/backup', label: 'Backup', icon: HiOutlineDatabase },

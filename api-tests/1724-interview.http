@@ -1,0 +1,254 @@
+### IPP-1724 Interview Mode API (setup, start, save answers, finish, report, history, delete)
+### Needs the JS problems imported (IPP-1715) and Q&A content. Put passwords while testing, then CHANGE_ME back.
+### Part A uses the admin (full access). Part B uses a NORMAL unpaid user (one free round).
+### Run the steps in order. Restarting the server once creates the new indexes (autoIndex).
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = changeme
+@userEmail = arsalmustafa62+ipp2@gmail.com
+@userPassword = NayaPassword123
+@token = {{login.response.body.data.token}}
+@userToken = {{userLogin.response.body.data.token}}
+@roundId = {{start.response.body.data._id}}
+@trialRoundId = {{trialStart.response.body.data._id}}
+
+
+### ==== A. Paid / admin ====
+
+### A1. Admin login -> 200
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### A2. Without login -> 401 "Please log in to continue"
+GET {{baseUrl}}/interview/setup
+
+
+### A3. Setup -> 200, every active language with access "full",
+###     javascript format { qa: 3, coding: 1 } minutes 19, php format { qa: 4, coding: 0 } minutes 12,
+###     levels [junior, mid, senior], running null
+GET {{baseUrl}}/interview/setup
+Authorization: Bearer {{token}}
+
+
+### A4. Wrong level -> 400 "Level must be junior, mid or senior"
+POST {{baseUrl}}/interview/start
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "language": "javascript", "level": "expert" }
+
+
+### A5. Start JS Mid -> 201 "Interview started", 4 items:
+###     0-2 kind "qa" (easy, medium, hard if they exist; easiest first; different topics when possible),
+###     each with question, answer, topic { slug, name }, seconds 180, rating null
+###     3 kind "coding", problem WITHOUT hints / solution, total = number of tests, seconds 600
+###     timeLimit 1140, isTrial false
+# @name start
+POST {{baseUrl}}/interview/start
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "language": "javascript", "level": "mid" }
+
+
+### A6. Start again while it runs -> 409, code ROUND_IN_PROGRESS
+POST {{baseUrl}}/interview/start
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "language": "php", "level": "junior" }
+
+
+### A7. Setup again -> running { _id = this round, language JavaScript, level mid }
+GET {{baseUrl}}/interview/setup
+Authorization: Bearer {{token}}
+
+
+### A8. Q1 "knew" -> 200 "Saved", item.points 1, answered 1 of 4
+PATCH {{baseUrl}}/interview/{{roundId}}/items/0
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "rating": "knew" }
+
+
+### A9. Q2 "partly" -> 200, item.points 0.5, answered 2
+PATCH {{baseUrl}}/interview/{{roundId}}/items/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "rating": "partly" }
+
+
+### A10. Wrong rating -> 400 "Rate your answer: knew, partly, didnt or skipped"
+PATCH {{baseUrl}}/interview/{{roundId}}/items/2
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "rating": "maybe" }
+
+
+### A11. Coding item without code -> 400 "Send the code and the number of passed tests"
+PATCH {{baseUrl}}/interview/{{roundId}}/items/3
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "rating": "knew" }
+
+
+### A12. Coding: 2 tests passed -> 200, item.passed 2, points = 2 / total
+###      (passed above total is cut down to total)
+PATCH {{baseUrl}}/interview/{{roundId}}/items/3
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "code": "function x() { return 1; }", "passed": 2 }
+
+
+### A13. Item that is not in the round -> 404 "Question not found in this round"
+PATCH {{baseUrl}}/interview/{{roundId}}/items/7
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "rating": "knew" }
+
+
+### A14. Running round (reload) -> 200, status "in-progress", items with the saved ratings / code
+GET {{baseUrl}}/interview/{{roundId}}
+Authorization: Bearer {{token}}
+
+
+### A15. Finish -> 200 "Round finished", status "completed",
+###      Q3 (not answered) rating "skipped" points 0,
+###      percentage = round((1 + 0.5 + 0 + 2/total) / 4 * 100)  e.g. total 6 -> 46,
+###      coding item has solution { code, explanation }, solutionLocked false,
+###      studyNext: Q3 topic (skipped), Q2 topic (partly) with "questions" count, the coding problem
+POST {{baseUrl}}/interview/{{roundId}}/finish
+Authorization: Bearer {{token}}
+
+
+### A16. Finish again -> 200 "Round already finished", same report
+POST {{baseUrl}}/interview/{{roundId}}/finish
+Authorization: Bearer {{token}}
+
+
+### A17. Save after finish -> 409, code ROUND_FINISHED
+PATCH {{baseUrl}}/interview/{{roundId}}/items/2
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "rating": "knew" }
+
+
+### A18. Report (reload) -> 200, same as A15
+GET {{baseUrl}}/interview/{{roundId}}
+Authorization: Bearer {{token}}
+
+
+### A19. History -> stats { rounds 1, averagePercentage = A15 percentage, weakestTopic (kind, language, topic, averagePercentage) },
+###      rounds[0] = this round (language name / slug / icon, level, percentage)
+GET {{baseUrl}}/interview/history
+Authorization: Bearer {{token}}
+
+
+### A20. PHP (no coding problems) Senior -> 201, 4 items, all kind "qa", timeLimit 720
+POST {{baseUrl}}/interview/start
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "language": "php", "level": "senior" }
+
+
+### A21. Delete the running PHP round (cancel) -> copy its _id from A20 -> 200 "Round deleted from your history"
+DELETE {{baseUrl}}/interview/PUT_PHP_ROUND_ID
+Authorization: Bearer {{token}}
+
+
+### A22. Bad id -> 400 "Invalid round id"
+GET {{baseUrl}}/interview/abc
+Authorization: Bearer {{token}}
+
+
+### ==== B. Unpaid user (one free round) ====
+### To test B again later, reset the free round in MongoDB:
+###   db.users.updateOne({ email: "arsalmustafa62+ipp2@gmail.com" }, { $unset: { interviewTrialAt: 1 } })
+
+### B1. User login -> 200
+# @name userLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{userEmail}}", "password": "{{userPassword}}" }
+
+
+### B2. Setup -> languages access "trial", format counts only free content
+###     (Q&A of the FIRST topic, free problems), trial { used false, roundId null }
+GET {{baseUrl}}/interview/setup
+Authorization: Bearer {{userToken}}
+
+### Purana round khatam karo
+POST {{baseUrl}}/interview/6ae3247f472b51216c328135/finish
+Authorization: Bearer {{userToken}}
+
+
+### B3. Start the free round -> 201 "Free interview round started", isTrial true,
+###     every Q&A from the first topic, coding problem is a free one
+# @name trialStart
+POST {{baseUrl}}/interview/start
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "language": "javascript", "level": "junior" }
+
+
+### B4. Finish it -> 200, coding item solution null, solutionLocked true
+POST {{baseUrl}}/interview/{{trialRoundId}}/finish
+Authorization: Bearer {{userToken}}
+
+
+### B5. Setup -> every language access "locked", available false, trial { used true, usedAt, roundId = B3 round }
+GET {{baseUrl}}/interview/setup
+Authorization: Bearer {{userToken}}
+
+
+### B6. Second round -> 403, code INTERVIEW_TRIAL_USED
+POST {{baseUrl}}/interview/start
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "language": "php", "level": "junior" }
+
+
+### B7. Trial report still opens -> 200, status "completed"
+GET {{baseUrl}}/interview/{{trialRoundId}}
+Authorization: Bearer {{userToken}}
+
+
+### B8. Another user's round -> 404 "Round not found"
+GET {{baseUrl}}/interview/{{roundId}}
+Authorization: Bearer {{userToken}}
+
+
+### B9. Clear history -> 200 "Interview history cleared (1 round)"
+DELETE {{baseUrl}}/interview/history
+Authorization: Bearer {{userToken}}
+
+
+### B10. Start again after deleting -> still 403 INTERVIEW_TRIAL_USED (the free round stays used)
+POST {{baseUrl}}/interview/start
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{ "language": "javascript", "level": "junior" }
+
+
+### ==== C. Clean up (admin) ====
+
+### C1. Clear admin history -> 200
+DELETE {{baseUrl}}/interview/history
+Authorization: Bearer {{token}}

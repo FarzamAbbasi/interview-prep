@@ -1,7 +1,7 @@
 /**
  * Backup script: MongoDB -> JSON file
  *
- *   npm run backup                          -> full backup: content + users + quiz results (IPP-1007)
+ *   npm run backup                          -> full backup: content + users + quiz results (IPP-1007) + coding progress (IPP-1722)
  *   npm run backup -- --content-only        -> only languages and questions (no emails / passwords)
  *   npm run backup -- --env=.env.live       -> back up the live database
  *
@@ -49,10 +49,13 @@ async function run() {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 
     console.log(`Backup saved: ${filePath}`);
-    console.log(`Languages: ${data.languages.length}, Questions: ${data.questions.length}`);
+    console.log(`Languages: ${data.languages.length}, Questions: ${data.questions.length}, Coding problems: ${data.problems.length}`);
     if (!contentOnly) {
       await recordFullBackup(data, 'command line'); // IPP-1008: admin dashboard shows this as the last backup
-      console.log(`Users: ${data.users.length}, Quiz results: ${data.quizAttempts.length}`);
+      console.log(
+        `Users: ${data.users.length}, Quiz results: ${data.quizAttempts.length}, Coding progress: ${data.problemProgress.length}, ` +
+          `Interview rounds: ${data.interviewRounds.length}`
+      );
       console.log('This file has user emails and hashed passwords: keep it private.');
     }
   } catch (error) {

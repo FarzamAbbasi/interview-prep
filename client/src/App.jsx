@@ -20,6 +20,10 @@ const QuizSetupPage = lazy(() => import('./pages/quiz/QuizSetupPage'));
 const QuizPlayPage = lazy(() => import('./pages/quiz/QuizPlayPage'));
 const QuizResultPage = lazy(() => import('./pages/quiz/QuizResultPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const PracticeListPage = lazy(() => import('./pages/practice/PracticeListPage')); // IPP-1716
+const SolvePage = lazy(() => import('./pages/practice/SolvePage')); // IPP-1717
+const InterviewSetupPage = lazy(() => import('./pages/interview/InterviewSetupPage')); // IPP-1725
+const InterviewRoundPage = lazy(() => import('./pages/interview/InterviewRoundPage')); // IPP-1725
 const BookmarksPage = lazy(() => import('./pages/BookmarksPage'));
 const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
@@ -28,6 +32,7 @@ const AdminLanguagesPage = lazy(() => import('./pages/admin/AdminLanguagesPage')
 const AdminQuestionsPage = lazy(() => import('./pages/admin/AdminQuestionsPage'));
 const AdminBackupPage = lazy(() => import('./pages/admin/AdminBackupPage'));
 const AdminUploadPage = lazy(() => import('./pages/admin/AdminUploadPage'));
+const AdminProblemsPage = lazy(() => import('./pages/admin/AdminProblemsPage')); // IPP-1721
 
 export default function App() {
   return (
@@ -40,6 +45,9 @@ export default function App() {
             <Route path="/languages" element={<LanguagesPage />} />
             <Route path="/languages/:slug" element={<QuestionsPage />} />
             <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/practice" element={<PracticeListPage />} />
+            <Route path="/practice/:language" element={<PracticeListPage />} />
+            <Route path="/practice/:language/:slug" element={<SolvePage />} />
 
             {/* Auth */}
             <Route path="/login" element={<LoginPage />} />
@@ -55,6 +63,9 @@ export default function App() {
               <Route path="/quiz/play" element={<QuizPlayPage />} />
               <Route path="/quiz/result/:attemptId" element={<QuizResultPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              {/* IPP-1725: Interview Mode (unpaid users get one free round) */}
+              <Route path="/interview" element={<InterviewSetupPage />} />
+              <Route path="/interview/:roundId" element={<InterviewRoundPage />} />
 
               {/* Paid only (others see the upgrade prompt) */}
               <Route element={<PaidRoute />}>
@@ -68,6 +79,7 @@ export default function App() {
                 <Route index element={<AdminDashboardPage />} />
                 <Route path="languages" element={<AdminLanguagesPage />} />
                 <Route path="questions" element={<AdminQuestionsPage />} />
+                <Route path="problems" element={<AdminProblemsPage />} />
                 <Route path="users" element={<AdminUsersPage />} />
                 <Route path="upload" element={<AdminUploadPage />} />
                 <Route path="backup" element={<AdminBackupPage />} />

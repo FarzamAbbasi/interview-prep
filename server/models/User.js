@@ -39,6 +39,8 @@ const userSchema = new mongoose.Schema(
     lastSeenAt: { type: Date }, // IPP-1703: any logged-in request, saved at most once an hour
     isBlocked: { type: Boolean, default: false },
     bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],
+    // IPP-1724: when the free Interview Mode round was used (stays set even if that round is deleted)
+    interviewTrialAt: { type: Date, default: null },
 
     // Email verification and password reset (stored hashed, hidden by default)
     emailToken: { type: String, select: false },

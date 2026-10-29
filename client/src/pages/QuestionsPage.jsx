@@ -134,6 +134,25 @@ export default function QuestionsPage() {
   const langLoading = langState.slug !== slug;
   usePageTitle(language ? `${language.name} interview questions` : 'Questions');
 
+  // ---- IPP-1729: "Practice with AI" (logged in): today's practice checks, shared by every row ----
+  const checkKey = user ? `${user._id}|${accessKey}` : null;
+  const [checkState, setCheckState] = useState({ key: null, usage: null });
+  useEffect(() => {
+    if (!checkKey) return undefined;
+    let cancelled = false;
+    api
+      .get('/answer-check/status', { params: { source: 'questions' } })
+      .then(({ data }) => !cancelled && setCheckState({ key: checkKey, usage: data.data }))
+      .catch(() => !cancelled && setCheckState({ key: checkKey, usage: null })); // no practice button, page works as before
+    return () => {
+      cancelled = true;
+    };
+  }, [checkKey]);
+  const checkUsage = checkState.key === checkKey ? checkState.usage : null;
+  const checker = checkUsage?.enabled
+    ? { usage: checkUsage, onUsage: (u) => setCheckState({ key: checkKey, usage: { ...checkUsage, ...u } }) }
+    : null;
+
   const topics = useMemo(() => language?.topics || [], [language]);
   const visibleOf = useCallback((t) => (hasFullAccess ? t.qaCount : t.freeQaCount), [hasFullAccess]);
 
@@ -479,6 +498,8 @@ export default function QuestionsPage() {
                 onBookmark={hasFullAccess ? () => toggleBookmark(q) : undefined}
                 bookmarkBusy={bookmarkBusy === q._id}
                 onNext={next ? () => openNext(next._id) : undefined}
+                checker={checker}
+                loginToCheck={!user}
               />
             );
           })}
