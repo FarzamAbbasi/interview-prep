@@ -5,7 +5,7 @@
  *
  * File format (language slugs instead of database ids, so it works on any database):
  *   { exportedAt, languages: [{ name, slug, icon, description, isActive, topics: [{ name, slug }] }],
- *     questions: [{ language: "php", type, topic, question, answer, codeSnippet, difficulty, tags,
+ *     questions: [{ language: "php", type, topic, question, answer, codeSnippet, difficulty, tags, companies?,
  *                   isFree, isActive, options?, correctOption? }] }
  *
  * Upload format for one language (IPP-1006, Admin -> Bulk upload), turned into the format above by normalizeUpload():
@@ -70,6 +70,7 @@ async function buildBackup({ includeUsers = true } = {}) {
           codeSnippet: q.codeSnippet,
           difficulty: q.difficulty,
           tags: q.tags,
+          ...(q.companies?.length ? { companies: q.companies } : {}), // IPP-1732
           isFree: q.isFree,
           isActive: q.isActive,
           createdAt: q.createdAt,

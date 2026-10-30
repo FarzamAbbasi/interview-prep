@@ -17,6 +17,8 @@ const COUNT_FIELDS = {
   easy: sumIf({ $and: [qa, { $eq: ['$difficulty', 'easy'] }] }),
   medium: sumIf({ $and: [qa, { $eq: ['$difficulty', 'medium'] }] }),
   hard: sumIf({ $and: [qa, { $eq: ['$difficulty', 'hard'] }] }),
+  // IPP-1732: Q&A without companies (company questions are never free)
+  openQaCount: sumIf({ $and: [qa, { $eq: [{ $size: { $ifNull: ['$companies', []] } }, 0] }] }),
 };
 const pickCounts = (c, done) => {
   const counts = {
@@ -54,7 +56,7 @@ async function withCounts(languages, user) {
       ...l,
       hasAccess: hasLanguageAccess(user, l._id), // IPP-1704: every topic open for this user?
       ...pickCounts(byId.get(String(l._id)), done ? done.byLanguage.get(String(l._id)) || 0 : undefined),
-      freeQaCount: firstCounts?.qaCount || 0,
+      freeQaCount: firstCounts?.openQaCount || 0, // IPP-1732: minus company questions
       topics: (l.topics || []).map((t) => {
         const key = topicKey(l._id, t.slug);
         const c = byTopic.get(key);
@@ -62,7 +64,7 @@ async function withCounts(languages, user) {
           name: t.name,
           slug: t.slug,
           ...pickCounts(c, done ? done.byTopic.get(key) || 0 : undefined),
-          freeQaCount: t.slug === first ? c?.qaCount || 0 : 0,
+          freeQaCount: t.slug === first ? c?.openQaCount || 0 : 0,
         };
       }),
     };

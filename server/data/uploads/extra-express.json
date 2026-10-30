@@ -1,0 +1,27 @@
+{
+  "_readme": [
+    "IPP-1731/1732: 1 extra Express.js Q&A with \"Asked at\" companies. Admin -> Bulk upload (dry run first). Only adds these questions; the language and other questions stay as they are."
+  ],
+  "language": {
+    "name": "Express.js",
+    "slug": "express"
+  },
+  "questions": [
+    {
+      "type": "qa",
+      "topic": "Request & Response",
+      "difficulty": "easy",
+      "question": "What is the difference between GET and POST requests?",
+      "answer": "Short answer: GET reads data: parameters go in the URL, it should not change anything on the server, and it can be cached and bookmarked. POST sends data in the request body to create something or trigger an action; it is not idempotent and is not cached by default.\n\nHow it works:\nGET: data in the query string, like /api/questions?topic=closures; read with req.query\nPOST: data in the body (JSON or form); read with req.body after express.json()\nSafe and idempotent: repeating a GET changes nothing; repeating a POST can create two records\nCaching and history: browsers and CDNs cache GET; POST stays out of the URL, history and most logs\n\nExample: GET /api/questions?topic=closures lists questions. POST /api/auth/login sends the email and password in the body.\n\nCommon mistake: Saying POST is \"secure\" because the data is not in the URL. Without HTTPS both are plain text on the network.\n\nInterview tip: Mention the other methods: PUT replaces, PATCH updates part of a resource and DELETE removes; PUT and DELETE are idempotent too.",
+      "codeSnippet": "app.use(express.json());\n\n// GET: read, data in the URL\napp.get('/api/questions', (req, res) => {\n  const { topic } = req.query;          // /api/questions?topic=closures\n  res.json({ topic });\n});\n\n// POST: create, data in the body\napp.post('/api/questions', (req, res) => {\n  const { question, answer } = req.body;\n  res.status(201).json({ question, answer });\n});",
+      "tags": [
+        "http",
+        "get",
+        "post"
+      ],
+      "companies": [
+        "Arbisoft"
+      ]
+    }
+  ]
+}

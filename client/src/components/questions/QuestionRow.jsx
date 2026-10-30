@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { HiCheck, HiChevronDown, HiOutlineStar, HiStar, HiOutlineLockClosed } from 'react-icons/hi';
 import AnswerText from './AnswerText';
 import AnswerChecker from './AnswerChecker';
+import CompanyChips from './CompanyChips';
 import { checksLeftText } from '../../utils/answerCheck';
 
 const difficultyStyle = {
@@ -32,7 +33,7 @@ export default function QuestionRow({
   checker,
   loginToCheck,
 }) {
-  const { _id, question: text, answer, codeSnippet, difficulty, isLocked } = question;
+  const { _id, question: text, answer, codeSnippet, difficulty, isLocked, companies } = question;
   const answerId = `answer-${_id}`;
   const actionBtn =
     'inline-flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-100 disabled:opacity-60';
@@ -65,7 +66,10 @@ export default function QuestionRow({
           aria-controls={answerId}
           className="flex min-w-0 flex-1 items-center gap-3 text-left"
         >
-          <h3 className="min-w-0 flex-1 text-[15px] font-semibold leading-snug text-slate-900">{text}</h3>
+          <span className="min-w-0 flex-1">
+            <h3 className="text-[15px] font-semibold leading-snug text-slate-900">{text}</h3>
+            <CompanyChips companies={companies} className="mt-1.5" />
+          </span>
           <span className={`hidden shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize sm:inline ${difficultyStyle[difficulty] || ''}`}>
             {difficulty}
           </span>

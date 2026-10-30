@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import AnswerText from './AnswerText';
+import CompanyChips from './CompanyChips';
 
 const difficultyText = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
 
@@ -90,6 +91,7 @@ export default function FlashcardView({ questions, isDone, onSetDone, loggedIn, 
           {loggedIn && isDone(q) && <span className="font-semibold text-brand-600">✓ Done</span>}
         </p>
         <h3 className="mt-4 text-2xl font-bold leading-tight tracking-tight text-slate-900 sm:text-[30px]">{q.question}</h3>
+        <CompanyChips companies={q.companies} className="mt-3" />
 
         <div className="mt-6 border-t-2 border-dashed border-slate-200 pt-6" aria-live="polite">
           {revealed ? (

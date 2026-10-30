@@ -5,10 +5,12 @@ const { sendSuccess } = require('../utils/apiResponse');
 const { getPaging, findLanguage, baseFilter, pagination } = require('../utils/questionFilters');
 const { doneIdSet } = require('../utils/progress');
 const { isFreeFor, visibleCondition } = require('../utils/freeAccess');
+
+const LOCKED_COMPANY_LIMIT = 100; // IPP-1732: teaser rows for unpaid users
 const { hasFullAccess, hasLanguageAccess } = require('../utils/access');
 
 // Fields the public may see (answer is added only when unlocked)
-const PUBLIC_FIELDS = 'language topic question answer codeSnippet difficulty tags isFree createdAt';
+const PUBLIC_FIELDS = 'language topic question answer codeSnippet difficulty tags companies isFree createdAt';
 
 /**
  * Hide the answer of paid questions for guests and unpaid users.
@@ -46,6 +48,8 @@ async function publicFilter(query) {
  *   ?language=php &difficulty=easy &tag=oop &search=array &page=1 &limit=10
  * Full access: every question. Guests and unpaid users (IPP-1501): ONLY the free questions;
  * paid questions are not sent at all, hiddenCount says how many more full access would show.
+ * IPP-1732: they also get lockedCompanyQuestions = [{ _id, topic, difficulty, companies }] (NO text, answer or code)
+ * for the company questions they cannot open, so the page can show "Asked at Amazon" behind a lock.
  */
 async function getQuestions(req, res) {
   const { page, limit, skip } = getPaging(req.query);
@@ -56,7 +60,7 @@ async function getQuestions(req, res) {
   const visible = limitTo ? { $and: [filter, limitTo] } : filter;
   const byId = new Map(languages.map((l) => [String(l._id), l]));
 
-  const [items, total, allMatching] = await Promise.all([
+  const [items, total, allMatching, lockedCompany] = await Promise.all([
     Question.find(visible)
       .select(PUBLIC_FIELDS)
       .populate('language', 'name slug')
@@ -66,6 +70,13 @@ async function getQuestions(req, res) {
       .lean(),
     Question.countDocuments(visible),
     limitTo ? Question.countDocuments(filter) : null,
+    limitTo
+      ? Question.find({ $and: [filter, { 'companies.0': { $exists: true } }, { $nor: [limitTo] }] })
+          .select('topic difficulty companies')
+          .sort({ createdAt: 1, _id: 1 })
+          .limit(LOCKED_COMPANY_LIMIT)
+          .lean()
+      : [],
   ]);
 
   const bookmarkIds = new Set((req.user?.bookmarks || []).map(String));
@@ -74,6 +85,7 @@ async function getQuestions(req, res) {
     language: language && { _id: language._id, name: language.name, slug: language.slug },
     hasFullAccess: fullAccess,
     hiddenCount: limitTo ? Math.max(0, allMatching - total) : 0, // IPP-1501
+    lockedCompanyQuestions: lockedCompany.map((q) => ({ _id: q._id, topic: q.topic, difficulty: q.difficulty, companies: q.companies })),
     questions: items.map((q) => {
       const lang = byId.get(String(q.language?._id || q.language));
       const item = lockIfNeeded(q, hasLanguageAccess(req.user, lang?._id), bookmarkIds, lang);

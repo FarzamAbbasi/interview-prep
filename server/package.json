@@ -13,7 +13,8 @@
     "dev:token": "node scripts/devToken.js",
     "set:password": "node scripts/setPassword.js",
     "clear:language": "node scripts/clearLanguage.js",
-    "import:problems": "node scripts/importProblems.js"
+    "import:problems": "node scripts/importProblems.js",
+    "tag:companies": "node scripts/tagCompanies.js"
   },
   "keywords": [],
   "author": "",

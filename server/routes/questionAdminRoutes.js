@@ -48,6 +48,9 @@ const questionRules = (isUpdate) => {
     body('difficulty').optional().isIn(['easy', 'medium', 'hard']).withMessage('Difficulty must be easy, medium or hard'),
     body('tags').optional().isArray({ max: 10 }).withMessage('Up to 10 tags'),
     body('tags.*').optional().isString().trim().isLength({ min: 1, max: 30 }).withMessage('Each tag can be 1 to 30 characters'),
+    // IPP-1732: "Asked at" companies; a question with companies is never free
+    body('companies').optional().isArray({ max: 10 }).withMessage('Up to 10 companies'),
+    body('companies.*').optional().isString().trim().isLength({ min: 1, max: 60 }).withMessage('Each company can be 1 to 60 characters'),
     body('codeSnippet').optional().isString().isLength({ max: 5000 }).withMessage('Code snippet cannot be more than 5000 characters'),
     body('isFree').optional().isBoolean({ strict: true }).withMessage('isFree must be true or false'),
     body('isActive').optional().isBoolean({ strict: true }).withMessage('isActive must be true or false'),

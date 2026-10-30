@@ -44,6 +44,7 @@ async function run() {
     }
     user.password = password; // hashed by the User model
     user.isVerified = true;
+    user.passwordChangedAt = new Date(); // old login tokens stop working
     await user.save();
     console.log(`Password changed for ${user.email} (role: ${user.role})`);
   } catch (error) {

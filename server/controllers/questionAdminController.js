@@ -8,7 +8,7 @@ const { sendSuccess } = require('../utils/apiResponse');
 const { getPaging, findLanguage, baseFilter, pagination } = require('../utils/questionFilters');
 
 // Fields the admin can set. "type" can only be set when creating.
-const EDITABLE = ['language', 'topic', 'question', 'answer', 'options', 'correctOption', 'difficulty', 'tags', 'codeSnippet', 'isFree', 'isActive'];
+const EDITABLE = ['language', 'topic', 'question', 'answer', 'options', 'correctOption', 'difficulty', 'tags', 'companies', 'codeSnippet', 'isFree', 'isActive'];
 
 function pickFields(body, allowType) {
   const fields = {};
@@ -102,7 +102,7 @@ async function getQuestion(req, res) {
 
 /**
  * POST /api/admin/questions   (IPP-402)
- * Q&A:  { language, type: "qa",  question, answer, difficulty?, tags?, codeSnippet?, isFree?, isActive? }
+ * Q&A:  { language, type: "qa",  question, answer, difficulty?, tags?, companies?, codeSnippet?, isFree?, isActive? }
  * MCQ:  { language, type: "mcq", question, answer (= explanation), options: [4], correctOption: 0-3, ... }
  */
 async function createQuestion(req, res) {

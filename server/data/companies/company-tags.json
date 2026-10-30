@@ -1,0 +1,156 @@
+{
+  "_readme": [
+    "IPP-1732: adds \"Asked at\" companies to questions already on the site. Run: npm run tag:companies -- --env=.env.live (dry run), then add --yes."
+  ],
+  "tags": [
+    {
+      "language": "javascript",
+      "question": "What is the difference between null and undefined?",
+      "companies": [
+        "Folio3"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "What is NaN, why is NaN !== NaN, and how should you check for it?",
+      "companies": [
+        "Folio3"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "How do optional chaining (?.) and nullish coalescing (??) work, and how is ?? different from ||?",
+      "companies": [
+        "Folio3"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "What is the difference between var, let and const?",
+      "companies": [
+        "Folio3"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "What is the event loop in JavaScript? Explain it in simple words.",
+      "companies": [
+        "Folio3"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "How does async/await relate to the microtask queue?",
+      "companies": [
+        "Folio3"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "What is the prototype chain in JavaScript?",
+      "companies": [
+        "Folio3"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "How does JavaScript decide what this refers to inside a function?",
+      "companies": [
+        "Folio3"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "How does inheritance work with prototypes without using class, and why should you avoid changing prototypes at runtime?",
+      "companies": [
+        "NetSol"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "What is the difference between microtasks and macrotasks, and which run first?",
+      "companies": [
+        "Amazon"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "What is event delegation, and why is it useful?",
+      "companies": [
+        "Amazon"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "How does garbage collection work in JavaScript?",
+      "companies": [
+        "Arbisoft"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "How do you find a memory leak with Chrome DevTools?",
+      "companies": [
+        "Google"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "How does a browser turn HTML, CSS and JavaScript into pixels (the critical rendering path)?",
+      "companies": [
+        "Google"
+      ]
+    },
+    {
+      "language": "mongodb",
+      "question": "When would you choose MongoDB over a SQL database, and when would you pick SQL instead?",
+      "companies": [
+        "Folio3"
+      ]
+    },
+    {
+      "language": "mongodb",
+      "question": "How does $lookup work, and how is it different from a SQL JOIN?",
+      "companies": [
+        "Folio3"
+      ]
+    },
+    {
+      "language": "mongodb",
+      "question": "What is an index in MongoDB, and why does it make queries faster?",
+      "companies": [
+        "Devsinc"
+      ]
+    },
+    {
+      "language": "mongodb",
+      "question": "What is denormalization in MongoDB, and how do you keep duplicated data in sync?",
+      "companies": [
+        "Devsinc"
+      ]
+    },
+    {
+      "language": "nodejs",
+      "question": "How does Redis caching speed up an API? Explain the cache-aside pattern.",
+      "companies": [
+        "Devsinc"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "Predict the output and explain each step: a mix of console.log, setTimeout, Promise.then and an async function.",
+      "companies": [
+        "Folio3"
+      ]
+    },
+    {
+      "language": "javascript",
+      "question": "Explain the four pillars of OOP with JavaScript examples.",
+      "companies": [
+        "Folio3",
+        "NetSol",
+        "Systems Ltd"
+      ]
+    }
+  ]
+}

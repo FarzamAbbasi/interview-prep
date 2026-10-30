@@ -1,0 +1,221 @@
+{
+  "_readme": [
+    "IPP-1731/1732: 13 extra JavaScript Q&A with \"Asked at\" companies. Admin -> Bulk upload (dry run first). Only adds these questions; the language and other questions stay as they are."
+  ],
+  "language": {
+    "name": "JavaScript",
+    "slug": "javascript"
+  },
+  "questions": [
+    {
+      "type": "qa",
+      "topic": "Classes & OOP",
+      "difficulty": "medium",
+      "question": "Which design patterns have you used in JavaScript? Explain Module, Singleton, Factory and Observer with examples.",
+      "answer": "Short answer: A design pattern is a named, reusable solution to a common design problem. In JavaScript and Node.js the ones you meet most are Module, Singleton, Factory and Observer.\n\nHow it works:\nModule: keep data private and export only a small public API (ES modules or a closure)\nSingleton: one shared instance, like a database connection; Node caches modules, so exporting one instance gives a singleton\nFactory: a function that decides which object to create, so callers do not use new and if/else everywhere\nObserver: listeners subscribe to an event and get notified (EventEmitter, addEventListener)\n\nExample: In a MERN app the Mongoose connection file is a singleton, a createNotifier(\"email\") factory returns the right sender, and an \"order created\" EventEmitter (observer) triggers the email.\n\nCommon mistake: Listing pattern names with no real example, or using Singleton everywhere. Hidden global state makes code hard to test.\n\nInterview tip: Pick two patterns you actually used in your own project and explain the problem each one solved.",
+      "codeSnippet": "// Factory\nfunction createNotifier(type) {\n  if (type === 'email') return { send: (to, msg) => console.log(`Email to ${to}: ${msg}`) };\n  if (type === 'sms') return { send: (to, msg) => console.log(`SMS to ${to}: ${msg}`) };\n  throw new Error(`Unknown notifier: ${type}`);\n}\n\n// Observer\nconst { EventEmitter } = require('events');\nconst orders = new EventEmitter();\norders.on('created', (order) => createNotifier('email').send(order.email, 'Order received'));\norders.emit('created', { email: 'ali@example.com' });",
+      "tags": [
+        "design patterns",
+        "singleton",
+        "factory",
+        "observer"
+      ],
+      "companies": [
+        "Folio3"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Classes & OOP",
+      "difficulty": "medium",
+      "question": "Does JavaScript support method overloading and method overriding? How do you get the same effect?",
+      "answer": "Short answer: Overriding: yes. A child class method with the same name replaces the parent one, and super.method() can still call the parent. Overloading: no. A second method with the same name silently replaces the first, so you handle different arguments inside one function.\n\nHow it works:\nOverriding: lookup walks the prototype chain and finds the child method first\nsuper.method(): calls the parent version from inside the override\nOverloading: JavaScript keeps only one function per name\nSame effect: check argument count or type, use default parameters, rest parameters or one options object\n\nExample: Shape.area() returns 0 and Circle overrides area() with its own formula. A greet(name, options) function accepts one name or an array of names instead of two \"overloads\".\n\nCommon mistake: Writing two methods with the same name in a class and expecting both to work. Only the last one survives, and there is no error.\n\nInterview tip: Mention that TypeScript allows overload signatures for type checking, but it still compiles to one JavaScript function.",
+      "codeSnippet": "class Shape {\n  area() { return 0; }\n  describe() { return `Area: ${this.area()}`; }\n}\nclass Circle extends Shape {\n  constructor(r) { super(); this.r = r; }\n  area() { return Math.PI * this.r ** 2; } // overriding\n}\n\n// \"overloading\" by checking the arguments\nfunction greet(name, options = {}) {\n  if (Array.isArray(name)) return name.map((n) => greet(n, options));\n  return `${options.formal ? 'Dear' : 'Hi'} ${name}`;\n}",
+      "tags": [
+        "oop",
+        "overloading",
+        "overriding"
+      ],
+      "companies": [
+        "Folio3"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Arrays & Iteration",
+      "difficulty": "easy",
+      "question": "What is the difference between an array and a linked list? How would you build a simple linked list in JavaScript?",
+      "answer": "Short answer: An array keeps items in order with fast index access (O(1)), but inserting or removing at the start or middle shifts items (O(n)). A linked list stores nodes that point to the next node: inserting or removing at a known node is O(1), but reaching the i-th item is O(n).\n\nHow it works:\nAccess by index: array O(1), linked list O(n)\nInsert or delete at the start: array O(n) (unshift and shift move everything), linked list O(1)\nMemory: array items sit together (fast for the CPU cache); list nodes are scattered and each one stores an extra pointer\nJavaScript arrays grow automatically; there is no built-in linked list, so you write a Node class\n\nExample: A playlist where songs are often inserted in the middle fits a linked list. A product list that you index, sort and filter fits an array.\n\nCommon mistake: Saying a linked list is always faster for inserts. You first have to walk to the right node, which is O(n).\n\nInterview tip: Draw boxes and arrows while you explain. Follow-ups are usually stacks, queues or reversing the list.",
+      "codeSnippet": "class Node {\n  constructor(value) { this.value = value; this.next = null; }\n}\nclass LinkedList {\n  constructor() { this.head = null; this.size = 0; }\n  prepend(value) {            // O(1)\n    const node = new Node(value);\n    node.next = this.head;\n    this.head = node;\n    this.size++;\n  }\n  append(value) {             // O(n) without a tail pointer\n    const node = new Node(value);\n    if (!this.head) this.head = node;\n    else {\n      let cur = this.head;\n      while (cur.next) cur = cur.next;\n      cur.next = node;\n    }\n    this.size++;\n  }\n  toArray() {\n    const out = [];\n    for (let cur = this.head; cur; cur = cur.next) out.push(cur.value);\n    return out;\n  }\n}",
+      "tags": [
+        "data structures",
+        "linked list",
+        "array"
+      ],
+      "companies": [
+        "NetSol"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Errors, Memory & Performance",
+      "difficulty": "medium",
+      "question": "Where are objects and primitive values stored in memory in JavaScript (stack vs heap)?",
+      "answer": "Short answer: A simple model: each function call gets a frame on the call stack that holds its local primitive values and references; objects, arrays and functions live in the heap, and a variable only holds a reference to them. Engines like V8 optimize this in their own ways, but the model explains copy by value vs copy by reference.\n\nHow it works:\nStack: one frame per function call, removed when the function returns\nHeap: objects; the garbage collector frees them when nothing can reach them any more\nlet b = a: copies the value for a primitive, but copies only the reference for an object\nClosures: variables a closure uses are kept alive (on the heap) after the outer function returns\n\nExample: const user = { name: \"Ali\" }; const copy = user; copy.name = \"Sara\"; Now user.name is \"Sara\" too, because both variables point to the same heap object.\n\nCommon mistake: Stating \"primitives are always on the stack\" as an absolute rule. Long strings and closure variables are heap-allocated in V8. Present it as a mental model.\n\nInterview tip: Connect it to memory leaks: a heap object that is still referenced from a global variable, a cache or an event listener is never freed.",
+      "codeSnippet": "let a = 10;\nlet b = a;   // value copied\nb = 20;\nconsole.log(a); // 10\n\nconst user = { name: 'Ali' };\nconst copy = user;          // reference copied\ncopy.name = 'Sara';\nconsole.log(user.name);     // \"Sara\" (same heap object)\n\nconst clone = { ...user };  // new heap object (shallow copy)",
+      "tags": [
+        "memory",
+        "stack",
+        "heap"
+      ],
+      "companies": [
+        "NetSol"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Classes & OOP",
+      "difficulty": "medium",
+      "question": "What is the diamond problem in multiple inheritance, and how does JavaScript avoid it?",
+      "answer": "Short answer: If class D inherits from both B and C, and both override a method from A, D does not know which version to use. JavaScript avoids this because a class can extend only one class: every object has a single prototype chain. To reuse behaviour from several places you use mixins or composition, and you choose the order yourself.\n\nHow it works:\nOne prototype: each object has exactly one [[Prototype]], so method lookup follows one line\nextends: only one parent class is allowed\nMixins: functions that take a class and return an extended class; the last one applied wins\nComposition: keep helper objects as properties instead of inheriting from them\n\nExample: A Duck gets CanFly and CanSwim mixins. Both define move(), and the mixin applied last decides the result, so there is no ambiguity.\n\nCommon mistake: Claiming JavaScript has multiple inheritance because of mixins. Mixins still build one single chain.\n\nInterview tip: Mention how other languages solve it: C++ has virtual inheritance, and Java and C# allow many interfaces but only one parent class.",
+      "codeSnippet": "const CanFly = (Base) => class extends Base { move() { return 'flying'; } };\nconst CanSwim = (Base) => class extends Base { move() { return 'swimming'; } };\n\nclass Animal { move() { return 'walking'; } }\nclass Duck extends CanSwim(CanFly(Animal)) {}\n\nconsole.log(new Duck().move()); // \"swimming\" (the last mixin wins)",
+      "tags": [
+        "oop",
+        "inheritance",
+        "mixins"
+      ],
+      "companies": [
+        "Arbisoft"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Coding Challenges & Polyfills",
+      "difficulty": "medium",
+      "question": "Delete a node from a singly linked list when you only have a reference to that node (not the head).",
+      "answer": "Short answer: You cannot reach the previous node, so copy the next node's value into the given node and then skip the next node. It runs in O(1).\n\nHow it works:\nnode.value = node.next.value: the given node takes the next value\nnode.next = node.next.next: the next node drops out of the list\nThis does not work for the last node, because there is no next value to copy\n\nExample: List 4 -> 5 -> 1 -> 9 and you get the node 5. Copy 1 into it (4 -> 1 -> 1 -> 9), then skip the old 1, giving 4 -> 1 -> 9.\n\nCommon mistake: Forgetting the last-node case, or trying to walk from a head you do not have.\n\nInterview tip: Say the limitation out loud: the node object stays but its value changes, so any other code holding a reference to the removed node now points outside the list.",
+      "codeSnippet": "function deleteNode(node) {\n  if (!node || !node.next) throw new Error('Cannot delete the last node this way');\n  node.value = node.next.value;\n  node.next = node.next.next;\n}",
+      "tags": [
+        "linked list",
+        "coding"
+      ],
+      "companies": [
+        "Arbisoft"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Coding Challenges & Polyfills",
+      "difficulty": "medium",
+      "question": "Implement merge sort in JavaScript. What are the time complexities of common sorting algorithms, and what does Array.prototype.sort use?",
+      "answer": "Short answer: Merge sort splits the array into halves, sorts each half recursively and merges the two sorted halves. It is O(n log n) in every case, needs O(n) extra memory and is stable.\n\nHow it works:\nBubble, selection, insertion sort: O(n^2); insertion sort is O(n) on an almost sorted array\nMerge sort: O(n log n) always, stable, extra memory\nQuick sort: O(n log n) on average, O(n^2) in the worst case, sorts in place\nArray.prototype.sort: V8 uses TimSort (merge + insertion sort), stable since ES2019; without a compare function it compares values as strings\n\nExample: [10, 9, 1].sort() returns [1, 10, 9] because \"10\" comes before \"9\" as text. Use .sort((a, b) => a - b) for numbers.\n\nCommon mistake: Calling sort() on numbers without a compare function, or saying quick sort is always O(n log n).\n\nInterview tip: When asked to \"just explain the concept\", state the idea, the complexity and the stability in one breath, then offer to code it.",
+      "codeSnippet": "function mergeSort(arr) {\n  if (arr.length <= 1) return arr;\n  const mid = Math.floor(arr.length / 2);\n  const left = mergeSort(arr.slice(0, mid));\n  const right = mergeSort(arr.slice(mid));\n  return merge(left, right);\n}\nfunction merge(a, b) {\n  const out = [];\n  let i = 0, j = 0;\n  while (i < a.length && j < b.length) {\n    out.push(a[i] <= b[j] ? a[i++] : b[j++]); // <= keeps it stable\n  }\n  return out.concat(a.slice(i), b.slice(j));\n}\nconsole.log(mergeSort([5, 2, 9, 1, 5])); // [1, 2, 5, 5, 9]",
+      "tags": [
+        "sorting",
+        "algorithms",
+        "complexity"
+      ],
+      "companies": [
+        "10Pearls",
+        "Arbisoft",
+        "Devsinc"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Classes & OOP",
+      "difficulty": "medium",
+      "question": "What are the SOLID principles? Give a JavaScript or Node.js example for each.",
+      "answer": "Short answer: SOLID is five design rules that keep code easy to change: Single responsibility, Open/closed, Liskov substitution, Interface segregation and Dependency inversion.\n\nHow it works:\nS: one reason to change; the controller handles HTTP, the service handles business rules\nO: add behaviour by adding code, not editing old code (a new payment gateway object)\nL: a child must work wherever the parent works (a Square that breaks setWidth breaks this rule)\nI: do not force code to depend on methods it does not use; keep objects small and focused\nD: depend on abstractions; pass the gateway or repository into the service instead of requiring it inside\n\nExample: OrderService receives a payment gateway in its constructor. JazzCash and Stripe gateways both have charge(), so adding a new one needs no change to OrderService (O and D together).\n\nCommon mistake: Reciting the five definitions without code, or forcing all five onto a tiny script where they only add layers.\n\nInterview tip: Show one small example that covers two or three letters, then explain the rest briefly. Dependency injection also makes testing with fakes easy.",
+      "codeSnippet": "class OrderService {\n  constructor(paymentGateway) { this.paymentGateway = paymentGateway; } // D: injected\n  async checkout(order) { return this.paymentGateway.charge(order.total); } // S: only order logic\n}\nconst jazzCash = { charge: async (amount) => ({ ok: true, provider: 'jazzcash', amount }) };\nconst stripe = { charge: async (amount) => ({ ok: true, provider: 'stripe', amount }) };\n\n// O: a new gateway, no change to OrderService\nnew OrderService(jazzCash).checkout({ total: 500 });\nnew OrderService(stripe).checkout({ total: 500 });",
+      "tags": [
+        "solid",
+        "design",
+        "oop"
+      ],
+      "companies": [
+        "Devsinc"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Arrays & Iteration",
+      "difficulty": "easy",
+      "question": "How do you implement a stack and a queue in JavaScript, and why can array.shift() be slow for a large queue?",
+      "answer": "Short answer: A stack is last in, first out: push() and pop() at the end of an array, both O(1). A queue is first in, first out: add at the end and remove from the front. shift() moves every remaining item one place, so it is O(n); for big queues keep a head index or use a linked list.\n\nHow it works:\nStack: push() adds, pop() removes the last item\nQueue with shift(): simple, but O(n) per removal\nQueue with a head index: dequeue only moves the index, O(1)\nClean up: reset or slice the array now and then so memory does not grow forever\n\nExample: The browser back button works like a stack. A job list of emails to send works like a queue.\n\nCommon mistake: Calling shift() inside a loop over 100,000 jobs. That turns the whole loop into O(n^2).\n\nInterview tip: Mention a real use: a stack for undo or matching brackets, a queue for breadth-first search or background jobs.",
+      "codeSnippet": "// Stack\nconst stack = [];\nstack.push(1); stack.push(2);\nstack.pop(); // 2\n\n// Queue with O(1) dequeue\nclass Queue {\n  constructor() { this.items = []; this.head = 0; }\n  enqueue(x) { this.items.push(x); }\n  dequeue() {\n    if (this.head >= this.items.length) return undefined;\n    const x = this.items[this.head++];\n    if (this.head > 1000 && this.head * 2 > this.items.length) {\n      this.items = this.items.slice(this.head); // free memory now and then\n      this.head = 0;\n    }\n    return x;\n  }\n  get size() { return this.items.length - this.head; }\n}",
+      "tags": [
+        "stack",
+        "queue",
+        "data structures"
+      ],
+      "companies": [
+        "Devsinc"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "DOM & Browser",
+      "difficulty": "medium",
+      "question": "Build a star rating widget with plain HTML, CSS and JavaScript (no framework). What do you need to handle?",
+      "answer": "Short answer: Render five buttons, keep the selected rating in a variable, highlight stars on hover and click, and use one event listener on the container (event delegation). Make it work with the keyboard and screen readers, and tell the rest of the page when the value changes.\n\nHow it works:\nState: the saved rating and the hover preview\nEvent delegation: one listener reads data-value from the clicked star\nHover preview: mouseover shows the preview, mouseleave goes back to the saved value\nAccessibility: real <button> elements, aria-label like \"3 stars\", aria-pressed on the selected one\nOutput: update a hidden input or dispatch a custom \"change\" event for the form\n\nExample: A product review form: hovering shows 4 gold stars, clicking saves 4, and leaving the widget keeps 4 highlighted.\n\nCommon mistake: Using <div> or <span> stars with only a click handler (no keyboard support), or adding one listener per star.\n\nInterview tip: Talk through state first, then rendering, then events. Interviewers watch whether your render function is driven by state.",
+      "codeSnippet": "<div id=\"rating\" role=\"group\" aria-label=\"Rating\"></div>\n<script>\n  const box = document.getElementById('rating');\n  let value = 0;\n  for (let i = 1; i <= 5; i++) {\n    const b = document.createElement('button');\n    b.type = 'button';\n    b.dataset.value = i;\n    b.textContent = '★';\n    b.setAttribute('aria-label', `${i} star${i > 1 ? 's' : ''}`);\n    box.append(b);\n  }\n  const paint = (n) => box.querySelectorAll('button').forEach((b) => {\n    b.classList.toggle('on', Number(b.dataset.value) <= n);\n    b.setAttribute('aria-pressed', String(Number(b.dataset.value) === value));\n  });\n  box.addEventListener('click', (e) => {\n    const b = e.target.closest('button');\n    if (!b) return;\n    value = Number(b.dataset.value);\n    paint(value);\n    box.dispatchEvent(new CustomEvent('change', { detail: value }));\n  });\n  box.addEventListener('mouseover', (e) => { const b = e.target.closest('button'); if (b) paint(Number(b.dataset.value)); });\n  box.addEventListener('mouseleave', () => paint(value));\n</script>",
+      "tags": [
+        "dom",
+        "event delegation",
+        "accessibility"
+      ],
+      "companies": [
+        "Amazon"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "DOM & Browser",
+      "difficulty": "medium",
+      "question": "Build tic-tac-toe in vanilla JavaScript. How do you store the game state and check for a winner?",
+      "answer": "Short answer: Keep the game in plain data: an array of 9 cells, the current player and a winner flag. On a click, ignore filled cells, place the mark, check the 8 winning lines, then switch player and re-render from the array.\n\nHow it works:\nState: board = Array(9).fill(null), player = \"X\", winner = null\nWinning lines: 3 rows, 3 columns and 2 diagonals, stored as index triples\nClick: one listener on the board (event delegation) reads data-index\nDraw: no winner and no empty cell left\nRender: update every cell from the board array, never read the game state from the DOM\n\nExample: X plays 0, 4 and 8. The check finds the line [0, 4, 8] with three X marks and shows \"X wins\".\n\nCommon mistake: Storing the state only in the DOM (reading textContent to find the winner), which makes reset and checks messy.\n\nInterview tip: Mention the next steps you would add: a reset button, highlighting the winning line and keyboard support.",
+      "codeSnippet": "const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];\nlet board = Array(9).fill(null), player = 'X', winner = null;\n\nfunction getWinner(b) {\n  for (const [a, c, d] of LINES) if (b[a] && b[a] === b[c] && b[a] === b[d]) return b[a];\n  return b.every(Boolean) ? 'draw' : null;\n}\n\ndocument.getElementById('board').addEventListener('click', (e) => {\n  const i = Number(e.target.dataset.index);\n  if (Number.isNaN(i) || board[i] || winner) return;\n  board[i] = player;\n  winner = getWinner(board);\n  player = player === 'X' ? 'O' : 'X';\n  render();\n});\n\nfunction render() {\n  document.querySelectorAll('[data-index]').forEach((cell) => { cell.textContent = board[cell.dataset.index] || ''; });\n  document.getElementById('status').textContent = winner === 'draw' ? 'Draw' : winner ? `${winner} wins` : `${player} to play`;\n}",
+      "tags": [
+        "dom",
+        "game",
+        "state"
+      ],
+      "companies": [
+        "Amazon"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "DOM & Browser",
+      "difficulty": "easy",
+      "question": "Take input from a form, show a message based on the value, and add the data as a new row in a table using plain JavaScript.",
+      "answer": "Short answer: Listen for the form's submit event, call preventDefault(), read the values with FormData, validate them, show the right message, then build a <tr> with textContent (never innerHTML for user input) and reset the form.\n\nHow it works:\nsubmit event: also fires when the user presses Enter\npreventDefault(): stops the page from reloading\nFormData(form): reads every named input at once\nMessage: set textContent and a class like \"error\" or \"ok\"\nTable row: insertRow() and insertCell(), with textContent so typed HTML is shown as text\n\nExample: A student enters a name and marks. Marks of 50 or more show \"Pass\" in green, otherwise \"Fail\" in red, and a new row appears in the results table.\n\nCommon mistake: Building the row with innerHTML and the user's text. Someone can type <img onerror=...> and run script (XSS).\n\nInterview tip: Mention accessibility: put the message in an element with aria-live=\"polite\" so screen readers announce it.",
+      "codeSnippet": "<form id=\"f\"><input name=\"name\" required><input name=\"marks\" type=\"number\" required><button>Add</button></form>\n<p id=\"msg\" aria-live=\"polite\"></p>\n<table><tbody id=\"rows\"></tbody></table>\n<script>\n  document.getElementById('f').addEventListener('submit', (e) => {\n    e.preventDefault();\n    const data = Object.fromEntries(new FormData(e.target));\n    const marks = Number(data.marks);\n    const msg = document.getElementById('msg');\n    msg.textContent = marks >= 50 ? `${data.name} passed` : `${data.name} failed`;\n    msg.className = marks >= 50 ? 'ok' : 'error';\n\n    const row = document.getElementById('rows').insertRow();\n    row.insertCell().textContent = data.name;   // textContent, not innerHTML\n    row.insertCell().textContent = marks;\n    e.target.reset();\n  });\n</script>",
+      "tags": [
+        "dom",
+        "forms",
+        "xss"
+      ],
+      "companies": [
+        "Amazon"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Coding Challenges & Polyfills",
+      "difficulty": "hard",
+      "question": "Insert a value into a sorted circular linked list.",
+      "answer": "Short answer: Walk around the circle looking for a gap where prev.value <= x <= next.value. If you reach the \"turning point\" (where prev.value > next.value, the largest value wraps to the smallest), insert there when x is a new maximum or minimum. If you come back to the start without finding a place (all values equal), insert anywhere.\n\nHow it works:\nEmpty list: the new node points to itself and becomes the head\nNormal gap: prev.value <= x && x <= next.value\nTurning point: prev.value > next.value and (x >= prev.value || x <= next.value)\nFull loop: stop when you return to the head, then insert after prev\nTime O(n), extra space O(1)\n\nExample: List 3 -> 4 -> 1 (circular), insert 2: the gap 1 -> 3 is found because 1 <= 2 <= 3, giving 3 -> 4 -> 1 -> 2.\n\nCommon mistake: Looping forever because there is no stop condition when all values are equal, or forgetting the empty-list case.\n\nInterview tip: List the edge cases before coding: empty list, one node, new max or min, all values equal.",
+      "codeSnippet": "function insert(head, x) {\n  const node = { value: x, next: null };\n  if (!head) { node.next = node; return node; }\n  let prev = head, next = head.next;\n  do {\n    const inGap = prev.value <= x && x <= next.value;\n    const atTurn = prev.value > next.value && (x >= prev.value || x <= next.value);\n    if (inGap || atTurn) break;\n    prev = next;\n    next = next.next;\n  } while (prev !== head);\n  prev.next = node;\n  node.next = next;\n  return head;\n}",
+      "tags": [
+        "linked list",
+        "coding",
+        "edge cases"
+      ],
+      "companies": [
+        "Meta"
+      ]
+    }
+  ]
+}

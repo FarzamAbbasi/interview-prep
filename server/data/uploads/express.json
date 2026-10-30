@@ -2,7 +2,8 @@
   "_readme": [
     "Express.js content for Admin -> Bulk upload (IPP-1712). 10 topics x (10 Q&A + 6 MCQs) = 160.",
     "Answers use parts (Short answer / How it works / Example / Common mistake / Interview tip), shown with labels by IPP-1710.",
-    "isActive false: check the questions in Admin, then activate Express.js in Admin -> Languages. Free = the first topic."
+    "isActive false: check the questions in Admin, then activate Express.js in Admin -> Languages. Free = the first topic.",
+    "IPP-1731/1732: +1 Q&A from interview research; company questions have \"companies\" (Asked at ...) and are locked for unpaid users. Total now 161. For the live site upload only extra-express.json."
   ],
   "language": {
     "name": "Express.js",
@@ -847,6 +848,22 @@
         "etag",
         "caching",
         "http"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Request & Response",
+      "difficulty": "easy",
+      "question": "What is the difference between GET and POST requests?",
+      "answer": "Short answer: GET reads data: parameters go in the URL, it should not change anything on the server, and it can be cached and bookmarked. POST sends data in the request body to create something or trigger an action; it is not idempotent and is not cached by default.\n\nHow it works:\nGET: data in the query string, like /api/questions?topic=closures; read with req.query\nPOST: data in the body (JSON or form); read with req.body after express.json()\nSafe and idempotent: repeating a GET changes nothing; repeating a POST can create two records\nCaching and history: browsers and CDNs cache GET; POST stays out of the URL, history and most logs\n\nExample: GET /api/questions?topic=closures lists questions. POST /api/auth/login sends the email and password in the body.\n\nCommon mistake: Saying POST is \"secure\" because the data is not in the URL. Without HTTPS both are plain text on the network.\n\nInterview tip: Mention the other methods: PUT replaces, PATCH updates part of a resource and DELETE removes; PUT and DELETE are idempotent too.",
+      "codeSnippet": "app.use(express.json());\n\n// GET: read, data in the URL\napp.get('/api/questions', (req, res) => {\n  const { topic } = req.query;          // /api/questions?topic=closures\n  res.json({ topic });\n});\n\n// POST: create, data in the body\napp.post('/api/questions', (req, res) => {\n  const { question, answer } = req.body;\n  res.status(201).json({ question, answer });\n});",
+      "tags": [
+        "http",
+        "get",
+        "post"
+      ],
+      "companies": [
+        "Arbisoft"
       ]
     },
     {

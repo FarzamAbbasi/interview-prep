@@ -1,0 +1,27 @@
+{
+  "_readme": [
+    "IPP-1731/1732: 1 extra React Q&A with \"Asked at\" companies. Admin -> Bulk upload (dry run first). Only adds these questions; the language and other questions stay as they are."
+  ],
+  "language": {
+    "name": "React",
+    "slug": "react"
+  },
+  "questions": [
+    {
+      "type": "qa",
+      "topic": "Context & State Management",
+      "difficulty": "hard",
+      "question": "How would you architect the frontend of a messaging app (like Messenger)?",
+      "answer": "Short answer: Start with requirements, then split the work into components, a normalized data layer, a real-time connection and good performance. The key ideas are: store messages by conversation, receive new ones over a WebSocket, send optimistically with a status, and virtualize long lists.\n\nHow it works:\nComponents: ConversationList, ChatWindow (MessageList + Composer), and a header with presence\nState: normalized store, conversations by id and messages by conversationId; server data in a cache like TanStack Query\nLoading: the latest 30 messages first, then older ones with cursor pagination when scrolling up\nReal-time: one WebSocket per user; on reconnect, fetch messages since the last id so nothing is missed\nSending: show the message at once with status \"sending\", replace it with the server copy, or show \"failed - retry\"\nPerformance: virtualized message list, memoized rows, lazy-loaded images\nExtras: unread counts, typing indicator (throttled), accessibility (aria-live for new messages)\n\nExample: Ali sends \"Salam\". It appears at once in grey (\"sending\"). The server reply turns it blue with a tick. If the network drops, it turns red with a retry button.\n\nCommon mistake: Keeping every message of every chat in one big array in a component, which re-renders everything on each new message.\n\nInterview tip: Talk about trade-offs: WebSocket vs polling, how much history to keep in memory, and how to keep message order correct (server timestamps or sequence numbers).",
+      "codeSnippet": "function useSendMessage(conversationId) {\n  const queryClient = useQueryClient();\n  return useMutation({\n    mutationFn: (text) => api.post(`/conversations/${conversationId}/messages`, { text }),\n    onMutate: (text) => {\n      const temp = { id: `temp-${Date.now()}`, text, status: 'sending' };\n      queryClient.setQueryData(['messages', conversationId], (old = []) => [...old, temp]);\n      return { tempId: temp.id };\n    },\n    onSuccess: (saved, text, { tempId }) => {\n      queryClient.setQueryData(['messages', conversationId], (old = []) =>\n        old.map((m) => (m.id === tempId ? { ...saved, status: 'sent' } : m)));\n    },\n    onError: (err, text, { tempId }) => {\n      queryClient.setQueryData(['messages', conversationId], (old = []) =>\n        old.map((m) => (m.id === tempId ? { ...m, status: 'failed' } : m)));\n    },\n  });\n}",
+      "tags": [
+        "frontend system design",
+        "real-time",
+        "state"
+      ],
+      "companies": [
+        "Meta"
+      ]
+    }
+  ]
+}

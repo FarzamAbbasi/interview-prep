@@ -43,7 +43,7 @@ async function getBookmarks(req, res) {
   const ids = req.user.bookmarks;
   const questions = (
     await Question.find({ _id: { $in: ids }, type: 'qa', isActive: true })
-      .select('language topic question answer codeSnippet difficulty tags isFree')
+      .select('language topic question answer codeSnippet difficulty tags companies isFree')
       .populate('language', 'name slug')
       .lean()
   ).filter((q) => q.language && hasLanguageAccess(req.user, q.language._id));

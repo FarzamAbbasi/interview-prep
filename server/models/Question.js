@@ -52,6 +52,16 @@ const questionSchema = new mongoose.Schema(
       default: 'easy',
     },
     tags: [{ type: String, lowercase: true, trim: true }],
+    // IPP-1732: companies where candidates reported this question ("Asked at Amazon").
+    // A question with companies is never free: only users with access to the language see it.
+    companies: {
+      type: [{ type: String, trim: true, maxlength: [60, 'Company name is too long (max 60)'] }],
+      default: undefined,
+      validate: {
+        validator: (list) => !list || list.length <= 10,
+        message: 'At most 10 companies per question',
+      },
+    },
     codeSnippet: { type: String, default: '' },
     isFree: { type: Boolean, default: false }, // visible to guests / sample quiz
     isActive: { type: Boolean, default: true },

@@ -37,10 +37,15 @@ function validate(form, topics) {
   const tags = splitTags(form.tags);
   if (tags.length > 10) errors.tags = 'Up to 10 tags';
   else if (tags.some((t) => t.length > 30)) errors.tags = 'Each tag can be up to 30 characters';
+  const companies = splitCompanies(form.companies);
+  if (companies.length > 10) errors.companies = 'Up to 10 companies';
+  else if (companies.some((c) => c.length > 60)) errors.companies = 'Each company can be up to 60 characters';
   return errors;
 }
 
 const splitTags = (text) => [...new Set(text.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean))];
+// IPP-1732: company names keep their case ("10Pearls", "NetSol")
+const splitCompanies = (text) => [...new Set(text.split(',').map((c) => c.trim()).filter(Boolean))];
 
 /**
  * Add / edit a Q&A or MCQ.
@@ -59,6 +64,7 @@ export default function QuestionForm({ initial, languages, defaultLanguageId, on
     correctOption: Number.isInteger(initial?.correctOption) ? initial.correctOption : null,
     difficulty: initial?.difficulty || 'easy',
     tags: (initial?.tags || []).join(', '),
+    companies: (initial?.companies || []).join(', '),
     isFree: initial?.isFree ?? false,
     isActive: initial?.isActive ?? true,
   }));
@@ -94,6 +100,7 @@ export default function QuestionForm({ initial, languages, defaultLanguageId, on
       codeSnippet: form.codeSnippet,
       difficulty: form.difficulty,
       tags: splitTags(form.tags),
+      companies: form.type === 'qa' ? splitCompanies(form.companies) : [],
       isFree: form.isFree,
       isActive: form.isActive,
     };
@@ -235,6 +242,16 @@ export default function QuestionForm({ initial, languages, defaultLanguageId, on
       <Field label="Tags (optional)" error={errors.tags} hint="Comma separated, e.g. oop, traits">
         <input value={form.tags} onChange={(e) => set({ tags: e.target.value })} className={fieldClass(errors.tags)} />
       </Field>
+
+      {form.type === 'qa' && (
+        <Field
+          label="Asked at companies (optional)"
+          error={errors.companies}
+          hint="Comma separated, e.g. Amazon, Arbisoft. A question with companies is always locked for unpaid users, even in the free topic."
+        >
+          <input value={form.companies} onChange={(e) => set({ companies: e.target.value })} className={fieldClass(errors.companies)} />
+        </Field>
+      )}
 
       <div className="flex flex-wrap gap-x-6 gap-y-2">
         {/* IPP-1607: no Free checkbox; guests and unpaid users get the first topic of every language */}

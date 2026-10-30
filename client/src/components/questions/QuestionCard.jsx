@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HiOutlineLockClosed, HiOutlineBookmark, HiBookmark, HiChevronDown } from 'react-icons/hi';
 import AnswerText from './AnswerText';
+import CompanyChips from './CompanyChips';
 
 const difficultyStyle = {
   easy: 'bg-green-50 text-green-700',
@@ -26,6 +27,7 @@ export default function QuestionCard({ question, number, topicName, showBookmark
         <span className="w-7 shrink-0 pt-0.5 text-right font-mono text-sm text-slate-400 tabular-nums">{number}.</span>
         <div className="min-w-0 flex-1">
           <h2 className="text-[17px] font-semibold leading-snug text-slate-900">{text}</h2>
+          <CompanyChips companies={question.companies} className="mt-2" />
           <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
             <span className={`rounded-full px-2 py-0.5 font-medium capitalize ${difficultyStyle[difficulty] || ''}`}>
               {difficulty}

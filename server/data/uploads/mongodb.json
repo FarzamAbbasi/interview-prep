@@ -2,7 +2,8 @@
   "_readme": [
     "MongoDB content for Admin -> Bulk upload (IPP-1711). 11 topics x (10 Q&A + 6 MCQs) = 176.",
     "Answers use parts (Short answer / How it works / Example / Common mistake / Interview tip), shown with labels by IPP-1710.",
-    "isActive false: check the questions in Admin, then activate MongoDB in Admin -> Languages. Free = the first topic."
+    "isActive false: check the questions in Admin, then activate MongoDB in Admin -> Languages. Free = the first topic.",
+    "IPP-1731/1732: +2 Q&A from interview research; company questions have \"companies\" (Asked at ...) and are locked for unpaid users. Total now 178. For the live site upload only extra-mongodb.json."
   ],
   "language": {
     "name": "MongoDB",
@@ -96,6 +97,9 @@
         "nosql",
         "sql",
         "design"
+      ],
+      "companies": [
+        "Folio3"
       ]
     },
     {
@@ -1063,6 +1067,9 @@
       "tags": [
         "denormalization",
         "extended-reference"
+      ],
+      "companies": [
+        "Devsinc"
       ]
     },
     {
@@ -1209,6 +1216,9 @@
       "tags": [
         "indexes",
         "basics"
+      ],
+      "companies": [
+        "Devsinc"
       ]
     },
     {
@@ -1710,6 +1720,9 @@
       "tags": [
         "lookup",
         "join"
+      ],
+      "companies": [
+        "Folio3"
       ]
     },
     {
@@ -1785,6 +1798,22 @@
         "topn",
         "group",
         "leaderboard"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Aggregation Pipeline",
+      "difficulty": "medium",
+      "question": "Find the employee with the second highest salary in MongoDB. How is it different from the SQL version?",
+      "answer": "Short answer: Get the distinct salaries sorted from high to low, skip the first one, and take the next. Then find the employees with that salary. Working on distinct salaries matters, because two people can share the top salary.\n\nHow it works:\n$group by salary: turns repeated salaries into one value each\n$sort { _id: -1 } then $skip: 1 and $limit: 1: picks the second highest distinct salary\nSecond query (or $lookup): returns every employee with that salary\nSQL version: SELECT MAX(salary) FROM employees WHERE salary < (SELECT MAX(salary) FROM employees)\nIndex { salary: -1 } keeps the sort fast on a big collection\n\nExample: Salaries 90k, 90k, 70k, 50k. A plain sort + skip(1) returns the second 90k, which is wrong. Grouping first gives 90k, 70k, 50k, so the answer is 70k.\n\nCommon mistake: Using find().sort({ salary: -1 }).skip(1).limit(1) without handling duplicate salaries.\n\nInterview tip: Ask whether \"second highest\" means the second distinct salary or the second row. Then mention $setWindowFields with $denseRank (MongoDB 5.0+) as a one-pipeline answer for N-th highest.",
+      "codeSnippet": "const [second] = await Employee.aggregate([\n  { $group: { _id: '$salary' } },\n  { $sort: { _id: -1 } },\n  { $skip: 1 },\n  { $limit: 1 },\n]);\nconst employees = second ? await Employee.find({ salary: second._id }) : [];\n\n// MongoDB 5.0+: N-th highest in one pipeline\nEmployee.aggregate([\n  { $setWindowFields: { sortBy: { salary: -1 }, output: { rank: { $denseRank: {} } } } },\n  { $match: { rank: 2 } },\n]);",
+      "tags": [
+        "aggregation",
+        "sql",
+        "ranking"
+      ],
+      "companies": [
+        "Systems Ltd"
       ]
     },
     {
@@ -2017,6 +2046,22 @@
       "tags": [
         "optimistic-concurrency",
         "versioning"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Transactions & Consistency",
+      "difficulty": "medium",
+      "question": "What are ACID properties, and how does MongoDB provide them?",
+      "answer": "Short answer: ACID means Atomicity, Consistency, Isolation and Durability: the guarantees that keep data correct when many operations run and something fails. MongoDB gives ACID for every single-document write, and since version 4.0 (replica sets) and 4.2 (sharded clusters) also for multi-document transactions.\n\nHow it works:\nAtomicity: all changes in a transaction happen, or none do\nConsistency: rules like unique indexes and schema validation are never broken\nIsolation: other operations do not see half-finished changes (snapshot isolation in transactions)\nDurability: once acknowledged with writeConcern \"majority\", the data survives a crash\nMongoDB: one document is always atomic, so embedding related data often removes the need for a transaction\n\nExample: Moving 500 rupees from Ali to Sara means two updates. Inside a transaction, if the second update fails, the first is rolled back, so money is never lost.\n\nCommon mistake: Saying \"MongoDB is not ACID\". That was true for multi-document writes before 4.0, but not today.\n\nInterview tip: Mention the cost: transactions are slower and need a replica set, so design the schema to keep related data in one document where it makes sense.",
+      "codeSnippet": "const session = await mongoose.startSession();\ntry {\n  await session.withTransaction(async () => {\n    await Account.updateOne({ _id: fromId, balance: { $gte: 500 } }, { $inc: { balance: -500 } }, { session });\n    await Account.updateOne({ _id: toId }, { $inc: { balance: 500 } }, { session });\n  });\n} finally {\n  await session.endSession();\n}",
+      "tags": [
+        "acid",
+        "transactions",
+        "consistency"
+      ],
+      "companies": [
+        "Devsinc"
       ]
     },
     {

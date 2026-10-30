@@ -4,19 +4,27 @@
  * The order of topics is the order the admin set in Admin -> Languages.
  * A language without topics has nothing free.
  * IPP-1704: a user with access to only some languages sees everything in those, first topic in the rest.
+ * IPP-1732: a question with companies ("Asked at Amazon") is never free, even in the first topic.
  */
 const { hasFullAccess, hasLanguageAccess } = require('./access');
 
 const firstTopicSlug = (language) => language?.topics?.[0]?.slug || null;
 
+const hasCompanies = (question) => Array.isArray(question?.companies) && question.companies.length > 0;
+
 const isFreeFor = (question, language) => {
   const first = firstTopicSlug(language);
-  return Boolean(first) && question.topic === first;
+  return Boolean(first) && question.topic === first && !hasCompanies(question);
 };
+
+// MongoDB condition: no companies (IPP-1732)
+const NO_COMPANIES = { 'companies.0': { $exists: false } };
 
 // MongoDB condition: questions in the first topic of these languages (matches nothing when none has topics)
 function freeCondition(languages) {
-  const parts = languages.map((l) => ({ language: l._id, topic: firstTopicSlug(l) })).filter((p) => p.topic);
+  const parts = languages
+    .map((l) => ({ language: l._id, topic: firstTopicSlug(l), ...NO_COMPANIES }))
+    .filter((p) => p.topic);
   return parts.length ? { $or: parts } : { _id: null };
 }
 
@@ -32,9 +40,9 @@ function visibleCondition(languages, user) {
   const parts = [];
   languages.forEach((l) => {
     if (hasLanguageAccess(user, l._id)) parts.push({ language: l._id });
-    else if (firstTopicSlug(l)) parts.push({ language: l._id, topic: firstTopicSlug(l) });
+    else if (firstTopicSlug(l)) parts.push({ language: l._id, topic: firstTopicSlug(l), ...NO_COMPANIES });
   });
   return parts.length ? { $or: parts } : { _id: null };
 }
 
-module.exports = { firstTopicSlug, isFreeFor, freeCondition, canOpen, visibleCondition };
+module.exports = { firstTopicSlug, hasCompanies, NO_COMPANIES, isFreeFor, freeCondition, canOpen, visibleCondition };

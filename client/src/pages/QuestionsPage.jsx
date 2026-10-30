@@ -6,6 +6,7 @@ import api, { getErrorMessage } from '../api/axios';
 import useAuth from '../hooks/useAuth';
 import QuestionRow, { QuestionRowSkeleton } from '../components/questions/QuestionRow';
 import FlashcardView from '../components/questions/FlashcardView';
+import LockedCompanyQuestions from '../components/questions/LockedCompanyQuestions';
 import DifficultyBar, { ProgressBar, DifficultyLegend } from '../components/languages/DifficultyBar';
 import TopicStrip from '../components/languages/TopicStrip';
 import Pagination from '../components/ui/Pagination';
@@ -504,6 +505,11 @@ export default function QuestionsPage() {
             );
           })}
       </div>
+
+      {/* IPP-1732: company questions without full access: company + topic + difficulty only */}
+      {!loading && !hasFullAccess && (onLastPage || !questions.length) && (
+        <LockedCompanyQuestions items={result.data?.lockedCompanyQuestions} topics={topics} loggedIn={Boolean(user)} />
+      )}
 
       {/* IPP-1501: end of the free questions (paid ones are not sent to the browser at all) */}
       {!loading && showEnd && onLastPage && (

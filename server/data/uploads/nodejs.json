@@ -2,7 +2,8 @@
   "_readme": [
     "Node.js content for Admin -> Bulk upload (IPP-1709). 10 topics x (10 Q&A + 6 MCQs).",
     "Answers use parts (Short answer / How it works / Example / Common mistake / Interview tip), shown with labels by IPP-1710.",
-    "isActive false: check the questions in Admin, then activate Node.js in Admin -> Languages. Free = the first topic."
+    "isActive false: check the questions in Admin, then activate Node.js in Admin -> Languages. Free = the first topic.",
+    "IPP-1731/1732: +6 Q&A from interview research; company questions have \"companies\" (Asked at ...) and are locked for unpaid users. Total now 166. For the live site upload only extra-nodejs.json."
   ],
   "language": {
     "name": "Node.js",
@@ -143,6 +144,22 @@
       "tags": [
         "esm",
         "modules"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Node Basics & Architecture",
+      "difficulty": "medium",
+      "question": "What happens from the moment a browser sends an HTTP request until your Express route sends the response?",
+      "answer": "Short answer: The browser finds the server (DNS), opens a TCP connection (plus a TLS handshake for HTTPS) and sends the request. Node's http server parses it and hands it to Express, which runs your middleware in order, matches a route, runs the handler, and the handler writes the response back on the same connection.\n\nHow it works:\nDNS: the domain becomes an IP address\nTCP + TLS: a connection is opened and encrypted (HTTPS)\nNode http server: parses the method, URL, headers and body stream, then emits \"request\"\nExpress: runs app.use() middleware in order (cors, express.json, auth, validation)\nRoute handler: does the work (database, other services) without blocking the event loop\nResponse: res.json() sets headers and the body; the connection stays open (keep-alive) for the next request\n\nExample: POST /api/auth/login: cors() adds headers, express.json() parses the body, a rate limiter counts the attempt, validation checks the email, the controller finds the user in MongoDB, compares the password and returns a JWT with res.json().\n\nCommon mistake: A handler that neither sends a response nor calls next(err). The request hangs until the client times out.\n\nInterview tip: Mention where things can go wrong at each step (DNS, TLS, CORS, a slow query) and how you would debug them with the browser Network tab and server logs.",
+      "codeSnippet": "const express = require('express');\nconst app = express();\n\napp.use((req, res, next) => { console.log(req.method, req.url); next(); }); // 1. logger\napp.use(express.json());                                                    // 2. body parser\n\napp.post('/api/auth/login', async (req, res, next) => {                     // 3. route\n  try {\n    const { email } = req.body;\n    res.json({ ok: true, email });                                         // 4. response\n  } catch (err) {\n    next(err);                                                             // or the error handler\n  }\n});\n\napp.use((err, req, res, next) => res.status(500).json({ message: 'Server error' }));\napp.listen(5000);",
+      "tags": [
+        "http",
+        "express",
+        "request lifecycle"
+      ],
+      "companies": [
+        "Devsinc"
       ]
     },
     {
@@ -1281,6 +1298,38 @@
       ]
     },
     {
+      "type": "qa",
+      "topic": "REST API Design",
+      "difficulty": "medium",
+      "question": "What is the difference between REST and gRPC, and when would you use each?",
+      "answer": "Short answer: REST exposes resources over plain HTTP, usually with JSON, so any client (including browsers) can call it and people can read it. gRPC calls remote functions defined in a .proto file, sends binary Protocol Buffers over HTTP/2, and generates typed clients; it is faster and supports streaming, but browsers need a gRPC-Web proxy.\n\nHow it works:\nContract: REST is often documented with OpenAPI; gRPC has a required .proto file\nFormat: REST sends JSON text; gRPC sends compact binary messages\nTransport: gRPC needs HTTP/2 and supports streaming in both directions\nTooling: REST works with curl and the browser; gRPC needs generated clients or special tools\nTypical use: REST for public and browser-facing APIs, gRPC for internal service-to-service calls\n\nExample: A MERN app's React frontend calls the Express REST API. Inside the backend, the order service calls the payment service with gRPC because it is fast and strictly typed.\n\nCommon mistake: Saying gRPC \"replaces\" REST everywhere. For a normal web app with a browser client, REST (or GraphQL) is simpler.\n\nInterview tip: Mention the cost of switching: a .proto contract, code generation and harder debugging, which pays off only with many internal services.",
+      "codeSnippet": "// orders.proto\nsyntax = \"proto3\";\nservice Orders {\n  rpc GetOrder (OrderRequest) returns (Order);\n}\nmessage OrderRequest { string id = 1; }\nmessage Order { string id = 1; int32 total = 2; }\n\n// The same thing as REST in Express\napp.get('/api/orders/:id', async (req, res) => {\n  res.json({ id: req.params.id, total: 500 });\n});",
+      "tags": [
+        "rest",
+        "grpc",
+        "api design"
+      ],
+      "companies": [
+        "Devsinc"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "REST API Design",
+      "difficulty": "hard",
+      "question": "Design a scalable REST API for a social media app with millions of users.",
+      "answer": "Short answer: Start with clear resources and endpoints, keep the API servers stateless behind a load balancer, add caching and good indexes, use cursor pagination, move slow work to queues, and protect it with rate limits. Then explain how the feed is built, because that is the hardest part.\n\nHow it works:\nResources: /users, /posts, /posts/:id/comments, /users/:id/followers, /feed\nStateless servers: JWT auth, no sessions in memory, so you can add servers behind a load balancer\nPagination: cursor based (?after=<lastId>&limit=20), never skip/offset on huge collections\nDatabase: indexes for every main query; shard or partition big collections like posts by user id\nCaching: Redis for hot data (profiles, counters), a CDN for images and videos\nFeed: fan-out on write (push post ids into followers' feeds) for normal users, fan-out on read for celebrities with millions of followers\nAsync work: a queue for notifications, image resizing and search indexing\nSafety: rate limits per user and IP, idempotency keys for POSTs that may be retried\n\nExample: GET /api/feed?after=abc&limit=20 reads 20 post ids from the user's Redis feed list, loads the posts in one query and returns nextCursor for the next page.\n\nCommon mistake: Jumping into a database choice before asking about scale and read/write patterns, or using offset pagination that gets slower on every page.\n\nInterview tip: Ask about numbers first (daily users, reads vs writes), state the trade-offs (consistency vs speed for likes and counters), and draw the request flow.",
+      "codeSnippet": "// Cursor pagination for the feed\napp.get('/api/feed', protect, async (req, res) => {\n  const limit = Math.min(Number(req.query.limit) || 20, 50);\n  const filter = { audience: req.user.id };\n  if (req.query.after) filter._id = { $lt: req.query.after };\n\n  const items = await FeedItem.find(filter)\n    .sort({ _id: -1 })\n    .limit(limit + 1)\n    .populate('post');\n\n  const hasMore = items.length > limit;\n  const page = items.slice(0, limit);\n  res.json({ items: page, nextCursor: hasMore ? page[page.length - 1]._id : null });\n});\n// Index: FeedItem { audience: 1, _id: -1 }",
+      "tags": [
+        "system design",
+        "scalability",
+        "pagination"
+      ],
+      "companies": [
+        "Microsoft"
+      ]
+    },
+    {
       "type": "mcq",
       "topic": "REST API Design",
       "difficulty": "easy",
@@ -1505,6 +1554,22 @@
       "tags": [
         "security",
         "helmet"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Authentication & Security",
+      "difficulty": "easy",
+      "question": "What is the difference between HTTP and HTTPS, and what does TLS protect?",
+      "answer": "Short answer: HTTPS is HTTP sent through an encrypted TLS connection. TLS encrypts the data, proves the server's identity with a certificate, and detects any change to the data on the way. Plain HTTP sends everything, including passwords and cookies, as readable text.\n\nHow it works:\nEncryption: nobody on the Wi-Fi or the network path can read the request or response\nAuthentication: the certificate, signed by a trusted authority, proves you are talking to the real domain\nIntegrity: a changed byte breaks the check, so data cannot be modified silently\nHandshake: client and server agree on keys first (asymmetric), then use fast symmetric encryption\nDefault ports: HTTP 80, HTTPS 443\n\nExample: A user logs in on public café Wi-Fi. With HTTP, anyone sniffing the network sees the password; with HTTPS they see only encrypted bytes and the domain name.\n\nCommon mistake: Thinking HTTPS hides everything. The domain (SNI) and IP address are still visible, and HTTPS does not protect against bugs like SQL or NoSQL injection.\n\nInterview tip: Mention the practical side: Render and Vercel give free certificates, set secure cookies, and add HSTS so browsers always use HTTPS.",
+      "codeSnippet": "// Express behind a proxy (Render, Heroku): force HTTPS and secure cookies\napp.set('trust proxy', 1);\napp.use((req, res, next) => {\n  if (req.secure) return next();\n  res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);\n});\n\n// npm i helmet  -> sets Strict-Transport-Security (HSTS) and other headers\napp.use(require('helmet')());\n\nres.cookie('token', jwt, { httpOnly: true, secure: true, sameSite: 'lax' });",
+      "tags": [
+        "https",
+        "tls",
+        "security"
+      ],
+      "companies": [
+        "Devsinc"
       ]
     },
     {
@@ -2091,6 +2156,9 @@
       "tags": [
         "caching",
         "redis"
+      ],
+      "companies": [
+        "Devsinc"
       ]
     },
     {
@@ -2187,6 +2255,38 @@
       "tags": [
         "memory",
         "scenario"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "medium",
+      "question": "What is a message broker like Kafka or RabbitMQ, and when does a Node.js API need one?",
+      "answer": "Short answer: A message broker sits between services: producers publish messages and consumers process them later, at their own speed. It decouples services, absorbs traffic spikes and allows retries. Kafka is a durable, replayable log built for very high throughput; RabbitMQ is a classic queue with flexible routing and per-message acknowledgements.\n\nHow it works:\nProducer: the API publishes an event like \"order.created\" and responds to the user at once\nBroker: stores the message safely until someone reads it\nConsumer: a worker sends the email, updates stock or generates a PDF\nKafka: messages stay in a log for days, many consumer groups can read and replay them\nRabbitMQ: a message goes to a queue and is removed after a consumer acknowledges it\n\nExample: On checkout the API saves the order and publishes \"order.created\". The email, inventory and analytics services each consume it separately, so a slow email server never slows the checkout.\n\nCommon mistake: Adding Kafka to a small app. A simple job queue such as BullMQ on Redis is enough until you have many services or huge volume.\n\nInterview tip: Talk about failure handling: retries, dead-letter queues and making consumers idempotent because a message can arrive twice.",
+      "codeSnippet": "// npm i kafkajs\nconst { Kafka } = require('kafkajs');\nconst kafka = new Kafka({ clientId: 'shop-api', brokers: ['localhost:9092'] });\n\n// Producer (inside the checkout route)\nconst producer = kafka.producer();\nawait producer.connect();\nawait producer.send({ topic: 'order.created', messages: [{ key: order.id, value: JSON.stringify(order) }] });\n\n// Consumer (a separate worker process)\nconst consumer = kafka.consumer({ groupId: 'email-service' });\nawait consumer.connect();\nawait consumer.subscribe({ topic: 'order.created' });\nawait consumer.run({ eachMessage: async ({ message }) => sendOrderEmail(JSON.parse(message.value)) });",
+      "tags": [
+        "kafka",
+        "message queue",
+        "architecture"
+      ],
+      "companies": [
+        "Devsinc"
+      ]
+    },
+    {
+      "type": "qa",
+      "topic": "Performance, Caching & Deployment",
+      "difficulty": "hard",
+      "question": "Design a feature that shows how many visitors are online on a website right now.",
+      "answer": "Short answer: First define \"online\", for example \"seen in the last 60 seconds\". Each open page sends a small heartbeat (or keeps a WebSocket open). The server stores each visitor's last-seen time in a Redis sorted set, counts the entries newer than 60 seconds, removes older ones, and pushes or serves that count to the pages.\n\nHow it works:\nVisitor id: a random id in localStorage (or the user id when logged in), so one person with many tabs counts once\nHeartbeat: every 20-30 seconds, or use the WebSocket connection itself\nStore: ZADD online <now> <visitorId> in Redis; it is fast and shared by all Node instances\nCount: ZCOUNT online <now-60s> +inf, and clean up with ZREMRANGEBYSCORE online -inf <now-60s>\nShow: broadcast the count over WebSocket/SSE every few seconds, or let pages poll a cached endpoint\nScale: never write every heartbeat to MongoDB; Redis handles it, and the number can be slightly approximate\n\nExample: A news site has three Node servers behind a load balancer. All of them write heartbeats to the same Redis sorted set, and one timer broadcasts \"1,245 people reading now\" every 5 seconds.\n\nCommon mistake: Counting open sockets on a single server (wrong with many servers), or never removing visitors who closed the tab.\n\nInterview tip: Start with the questions an interviewer expects: exact or approximate? per page or whole site? how many users? Then size the design to the answers.",
+      "codeSnippet": "// npm i ioredis\nconst Redis = require('ioredis');\nconst redis = new Redis(process.env.REDIS_URL);\nconst WINDOW = 60 * 1000;\n\napp.post('/api/heartbeat', async (req, res) => {\n  const id = String(req.body.visitorId).slice(0, 64);\n  await redis.zadd('online', Date.now(), id);\n  res.sendStatus(204);\n});\n\napp.get('/api/online', async (req, res) => {\n  const since = Date.now() - WINDOW;\n  await redis.zremrangebyscore('online', '-inf', since);   // drop old visitors\n  const count = await redis.zcount('online', since, '+inf');\n  res.set('Cache-Control', 'public, max-age=5').json({ count });\n});",
+      "tags": [
+        "system design",
+        "redis",
+        "real-time"
+      ],
+      "companies": [
+        "10Pearls"
       ]
     },
     {

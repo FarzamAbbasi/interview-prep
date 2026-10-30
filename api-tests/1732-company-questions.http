@@ -1,0 +1,84 @@
+### IPP-1732 Company questions ("Asked at Amazon"), locked for unpaid users
+### Before (in /server, local DB):
+###   1. npm run dev
+###   2. Admin -> Bulk upload: server/data/uploads/extra-javascript.json (Dry run first: 13 new, 0 skip), then upload
+###      (do the same for extra-nodejs, extra-mongodb, extra-express, extra-react if you want)
+###   3. npm run tag:companies          -> dry run, "Would change: 21 | not found: 0"
+###      npm run tag:companies -- --yes -> "Saved: 21"
+### Put the admin password while testing, then CHANGE_ME back.
+### The JavaScript first topic slug is "basics-types" (check Admin -> Languages if yours is different).
+
+@baseUrl = http://localhost:5000/api
+@adminEmail = askedin143@gmail.com
+@adminPassword = Askedin-Admin-2026!x
+@token = {{login.response.body.data.token}}
+@companyQuestionId = {{adminSearch.response.body.data.questions[0]._id}}
+
+
+### 1. Admin login -> 200
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+
+### 2. Guest, JavaScript free topic -> 200
+###    questions[]: NO item has "companies" ("What is the difference between null and undefined?" is NOT in the list any more)
+###    lockedCompanyQuestions: has { _id, topic, difficulty, companies: ["Folio3"] } items, with NO "question", "answer" or "codeSnippet"
+GET {{baseUrl}}/questions?language=javascript&topic=basics-types&limit=50
+
+
+### 3. Guest, whole JavaScript -> 200
+###    lockedCompanyQuestions: about 29 items (Amazon, Arbisoft, Folio3, Meta, NetSol, Devsinc, ...), still no question text
+GET {{baseUrl}}/questions?language=javascript&limit=50
+
+
+### 4. Admin (full access), same topic -> 200
+###    questions[] includes "null and undefined" WITH "companies": ["Folio3"]; lockedCompanyQuestions: []
+GET {{baseUrl}}/questions?language=javascript&topic=basics-types&limit=50
+Authorization: Bearer {{token}}
+
+
+### 5. Admin finds the company question in the free topic (used by 6 and 8) -> 200, first item = "null and undefined"
+# @name adminSearch
+GET {{baseUrl}}/admin/questions?language=javascript&topic=basics-types&type=qa&search=null%20and%20undefined
+Authorization: Bearer {{token}}
+
+
+### 6. Guest opens that question directly -> 403 NEEDS_FULL_ACCESS (it is in the free topic, but has a company)
+GET {{baseUrl}}/questions/{{companyQuestionId}}
+
+
+### 7. Guest, language counts -> 200
+###    topics[0].freeQaCount is 2 LESS than topics[0].qaCount (null/undefined and var/let/const are company questions)
+GET {{baseUrl}}/languages/javascript
+
+
+### 8. Admin: too many companies -> 400 "Up to 10 companies"
+PUT {{baseUrl}}/admin/questions/{{companyQuestionId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "companies": ["A","B","C","D","E","F","G","H","I","J","K"] }
+
+
+### 9. Admin: company name too long -> 400 "Each company can be 1 to 60 characters"
+PUT {{baseUrl}}/admin/questions/{{companyQuestionId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "companies": ["xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"] }
+
+
+### 10. Content backup keeps companies -> 200, the "null and undefined" question has "companies": ["Folio3"]
+GET {{baseUrl}}/admin/backup/export?scope=content
+Authorization: Bearer {{token}}
+
+
+### Browser checks (not HTTP):
+### - Logged out, /languages/javascript: free questions, then the "Company interview questions - N locked" box
+###   (lock, "Asked at Amazon", topic, difficulty; no question text), then the "more questions" box
+### - Admin, /languages/javascript: company questions show "Asked at" chips under the question
+### - Admin -> Questions -> edit a Q&A: "Asked at companies" field (comma separated); MCQ has no such field
+### - Interview Mode as an unpaid user (trial): no company question appears in the round

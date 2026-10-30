@@ -7,7 +7,7 @@ const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const { sendSuccess } = require('../utils/apiResponse');
 const { findLanguage, getPaging, pagination } = require('../utils/questionFilters');
-const { firstTopicSlug } = require('../utils/freeAccess');
+const { firstTopicSlug, NO_COMPANIES } = require('../utils/freeAccess');
 const { hasLanguageAccess } = require('../utils/access');
 const { LEVELS, QA_SECONDS, CODING_SECONDS, pickQuestions, pickProblem, qaCountFor } = require('../utils/interviewPicker');
 const { runAnswerCheck } = require('../utils/answerCheckService');
@@ -36,6 +36,7 @@ function poolFilters(language, user) {
   const coding = { language: language._id, isActive: true };
   if (!full) {
     qa.topic = firstTopicSlug(language) || '__none__';
+    Object.assign(qa, NO_COMPANIES); // IPP-1732: company questions are never free
     coding.isFree = true;
   }
   return { full, qa, coding };
@@ -301,7 +302,16 @@ async function getSetup(req, res) {
   const [qaRows, codingRows, running, trialRound] = await Promise.all([
     Question.aggregate([
       { $match: { language: { $in: ids }, type: 'qa', isActive: true } },
-      { $group: { _id: { language: '$language', topic: '$topic' }, n: { $sum: 1 } } },
+      {
+        $group: {
+          _id: {
+            language: '$language',
+            topic: '$topic',
+            hasCompanies: { $gt: [{ $size: { $ifNull: ['$companies', []] } }, 0] }, // IPP-1732
+          },
+          n: { $sum: 1 },
+        },
+      },
     ]),
     Problem.aggregate([
       { $match: { language: { $in: ids }, isActive: true } },
@@ -320,7 +330,7 @@ async function getSetup(req, res) {
     const id = String(l._id);
     const first = firstTopicSlug(l);
     const qaCount = qaRows
-      .filter((r) => String(r._id.language) === id && (full || r._id.topic === first))
+      .filter((r) => String(r._id.language) === id && (full || (r._id.topic === first && !r._id.hasCompanies)))
       .reduce((n, r) => n + r.n, 0);
     const codingCount = codingRows
       .filter((r) => String(r._id.language) === id && (full || r._id.isFree))
