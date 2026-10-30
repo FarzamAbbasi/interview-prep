@@ -10,6 +10,7 @@ const isAdmin = (req) => req.user?.role === 'admin';
 
 const qa = { $eq: ['$type', 'qa'] };
 const sumIf = (cond) => ({ $sum: { $cond: [cond, 1, 0] } });
+const hasCompanies = { $gt: [{ $size: { $ifNull: ['$companies', []] } }, 0] }; // IPP-1732
 const COUNT_FIELDS = {
   qaCount: sumIf(qa),
   mcqCount: sumIf({ $eq: ['$type', 'mcq'] }),
@@ -19,6 +20,11 @@ const COUNT_FIELDS = {
   hard: sumIf({ $and: [qa, { $eq: ['$difficulty', 'hard'] }] }),
   // IPP-1732: Q&A without companies (company questions are never free)
   openQaCount: sumIf({ $and: [qa, { $eq: [{ $size: { $ifNull: ['$companies', []] } }, 0] }] }),
+  // IPP-1732: the "Company questions" tab (count + difficulty mix)
+  companyQaCount: sumIf({ $and: [qa, hasCompanies] }),
+  companyEasy: sumIf({ $and: [qa, hasCompanies, { $eq: ['$difficulty', 'easy'] }] }),
+  companyMedium: sumIf({ $and: [qa, hasCompanies, { $eq: ['$difficulty', 'medium'] }] }),
+  companyHard: sumIf({ $and: [qa, hasCompanies, { $eq: ['$difficulty', 'hard'] }] }),
 };
 const pickCounts = (c, done) => {
   const counts = {
@@ -30,6 +36,12 @@ const pickCounts = (c, done) => {
   if (done !== undefined) counts.doneCount = done; // IPP-1601: only for logged-in users
   return counts;
 };
+
+// IPP-1732: { qaCount, difficulty } of the language's company questions (never free)
+const companyCounts = (c) => ({
+  qaCount: c?.companyQaCount || 0,
+  difficulty: { easy: c?.companyEasy || 0, medium: c?.companyMedium || 0, hard: c?.companyHard || 0 },
+});
 
 /**
  * Add question counts to each language and each topic (only active questions):
@@ -57,6 +69,7 @@ async function withCounts(languages, user) {
       hasAccess: hasLanguageAccess(user, l._id), // IPP-1704: every topic open for this user?
       ...pickCounts(byId.get(String(l._id)), done ? done.byLanguage.get(String(l._id)) || 0 : undefined),
       freeQaCount: firstCounts?.openQaCount || 0, // IPP-1732: minus company questions
+      companyQuestions: companyCounts(byId.get(String(l._id))), // IPP-1732: "Company questions" tab
       topics: (l.topics || []).map((t) => {
         const key = topicKey(l._id, t.slug);
         const c = byTopic.get(key);

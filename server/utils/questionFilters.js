@@ -30,7 +30,7 @@ async function findLanguage(value, { onlyActive }) {
 
 /**
  * Build the MongoDB filter shared by the public and admin lists.
- *   ?difficulty=easy|medium|hard  ?tag=oop  ?search=array
+ *   ?difficulty=easy|medium|hard  ?tag=oop  ?search=array  ?company=true (IPP-1732: only "Asked at" questions)
  * search looks in the question text and tags (case-insensitive, part of a word works).
  */
 function baseFilter(query) {
@@ -38,6 +38,7 @@ function baseFilter(query) {
   if (['easy', 'medium', 'hard'].includes(query.difficulty)) filter.difficulty = query.difficulty;
   if (query.tag) filter.tags = String(query.tag).toLowerCase().trim();
   if (query.topic) filter.topic = String(query.topic).toLowerCase().trim(); // IPP-404
+  if (query.company === 'true') filter['companies.0'] = { $exists: true }; // IPP-1732: company questions tab
 
   const search = String(query.search || '').trim().slice(0, 100);
   if (search) {

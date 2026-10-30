@@ -14,6 +14,7 @@ const listRules = [
   query('tag').optional().isString().isLength({ max: 30 }).withMessage('tag can be up to 30 characters'),
   query('language').optional().isString().isLength({ max: 50 }).withMessage('Invalid language'),
   query('topic').optional().isString().isLength({ max: 60 }).withMessage('Invalid topic'), // IPP-404
+  query('company').optional().isIn(['true', 'false']).withMessage('company must be true or false'), // IPP-1732
 ];
 
 // ---- IPP-403: public question browsing (login optional: paid users see all answers) ----

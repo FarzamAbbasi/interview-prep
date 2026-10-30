@@ -10,7 +10,7 @@
 
 @baseUrl = http://localhost:5000/api
 @adminEmail = askedin143@gmail.com
-@adminPassword = Askedin-Admin-2026!x
+@adminPassword = CHANGE_ME
 @token = {{login.response.body.data.token}}
 @companyQuestionId = {{adminSearch.response.body.data.questions[0]._id}}
 
@@ -76,7 +76,23 @@ GET {{baseUrl}}/admin/backup/export?scope=content
 Authorization: Bearer {{token}}
 
 
+### 11. Company tab, guest -> 200: questions [] , lockedCompanyQuestions = every JavaScript company question (all topics)
+GET {{baseUrl}}/questions?language=javascript&company=true&limit=50
+
+
+### 12. Company tab, admin -> 200: questions = the same company questions WITH text, answer and "companies"
+GET {{baseUrl}}/questions?language=javascript&company=true&limit=50
+Authorization: Bearer {{token}}
+
+
+### 13. Language counts -> 200: "companyQuestions": { "qaCount": 29, "difficulty": {...} } (Express / React: 1)
+GET {{baseUrl}}/languages/javascript
+
+
 ### Browser checks (not HTTP):
+### - /languages/javascript: FIRST card "Company questions" (lock + "full access" for guests); clicking it
+###   opens ?topic=company-questions with all company questions (paid) or the locked list (guests)
+###   A language without company questions has no such card
 ### - Logged out, /languages/javascript: free questions, then the "Company interview questions - N locked" box
 ###   (lock, "Asked at Amazon", topic, difficulty; no question text), then the "more questions" box
 ### - Admin, /languages/javascript: company questions show "Asked at" chips under the question

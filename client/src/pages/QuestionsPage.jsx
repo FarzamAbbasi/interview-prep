@@ -7,6 +7,7 @@ import useAuth from '../hooks/useAuth';
 import QuestionRow, { QuestionRowSkeleton } from '../components/questions/QuestionRow';
 import FlashcardView from '../components/questions/FlashcardView';
 import LockedCompanyQuestions from '../components/questions/LockedCompanyQuestions';
+import CompanyTabCard, { COMPANY_TAB } from '../components/questions/CompanyTabCard';
 import DifficultyBar, { ProgressBar, DifficultyLegend } from '../components/languages/DifficultyBar';
 import TopicStrip from '../components/languages/TopicStrip';
 import Pagination from '../components/ui/Pagination';
@@ -165,8 +166,10 @@ export default function QuestionsPage() {
     // only pick once per language load, not after every "done" click
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, topics.length, hasFullAccess]);
-  const topicSlug = filters.topic || defaultTopic;
-  const topic = topics.find((t) => t.slug === topicSlug) || null;
+  // IPP-1732: ?topic=company-questions = the "Company questions" tab (company questions of every topic)
+  const companyTab = filters.topic === COMPANY_TAB && (language?.companyQuestions?.qaCount || 0) > 0;
+  const topicSlug = companyTab ? COMPANY_TAB : filters.topic === COMPANY_TAB ? defaultTopic : filters.topic || defaultTopic;
+  const topic = companyTab ? null : topics.find((t) => t.slug === topicSlug) || null;
 
   // ---- questions of the chosen topic ----
   const [reloadCount, setReloadCount] = useState(0);
@@ -180,7 +183,8 @@ export default function QuestionsPage() {
       .get('/questions', {
         params: {
           language: slug,
-          topic: topicValue || undefined,
+          topic: topicValue && topicValue !== COMPANY_TAB ? topicValue : undefined,
+          company: topicValue === COMPANY_TAB ? 'true' : undefined, // IPP-1732
           difficulty: difficulty || undefined,
           search: search || undefined,
           page,
@@ -306,10 +310,13 @@ export default function QuestionsPage() {
   const questions = data?.questions || [];
   const pagination = data?.pagination;
   const onLastPage = pagination && pagination.page >= pagination.totalPages;
+  // IPP-1732: locked company questions (guests / unpaid users only)
+  const companyLocked = (!loading && result.data?.lockedCompanyQuestions) || [];
+  const showCompanyBox = !loading && !hasFullAccess && (onLastPage || !questions.length) && companyLocked.length > 0;
   const languageVisible = hasFullAccess ? language.qaCount : language.freeQaCount;
   const topicVisible = topic ? visibleOf(topic) : 0;
   const topicComplete = user && hasFullAccess && topic && topicVisible > 0 && (topic.doneCount || 0) >= topicVisible;
-  const listTitle = topic ? topic.name : 'All questions';
+  const listTitle = companyTab ? 'Company interview questions' : topic ? topic.name : 'All questions';
   const quizLink = hasFullAccess
     ? `/quiz?language=${language.slug}${topic ? `&topic=${topic.slug}` : ''}`
     : `/quiz?language=${language.slug}`;
@@ -345,6 +352,15 @@ export default function QuestionsPage() {
       {topics.length > 0 && (
         <>
           <TopicStrip selectedKey={topicSlug} legend={<DifficultyLegend withProgress={Boolean(user)} />}>
+            {/* IPP-1732: first card = company questions of this language (when it has any) */}
+            {language.companyQuestions?.qaCount > 0 && (
+              <CompanyTabCard
+                counts={language.companyQuestions}
+                selected={companyTab}
+                hasFullAccess={hasFullAccess}
+                onSelect={() => chooseTopic(COMPANY_TAB)}
+              />
+            )}
             {topics.map((t) => (
               <TopicCard
                 key={t.slug}
@@ -379,7 +395,7 @@ export default function QuestionsPage() {
       {/* List toolbar */}
       <div className="mb-3.5 flex flex-wrap items-center gap-2.5">
         <h2 className="mr-auto text-xl font-bold tracking-tight text-slate-900 sm:text-[22px]">{listTitle}</h2>
-        {user && !topicComplete && (
+        {user && !topicComplete && !companyTab && (
           <Link
             to={quizLink}
             className="order-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 sm:order-3"
@@ -506,13 +522,21 @@ export default function QuestionsPage() {
           })}
       </div>
 
-      {/* IPP-1732: company questions without full access: company + topic + difficulty only */}
-      {!loading && !hasFullAccess && (onLastPage || !questions.length) && (
-        <LockedCompanyQuestions items={result.data?.lockedCompanyQuestions} topics={topics} loggedIn={Boolean(user)} />
+      {/* IPP-1732: company questions without full access (company + topic + difficulty only).
+          When it shows, it REPLACES the "more questions" box below (same button, other paid questions as one line). */}
+      {showCompanyBox && (
+        <div ref={endRef}>
+          <LockedCompanyQuestions
+            items={companyLocked}
+            topics={topics}
+            loggedIn={Boolean(user)}
+            otherCount={Math.max(0, hiddenCount - companyLocked.length)}
+          />
+        </div>
       )}
 
       {/* IPP-1501: end of the free questions (paid ones are not sent to the browser at all) */}
-      {!loading && showEnd && onLastPage && (
+      {!loading && showEnd && onLastPage && !showCompanyBox && (
         <div
           ref={endRef}
           className="mt-4 flex flex-col gap-4 rounded-2xl border-2 border-dashed border-slate-300 bg-white p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"
